@@ -6,6 +6,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
@@ -47,6 +48,8 @@ public class TestAIConfig {
     private ChatModel createMockChatModel() {
         log.info("Creating MOCK ChatModel for tests - NO real LLM calls will be made");
         ChatModel mockModel = mock(ChatModel.class);
+
+        when(mockModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
 
         AtomicInteger callCount = new AtomicInteger(0);
 
@@ -1056,6 +1059,8 @@ public class TestAIConfig {
     public ChatModel testRerankingChatModel() {
         log.info("Creating MOCK rerankingChatModel for tests - NO real LLM calls will be made");
         ChatModel mockModel = mock(ChatModel.class);
+
+        when(mockModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
 
         when(mockModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             log.info("MOCK rerankingChatModel.call() invoked - using MOCK, NOT real LLM");

@@ -203,7 +203,7 @@ logging:
     com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
     com.berdachuk.medexpertmatch.embedding.config: INFO
     org.springframework.web.client.RestClient: INFO
-    org.springframework.ai.openai.api.OpenAiApi: INFO
+    org.springframework.ai.openai: INFO
     org.springframework.http.client: INFO
     org.springframework.ai.chat.client: INFO
     org.springframework.ai.chat.client.advisor: INFO
