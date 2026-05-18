@@ -308,6 +308,9 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
 
         log.info("Generated {} medical specialties ({} base + {} extended)",
                 extendedSpecialties.size(), baseSpecialties.size(), extendedSpecialtiesList.size());
+
+        // Store the full list of all specialties in the catalog state for doctor generation
+        catalogState.setExtendedMedicalSpecialties(extendedSpecialties);
     }
 
     @Override
@@ -404,8 +407,13 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
 
     @Override
     public void generateDoctors(int count, SyntheticDataGenerationProgress progress) {
+        // Use all generated specialties (base + extended) so every specialty has doctors
+        List<String> allSpecialties = catalogState.getExtendedMedicalSpecialties();
+        if (allSpecialties == null || allSpecialties.isEmpty()) {
+            allSpecialties = catalogState.getLoadedMedicalSpecialties();
+        }
         doctorGeneratorService.generateDoctors(count, progress,
-                catalogState.getLoadedMedicalSpecialties(), catalogState.getLoadedAvailabilityStatuses());
+                allSpecialties, catalogState.getLoadedAvailabilityStatuses());
     }
 
     @Override

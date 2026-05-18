@@ -56,13 +56,10 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
         long startTime = System.currentTimeMillis();
         log.info("Starting medical graph build process...");
 
-        // Use graphService.createGraphIfNotExists() to ensure consistent transaction handling
-        // This method uses REQUIRES_NEW propagation, which is necessary for graph operations
         log.info("Ensuring graph structure exists...");
         graphService.createGraphIfNotExists();
         log.info("Graph structure ready");
 
-        // Build graph vertices and edges
         log.info("Building graph vertices and edges...");
         long verticesStartTime = System.currentTimeMillis();
 
@@ -78,18 +75,6 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
         long caseEndTime = System.currentTimeMillis();
         log.info("  Medical case vertices created in {}ms", caseEndTime - caseStartTime);
 
-        log.info("  Creating ICD-10 code vertices...");
-        long icd10StartTime = System.currentTimeMillis();
-        createIcd10CodeVertices();
-        long icd10EndTime = System.currentTimeMillis();
-        log.info("  ICD-10 code vertices created in {}ms", icd10EndTime - icd10StartTime);
-
-        log.info("  Creating medical specialty vertices...");
-        long specialtyStartTime = System.currentTimeMillis();
-        createMedicalSpecialtyVertices();
-        long specialtyEndTime = System.currentTimeMillis();
-        log.info("  Medical specialty vertices created in {}ms", specialtyEndTime - specialtyStartTime);
-
         log.info("  Creating facility vertices...");
         long facilityStartTime = System.currentTimeMillis();
         createFacilityVertices();
@@ -99,12 +84,10 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
         long verticesEndTime = System.currentTimeMillis();
         log.info("Graph vertices creation completed in {}ms", verticesEndTime - verticesStartTime);
 
-        // Create graph indexes for better query performance
         log.info("Creating graph indexes...");
         createGraphIndexes();
         log.info("Graph indexes creation completed");
 
-        // Create relationships
         log.info("Building graph relationships...");
         long relationshipsStartTime = System.currentTimeMillis();
 
@@ -186,26 +169,6 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
                 namedJdbcTemplate.getJdbcTemplate().execute(caseIndexSql);
             } catch (Exception e) {
                 log.debug("Could not create MedicalCase index: {}", e.getMessage());
-            }
-
-            try {
-                String icd10IndexSql = String.format("""
-                        CREATE INDEX IF NOT EXISTS idx_%s_icd10code_props_code 
-                        ON ag_catalog.ag_%s_ICD10Code USING gin ((properties jsonb_path_ops))
-                        """, graphName, graphName);
-                namedJdbcTemplate.getJdbcTemplate().execute(icd10IndexSql);
-            } catch (Exception e) {
-                log.debug("Could not create ICD10Code index: {}", e.getMessage());
-            }
-
-            try {
-                String specialtyIndexSql = String.format("""
-                        CREATE INDEX IF NOT EXISTS idx_%s_medicalspecialty_props_id 
-                        ON ag_catalog.ag_%s_MedicalSpecialty USING gin ((properties jsonb_path_ops))
-                        """, graphName, graphName);
-                namedJdbcTemplate.getJdbcTemplate().execute(specialtyIndexSql);
-            } catch (Exception e) {
-                log.debug("Could not create MedicalSpecialty index: {}", e.getMessage());
             }
 
             try {

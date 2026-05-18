@@ -51,7 +51,7 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
     @Override
     @Transactional
     public void generateDoctors(int count, SyntheticDataGenerationProgress progress,
-                                List<String> medicalSpecialties, List<String> availabilityStatuses) {
+                                  List<String> medicalSpecialties, List<String> availabilityStatuses) {
         if (count < 0) {
             throw new IllegalArgumentException("Count must be non-negative, got: " + count);
         }
@@ -61,7 +61,7 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
         }
 
         List<String> loadedMedicalSpecialties = medicalSpecialties != null && !medicalSpecialties.isEmpty()
-                ? medicalSpecialties : List.of("General Medicine");
+                ? new ArrayList<>(medicalSpecialties) : List.of("General Medicine");
         List<String> loadedAvailabilityStatuses = availabilityStatuses != null && !availabilityStatuses.isEmpty()
                 ? availabilityStatuses : List.of("AVAILABLE");
 
@@ -75,6 +75,8 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
 
         Set<String> generatedEmails = new HashSet<>();
         List<Doctor> doctors = new ArrayList<>();
+        // Track which facilities have been assigned to at least one doctor
+        Set<String> assignedFacilityIds = new HashSet<>();
         for (int i = 0; i < count; i++) {
             if (progress != null && progress.isCancelled()) {
                 log.info("Generation cancelled during doctor generation at {}/{}", i, count);
@@ -134,6 +136,21 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
                     facilityIdsSet.add(shuffledFacilities.get(j));
                 }
             }
+
+            // Ensure all facilities have at least one affiliated doctor
+            // If this is one of the last doctors and there are still unassigned facilities, assign one
+            if (!availableFacilityIds.isEmpty()) {
+                List<String> remainingUnassigned = availableFacilityIds.stream()
+                        .filter(fid -> !assignedFacilityIds.contains(fid))
+                        .toList();
+                if (!remainingUnassigned.isEmpty()) {
+                    // Assign one unassigned facility to this doctor
+                    String unassignedFacility = remainingUnassigned.get(random.nextInt(remainingUnassigned.size()));
+                    facilityIdsSet.add(unassignedFacility);
+                }
+            }
+            assignedFacilityIds.addAll(facilityIdsSet);
+
             List<String> facilityIds = new ArrayList<>(facilityIdsSet);
 
             boolean telehealthEnabled = random.nextDouble() < TELEHEALTH_PROBABILITY;
