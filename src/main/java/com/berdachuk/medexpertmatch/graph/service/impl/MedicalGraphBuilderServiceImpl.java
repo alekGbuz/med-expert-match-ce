@@ -75,6 +75,18 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
         long caseEndTime = System.currentTimeMillis();
         log.info("  Medical case vertices created in {}ms", caseEndTime - caseStartTime);
 
+        log.info("  Creating ICD-10 code vertices...");
+        long icd10StartTime = System.currentTimeMillis();
+        createIcd10CodeVertices();
+        long icd10EndTime = System.currentTimeMillis();
+        log.info("  ICD-10 code vertices created in {}ms", icd10EndTime - icd10StartTime);
+
+        log.info("  Creating medical specialty vertices...");
+        long specialtyStartTime = System.currentTimeMillis();
+        createMedicalSpecialtyVertices();
+        long specialtyEndTime = System.currentTimeMillis();
+        log.info("  Medical specialty vertices created in {}ms", specialtyEndTime - specialtyStartTime);
+
         log.info("  Creating facility vertices...");
         long facilityStartTime = System.currentTimeMillis();
         createFacilityVertices();
@@ -277,9 +289,23 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
      */
     private void createFacilityVertices() {
         List<com.berdachuk.medexpertmatch.facility.domain.Facility> facilities = facilityRepository.findAll();
+        Set<String> assignedFacilityIds = new HashSet<>();
+        List<String> doctorIds = doctorRepository.findAllIds(0);
+        for (String doctorId : doctorIds) {
+            doctorRepository.findById(doctorId).ifPresent(doctor -> {
+                if (doctor.facilityIds() != null) {
+                    assignedFacilityIds.addAll(doctor.facilityIds());
+                }
+            });
+        }
         int created = 0;
+        int skipped = 0;
         int failed = 0;
         for (var facility : facilities) {
+            if (!assignedFacilityIds.contains(facility.id())) {
+                skipped++;
+                continue;
+            }
             try {
                 createFacilityVertex(
                         facility.id(),
@@ -290,10 +316,9 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
             } catch (Exception e) {
                 failed++;
                 log.warn("Failed to create facility vertex for facility {}: {}", facility.id(), e.getMessage());
-                // Continue with next facility
             }
         }
-        log.info("  Created {} facility vertices ({} failed)", created, failed);
+        log.info("  Created {} facility vertices ({} skipped, {} failed)", created, skipped, failed);
     }
 
     /**
