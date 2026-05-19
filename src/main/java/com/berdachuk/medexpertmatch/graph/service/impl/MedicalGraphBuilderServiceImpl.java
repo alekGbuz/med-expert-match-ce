@@ -276,12 +276,26 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
      */
     private void createMedicalSpecialtyVertices() {
         List<com.berdachuk.medexpertmatch.doctor.domain.MedicalSpecialty> specialties = medicalSpecialtyRepository.findAll();
+        Set<String> assignedSpecialtyNames = new HashSet<>();
+        List<String> doctorIds = doctorRepository.findAllIds(0);
+        for (String doctorId : doctorIds) {
+            doctorRepository.findById(doctorId).ifPresent(doctor -> {
+                if (doctor.specialties() != null) {
+                    assignedSpecialtyNames.addAll(doctor.specialties());
+                }
+            });
+        }
         int created = 0;
+        int skipped = 0;
         for (var specialty : specialties) {
+            if (!assignedSpecialtyNames.contains(specialty.name())) {
+                skipped++;
+                continue;
+            }
             createMedicalSpecialtyVertex(specialty.id(), specialty.name());
             created++;
         }
-        log.info("  Created {} medical specialty vertices", created);
+        log.info("  Created {} medical specialty vertices ({} skipped)", created, skipped);
     }
 
     /**
