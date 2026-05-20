@@ -1265,9 +1265,56 @@ public class MedicalAgentTools {
     private String aggregateConditionMetrics(String conditionCode, String metricType) {
         StringBuilder metrics = new StringBuilder();
 
-        if (conditionCode == null || conditionCode.trim().isEmpty()) {
-            return "Error: Condition code (ICD-10) is required for CONDITION entity type.\n";
+        if (conditionCode != null && !conditionCode.trim().isEmpty()) {
+            return aggregateSingleConditionMetrics(conditionCode, metricType);
         }
+
+        List<String> caseIds = medicalCaseRepository.findAllIds(500);
+        if (caseIds.isEmpty()) {
+            return "No cases found.\n";
+        }
+        List<MedicalCase> cases = medicalCaseRepository.findByIds(caseIds);
+        int totalCases = cases.size();
+        Map<String, Integer> urgencyDistribution = new HashMap<>();
+        Map<String, Integer> specialtyDistribution = new HashMap<>();
+        Map<String, Integer> conditionDistribution = new HashMap<>();
+
+        for (MedicalCase medicalCase : cases) {
+            if (medicalCase.urgencyLevel() != null) {
+                urgencyDistribution.merge(medicalCase.urgencyLevel().toUpperCase(), 1, Integer::sum);
+            }
+            if (medicalCase.icd10Codes() != null) {
+                for (String code : medicalCase.icd10Codes()) {
+                    conditionDistribution.merge(code, 1, Integer::sum);
+                }
+            }
+            if (medicalCase.requiredSpecialty() != null) {
+                specialtyDistribution.merge(medicalCase.requiredSpecialty(), 1, Integer::sum);
+            }
+        }
+
+        metrics.append(String.format("Total Cases: %d\n", totalCases));
+        metrics.append(String.format("Unique Conditions: %d\n", conditionDistribution.size()));
+        metrics.append(String.format("Unique Specialties: %d\n", specialtyDistribution.size()));
+
+        metrics.append("\nCondition Distribution:\n");
+        conditionDistribution.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(10)
+                .forEach(e -> metrics.append(String.format("  %s: %d (%.1f%%)\n",
+                        e.getKey(), e.getValue(), totalCases > 0 ? (double) e.getValue() / totalCases * 100 : 0.0)));
+
+        metrics.append("\nUrgency Distribution:\n");
+        urgencyDistribution.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .forEach(e -> metrics.append(String.format("  %s: %d (%.1f%%)\n",
+                        e.getKey(), e.getValue(), totalCases > 0 ? (double) e.getValue() / totalCases * 100 : 0.0)));
+
+        return metrics.toString();
+    }
+
+    private String aggregateSingleConditionMetrics(String conditionCode, String metricType) {
+        StringBuilder metrics = new StringBuilder();
 
         // Find cases with this ICD-10 code
         List<MedicalCase> cases = medicalCaseRepository.findByIcd10Code(conditionCode, 1000);
