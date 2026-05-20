@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.core.config;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -35,10 +36,12 @@ import static org.mockito.Mockito.when;
  * - This ensures only the mocked beans from TestAIConfig are used
  * - All @Primary annotations ensure mocks are selected over any auto-configured beans
  */
-@Slf4j
 @TestConfiguration
 @Profile("test")
 public class TestAIConfig {
+
+    @SuppressWarnings("unused")
+    private static final Logger log = LoggerFactory.getLogger(TestAIConfig.class);
 
     /**
      * Creates a mock ChatModel for tests.
