@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.documents.service.impl;
 
 import com.berdachuk.medexpertmatch.core.repository.sql.InjectSql;
-import com.berdachuk.medexpertmatch.documents.api.DocumentSearchApi;
+import com.berdachuk.medexpertmatch.documents.DocumentSearchApi;
 import com.berdachuk.medexpertmatch.documents.domain.DocumentSearchResult;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;

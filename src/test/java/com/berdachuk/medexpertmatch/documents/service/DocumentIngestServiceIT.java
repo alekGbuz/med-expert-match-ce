@@ -1,6 +1,6 @@
 package com.berdachuk.medexpertmatch.documents.service;
 
-import com.berdachuk.medexpertmatch.documents.api.DocumentIngestApi;
+import com.berdachuk.medexpertmatch.documents.DocumentIngestApi;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
