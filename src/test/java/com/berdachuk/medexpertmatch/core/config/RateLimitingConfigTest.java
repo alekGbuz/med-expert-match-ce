@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.core.config;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -12,9 +13,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RateLimitingConfigTest {
 
+    private static final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     void shouldAllowRequestsUnderLimit() throws Exception {
-        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 5, 60);
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 5, 60, new SimpleMeterRegistry());
 
         for (int i = 0; i < 5; i++) {
             var request = new MockHttpServletRequest("GET", "/api/v1/test");
@@ -27,7 +30,7 @@ class RateLimitingConfigTest {
 
     @Test
     void shouldBlockRequestsOverLimit() throws Exception {
-        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 3, 60);
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 3, 60, new SimpleMeterRegistry());
 
         for (int i = 0; i < 3; i++) {
             var request = new MockHttpServletRequest("GET", "/api/v1/test");
@@ -47,7 +50,7 @@ class RateLimitingConfigTest {
 
     @Test
     void shouldExcludeHealthEndpointsFromRateLimiting() throws Exception {
-        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60);
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
 
         for (int i = 0; i < 10; i++) {
             var request = new MockHttpServletRequest("GET", "/api/v1/documents/search/health");
@@ -60,7 +63,7 @@ class RateLimitingConfigTest {
 
     @Test
     void shouldTrackSeparateIpsIndependently() throws Exception {
-        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60);
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
 
         var request1 = new MockHttpServletRequest("GET", "/api/v1/test");
         request1.setRemoteAddr("192.168.1.1");
@@ -83,7 +86,7 @@ class RateLimitingConfigTest {
 
     @Test
     void shouldRespectXForwardedForHeader() throws Exception {
-        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60);
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
 
         var request = new MockHttpServletRequest("GET", "/api/v1/test");
         request.addHeader("X-Forwarded-For", "10.0.0.1, 192.168.1.1");
