@@ -210,6 +210,12 @@
             <version>${datafaker.version}</version>
         </dependency>
 
+        <!-- Micrometer Prometheus registry for observability -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- OpenAPI/Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>
