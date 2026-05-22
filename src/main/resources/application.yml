@@ -87,6 +87,8 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  max-http-request-header-size: 8KB
   error:
     include-message: always
     include-binding-errors: always
@@ -111,6 +113,14 @@ management:
       prometheus:
         enabled: true
 
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 springdoc:
   api-docs:
     path: /api/v1/openapi.json
@@ -125,6 +135,12 @@ springdoc:
 
 # Application-specific settings
 medexpertmatch:
+  features:
+    document-ingestion: ${MEDEXPERTMATCH_FEATURES_DOCUMENT_INGESTION:true}
+    graph-rag: ${MEDEXPERTMATCH_FEATURES_GRAPH_RAG:true}
+    agent-skills: ${MEDEXPERTMATCH_FEATURES_AGENT_SKILLS:true}
+    evaluation: ${MEDEXPERTMATCH_FEATURES_EVALUATION:true}
+    semantic-reranking: ${MEDEXPERTMATCH_FEATURES_SEMANTIC_RERANKING:true}
   skills: # Agent skills (SKILL.md); set enabled: false to use plain ChatClient
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
     directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
