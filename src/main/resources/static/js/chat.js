@@ -123,12 +123,29 @@
         if (!panel || activityCollapsed) return;
         var html = '';
         activityEntries.forEach(function (e) {
-            html += '<div class="agent-activity-entry ' + escapeHtml(e.kind) + '">' +
+            var label = e.kind;
+            if (e.kind === 'tool') label = 'tool_call';
+            if (e.kind === 'plan') label = 'todo';
+            if (e.kind === 'reasoning') label = 'reasoning';
+            html += '<div class="agent-activity-entry ' + escapeHtml(label) + '">' +
                 '<div class="fw-semibold">' + escapeHtml(e.agentId) + '</div>' +
                 '<div class="text-muted">' + escapeHtml(e.message) + '</div></div>';
         });
         panel.innerHTML = html || '<div class="text-muted">Working…</div>';
         panel.scrollTop = panel.scrollHeight;
+    }
+
+    function renderTodosFromActivity(todos) {
+        var panel = document.getElementById('agentTodoPanel');
+        if (!panel || !todos || !todos.length) return;
+        panel.classList.remove('d-none');
+        var html = '<div class="small fw-semibold mb-1">Agent plan</div><ul class="list-unstyled mb-0 small">';
+        todos.forEach(function (t) {
+            html += '<li><span class="badge bg-light text-dark me-1">' + escapeHtml(t.status) + '</span>' +
+                escapeHtml(t.content) + '</li>';
+        });
+        html += '</ul>';
+        panel.innerHTML = html;
     }
 
     function collapseActivityPanel() {
@@ -138,7 +155,8 @@
         if (!summary) return;
         var elapsedSec = activityStartMs ? Math.max(1, Math.round((Date.now() - activityStartMs) / 1000)) : 0;
         var agents = new Set(activityEntries.map(function (e) { return e.agentId; }));
-        summary.textContent = agents.size + ' agent(s) · ' + activityEntries.length + ' steps · ' + elapsedSec + 's — click to expand';
+        summary.textContent = '▸ ' + agents.size + ' agent(s) · ' + activityEntries.length + ' steps · ' + elapsedSec + 's — click to expand';
+        summary.setAttribute('aria-expanded', 'false');
         summary.classList.remove('d-none');
         if (panel) panel.classList.add('d-none');
     }
@@ -149,6 +167,7 @@
         var summary = document.getElementById('agentActivitySummary');
         if (summary) summary.classList.add('d-none');
         if (panel) panel.classList.remove('d-none');
+        if (summary) summary.setAttribute('aria-expanded', 'true');
         renderActivityPanel();
     }
 
@@ -282,6 +301,18 @@
                                     addActivityEntry('done', 'Completed', agentPayload.agentId);
                                 }
                             } catch (ignore) { /* non-json agent payload */ }
+                        } else if (evt.event === 'activity') {
+                            try {
+                                var act = JSON.parse(evt.data);
+                                if (act.type === 'tool_call') {
+                                    addActivityEntry('tool', act.message || act.toolName, 'orchestrator');
+                                } else if (act.type === 'reasoning') {
+                                    addActivityEntry('reasoning', act.message || 'Thinking…', 'orchestrator');
+                                } else if (act.type === 'todo_update' && act.todos) {
+                                    renderTodosFromActivity(act.todos);
+                                    addActivityEntry('plan', 'Plan updated (' + act.todos.length + ' items)', 'orchestrator');
+                                }
+                            } catch (ignore) { /* non-json activity payload */ }
                         } else if (evt.event === 'done') {
                             if (logSource) logSource.close();
                             finalizeAssistantBubble();

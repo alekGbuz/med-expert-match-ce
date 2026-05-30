@@ -28,8 +28,18 @@
     margin-bottom: 0.5rem;
 }
 
-.agent-activity-entry.tool {
+.agent-activity-entry.tool,
+.agent-activity-entry.tool_call {
     border-left-color: #6f42c1;
+}
+
+.agent-activity-entry.reasoning {
+    border-left-color: #fd7e14;
+}
+
+.agent-activity-entry.todo,
+.agent-activity-entry.plan {
+    border-left-color: #0dcaf0;
 }
 
 .agent-activity-entry.done {

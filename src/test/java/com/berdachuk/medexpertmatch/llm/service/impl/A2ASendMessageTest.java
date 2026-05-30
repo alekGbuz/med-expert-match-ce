@@ -106,4 +106,34 @@ class A2ASendMessageTest {
         Map<String, Object> result = (Map<String, Object>) response.get("result");
         assertEquals("completed", result.get("status"));
     }
+
+    @Test
+    @DisplayName("JSON-RPC unknown method maps to -32601")
+    void jsonRpcUnknownMethod() {
+        Map<String, Object> request = Map.of(
+                "jsonrpc", "2.0",
+                "id", 1,
+                "method", "ping",
+                "params", Map.of());
+
+        Map<String, Object> response = service.handleJsonRpc(request);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> error = (Map<String, Object>) response.get("error");
+        assertEquals(-32601, error.get("code"));
+    }
+
+    @Test
+    @DisplayName("JSON-RPC invalid params maps to -32602")
+    void jsonRpcInvalidParams() {
+        Map<String, Object> request = Map.of(
+                "jsonrpc", "2.0",
+                "id", 2,
+                "method", "sendMessage",
+                "params", "bad");
+
+        Map<String, Object> response = service.handleJsonRpc(request);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> error = (Map<String, Object>) response.get("error");
+        assertEquals(-32602, error.get("code"));
+    }
 }

@@ -6,6 +6,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,10 +31,11 @@ class ChatAssistantServiceImplTest {
     private final ChatClient.CallResponseSpec callSpec = mock(ChatClient.CallResponseSpec.class);
     private final MedicalAgentPromptSupportService promptSupport = mock(MedicalAgentPromptSupportService.class);
     private final LogStreamService logStreamService = mock(LogStreamService.class);
+    private final ChatStreamActivityPublisher chatStreamActivityPublisher = mock(ChatStreamActivityPublisher.class);
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
-            chatService, chatClient, promptSupport, logStreamService, llmCallLimiter, "functiongemma");
+            chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter, "functiongemma");
 
     @AfterEach
     void clearContext() {

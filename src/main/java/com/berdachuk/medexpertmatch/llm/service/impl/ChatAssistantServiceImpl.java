@@ -10,6 +10,7 @@ import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.agent.SessionAdvisorSupport;
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
+import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -36,6 +37,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final ChatClient chatClient;
     private final MedicalAgentPromptSupportService promptSupportService;
     private final LogStreamService logStreamService;
+    private final ChatStreamActivityPublisher chatStreamActivityPublisher;
     private final LlmCallLimiter llmCallLimiter;
     private final PromptTemplate chatAgentSystemTemplate;
     private final String functionGemmaModelName;
@@ -45,12 +47,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             @Qualifier("medicalAgentChatClient") ChatClient chatClient,
             MedicalAgentPromptSupportService promptSupportService,
             LogStreamService logStreamService,
+            ChatStreamActivityPublisher chatStreamActivityPublisher,
             LlmCallLimiter llmCallLimiter,
             @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName) {
         this.chatService = chatService;
         this.chatClient = chatClient;
         this.promptSupportService = promptSupportService;
         this.logStreamService = logStreamService;
+        this.chatStreamActivityPublisher = chatStreamActivityPublisher;
         this.llmCallLimiter = llmCallLimiter;
         this.functionGemmaModelName = functionGemmaModelName;
         this.chatAgentSystemTemplate = new PromptTemplate(new ClassPathResource("prompts/chat-agent-system.st"));
@@ -79,11 +83,13 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         SseEmitter emitter = new SseEmitter(120_000L);
         CompletableFuture.runAsync(() -> {
             StringBuilder full = new StringBuilder();
+            chatStreamActivityPublisher.register(ctx.sessionId(), emitter);
             try {
                 sendAgentEvent(emitter, Map.of(
                         "type", "agent_start",
                         "agentId", ctx.profile().agentId(),
                         "orchestrator", ctx.profile().orchestrator()));
+                chatStreamActivityPublisher.publishReasoning(ctx.sessionId(), "Planning response…");
                 logStreamService.sendLog(ctx.sessionId(), "INFO", "Chat Agent",
                         "Streaming turn for agent " + ctx.profile().agentId());
 
@@ -115,6 +121,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                 emitter.completeWithError(e);
                             } finally {
                                 clearTurnContext(ctx.sessionId());
+                                chatStreamActivityPublisher.unregister(ctx.sessionId());
                             }
                         })
                         .doOnError(error -> {
@@ -127,12 +134,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                             }
                             emitter.completeWithError(error);
                             clearTurnContext(ctx.sessionId());
+                            chatStreamActivityPublisher.unregister(ctx.sessionId());
                         })
                         .subscribe();
             } catch (Exception e) {
                 log.warn("Chat stream setup failed for chat {}: {}", chatId, e.getMessage());
                 emitter.completeWithError(e);
                 clearTurnContext(ctx.sessionId());
+                chatStreamActivityPublisher.unregister(ctx.sessionId());
             }
         });
         return emitter;
