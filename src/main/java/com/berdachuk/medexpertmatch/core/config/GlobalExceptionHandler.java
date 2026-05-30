@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
 
@@ -52,6 +53,22 @@ public class GlobalExceptionHandler {
         problem.setType(URI.create("about:blank"));
         problem.setInstance(URI.create(((ServletWebRequest) request).getRequest().getRequestURI()));
         problem.setProperty("errorCode", ex.getErrorCode());
+        return problem;
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ProblemDetail handleNoResourceFound(NoResourceFoundException ex, WebRequest request) {
+        String path = ((ServletWebRequest) request).getRequest().getRequestURI();
+        if (path != null && path.endsWith("/favicon.ico")) {
+            log.debug("Missing favicon request: {}", path);
+        } else {
+            log.warn("Resource not found: {}", ex.getMessage());
+        }
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Not Found");
+        problem.setType(URI.create("about:blank"));
+        problem.setInstance(URI.create(path));
+        problem.setProperty("errorCode", "NOT_FOUND");
         return problem;
     }
 

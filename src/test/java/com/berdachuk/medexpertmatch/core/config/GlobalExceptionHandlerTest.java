@@ -2,9 +2,11 @@ package com.berdachuk.medexpertmatch.core.config;
 
 import com.berdachuk.medexpertmatch.core.exception.MedExpertMatchException;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,6 +36,18 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problem.getStatus());
         assertEquals("Application Error", problem.getTitle());
         assertEquals("GRAPH_QUERY_FAILED", problem.getProperties().get("errorCode"));
+    }
+
+    @Test
+    void shouldReturn404ForMissingFaviconWithout500() {
+        var request = new ServletWebRequest(new MockHttpServletRequest("GET", "/favicon.ico"));
+        var problem = handler.handleNoResourceFound(
+                new NoResourceFoundException(HttpMethod.GET, "/favicon.ico", "static"),
+                request);
+
+        assertEquals(HttpStatus.NOT_FOUND.value(), problem.getStatus());
+        assertEquals("Not Found", problem.getTitle());
+        assertEquals("NOT_FOUND", problem.getProperties().get("errorCode"));
     }
 
     @Test
