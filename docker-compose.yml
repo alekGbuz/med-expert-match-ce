@@ -85,6 +85,8 @@ services:
       MEDEXPERTMATCH_SKILLS_ENABLED: "true"
       MEDEXPERTMATCH_SKILLS_DIRECTORY: "skills"
       MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY: "/app/skills"
+      # Writable path in container (default user.home may be missing or read-only under host network)
+      AGENT_MEMORY_DIR: /tmp/medexpertmatch/memory
     depends_on:
       postgres:
         condition: service_healthy

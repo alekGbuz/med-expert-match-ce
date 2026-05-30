@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
+import com.berdachuk.medexpertmatch.llm.automemory.MemoryConsolidationTrigger;
+import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
@@ -196,6 +198,11 @@ public class MedicalAgentConfiguration {
                 .maxTurns(properties.maxWindowTurns())
                 .tokenCountEstimator(tokenCountEstimator)
                 .build();
+    }
+
+    @Bean
+    MemoryConsolidationTrigger timeGapConsolidationTrigger(AgentMemoryProperties agentMemoryProperties) {
+        return new TimeGapConsolidationTrigger(agentMemoryProperties);
     }
 
     /**

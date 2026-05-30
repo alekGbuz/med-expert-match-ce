@@ -80,6 +80,13 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         CompletableFuture.runAsync(() -> {
             StringBuilder full = new StringBuilder();
             try {
+                sendAgentEvent(emitter, Map.of(
+                        "type", "agent_start",
+                        "agentId", ctx.profile().agentId(),
+                        "orchestrator", ctx.profile().orchestrator()));
+                logStreamService.sendLog(ctx.sessionId(), "INFO", "Chat Agent",
+                        "Streaming turn for agent " + ctx.profile().agentId());
+
                 Flux<String> tokenFlux = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
                         .system(ctx.systemPrompt())
                         .user(ctx.userPrompt())
@@ -101,6 +108,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                         ? "I could not generate a response. Please try again."
                                         : full.toString().trim();
                                 ChatMessage assistant = chatService.appendAssistantMessage(chatId, userId, reply);
+                                sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", ctx.profile().agentId()));
                                 emitter.send(SseEmitter.event().name("done").data(assistant.id()));
                                 emitter.complete();
                             } catch (IOException e) {
@@ -209,6 +217,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                     .orElse(content);
         }
         return "User message:\n" + content;
+    }
+
+    private static void sendAgentEvent(SseEmitter emitter, Map<String, Object> payload) {
+        try {
+            emitter.send(SseEmitter.event().name("agent").data(payload));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private record TurnContext(

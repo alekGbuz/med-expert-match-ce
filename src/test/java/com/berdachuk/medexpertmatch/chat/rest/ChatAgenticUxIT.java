@@ -37,7 +37,7 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
         String chatId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
         String sessionId = userId + "-" + chatId;
 
-        mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages")
+        mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages/stream")
                         .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"Plan a triage workflow\",\"agentId\":\"auto\"}"))

@@ -28,4 +28,4 @@ M14 delivered LLM-backed chat with TaskTool subagents. M15 added discovery, stre
 
 ## Next
 
-**`plans/M16-a2a-full-integration-and-m08-closeout.md`**
+**`.agents/plans/M17-chat-agent-polish-and-a2a-hardening.md`**

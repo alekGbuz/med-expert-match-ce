@@ -1,4 +1,10 @@
 (function () {
+    var activityEntries = [];
+    var activityStartMs = null;
+    var activityCollapsed = false;
+    var currentAssistantBubble = null;
+    var currentMarkdownBuffer = '';
+
     function apiHeaders() {
         if (typeof getApiUserHeaders === 'function') {
             return getApiUserHeaders();
@@ -19,28 +25,153 @@
         window.location.href = url.toString();
     }
 
-    function appendTrace(line) {
-        var panel = document.getElementById('executionTracePanel');
-        if (!panel) return;
-        panel.classList.remove('d-none');
-        panel.textContent += line + '\n';
+    function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderMarkdown(text) {
+        if (!text) return '';
+        if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+            return escapeHtml(text);
+        }
+        var raw = marked.parse(text, { breaks: true });
+        return DOMPurify.sanitize(raw);
+    }
+
+    function initHistoricalMarkdown() {
+        document.querySelectorAll('[data-markdown]').forEach(function (el) {
+            var md = el.getAttribute('data-markdown') || '';
+            el.innerHTML = renderMarkdown(md);
+        });
+    }
+
+    function hideEmptyState() {
+        var empty = document.getElementById('chatEmptyState');
+        if (empty) empty.classList.add('d-none');
+    }
+
+    function appendUserBubble(text) {
+        hideEmptyState();
+        var panel = document.getElementById('messagePanel');
+        var wrap = document.createElement('div');
+        wrap.className = 'mb-3 chat-message-row text-end';
+        wrap.innerHTML = '<span class="badge mb-1 bg-primary">user</span>' +
+            '<div class="p-2 rounded d-inline-block text-start bg-primary-subtle">' + escapeHtml(text) + '</div>';
+        panel.appendChild(wrap);
         panel.scrollTop = panel.scrollHeight;
+    }
+
+    function beginAssistantBubble() {
+        hideEmptyState();
+        var panel = document.getElementById('messagePanel');
+        var wrap = document.createElement('div');
+        wrap.className = 'mb-3 chat-message-row text-start chat-streaming';
+        wrap.innerHTML = '<span class="badge mb-1 bg-secondary">assistant</span>' +
+            '<div class="p-2 rounded d-inline-block text-start bg-light border chat-markdown"></div>';
+        panel.appendChild(wrap);
+        currentAssistantBubble = wrap.querySelector('.chat-markdown');
+        currentMarkdownBuffer = '';
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    function updateAssistantBubble() {
+        if (!currentAssistantBubble) return;
+        currentAssistantBubble.innerHTML = renderMarkdown(currentMarkdownBuffer);
+        var panel = document.getElementById('messagePanel');
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    function finalizeAssistantBubble() {
+        if (currentAssistantBubble && currentAssistantBubble.closest('.chat-streaming')) {
+            currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
+        }
+        currentAssistantBubble = null;
+        currentMarkdownBuffer = '';
+    }
+
+    function activityPanels() {
+        return [
+            document.getElementById('agentActivityPanel'),
+            document.getElementById('agentActivitySummary')
+        ].filter(Boolean);
+    }
+
+    function resetActivityPanel() {
+        activityEntries = [];
+        activityStartMs = Date.now();
+        activityCollapsed = false;
+        var panel = document.getElementById('agentActivityPanel');
+        var summary = document.getElementById('agentActivitySummary');
+        if (panel) {
+            panel.classList.remove('d-none');
+            panel.innerHTML = '';
+        }
+        if (summary) {
+            summary.classList.add('d-none');
+            summary.innerHTML = '';
+        }
+    }
+
+    function addActivityEntry(kind, message, agentId) {
+        var entry = { kind: kind, message: message, agentId: agentId || 'orchestrator', ts: Date.now() };
+        activityEntries.push(entry);
+        renderActivityPanel();
+    }
+
+    function renderActivityPanel() {
+        var panel = document.getElementById('agentActivityPanel');
+        if (!panel || activityCollapsed) return;
+        var html = '';
+        activityEntries.forEach(function (e) {
+            html += '<div class="agent-activity-entry ' + escapeHtml(e.kind) + '">' +
+                '<div class="fw-semibold">' + escapeHtml(e.agentId) + '</div>' +
+                '<div class="text-muted">' + escapeHtml(e.message) + '</div></div>';
+        });
+        panel.innerHTML = html || '<div class="text-muted">Working…</div>';
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    function collapseActivityPanel() {
+        activityCollapsed = true;
+        var panel = document.getElementById('agentActivityPanel');
+        var summary = document.getElementById('agentActivitySummary');
+        if (!summary) return;
+        var elapsedSec = activityStartMs ? Math.max(1, Math.round((Date.now() - activityStartMs) / 1000)) : 0;
+        var agents = new Set(activityEntries.map(function (e) { return e.agentId; }));
+        summary.textContent = agents.size + ' agent(s) · ' + activityEntries.length + ' steps · ' + elapsedSec + 's — click to expand';
+        summary.classList.remove('d-none');
+        if (panel) panel.classList.add('d-none');
+    }
+
+    function expandActivityPanel() {
+        activityCollapsed = false;
+        var panel = document.getElementById('agentActivityPanel');
+        var summary = document.getElementById('agentActivitySummary');
+        if (summary) summary.classList.add('d-none');
+        if (panel) panel.classList.remove('d-none');
+        renderActivityPanel();
+    }
+
+    function parseSseBlock(block) {
+        var lines = block.split('\n');
+        var eventName = 'message';
+        var dataLines = [];
+        lines.forEach(function (line) {
+            if (line.indexOf('event:') === 0) eventName = line.substring(6).trim();
+            if (line.indexOf('data:') === 0) dataLines.push(line.substring(5).trim());
+        });
+        return { event: eventName, data: dataLines.join('\n') };
     }
 
     function startLogStream(sid) {
         if (!sid || typeof EventSource === 'undefined') return null;
-        var panel = document.getElementById('executionTracePanel');
-        if (panel) {
-            panel.classList.remove('d-none');
-            panel.textContent = '';
-        }
         var source = new EventSource('/api/v1/logs/stream?sessionId=' + encodeURIComponent(sid));
         source.onmessage = function (e) {
             try {
-                var data = JSON.parse(e.data);
-                appendTrace((data.level || 'INFO') + ' ' + (data.message || e.data));
+                var payload = JSON.parse(e.data);
+                addActivityEntry('tool', payload.message || e.data, 'orchestrator');
             } catch (err) {
-                appendTrace(e.data);
+                addActivityEntry('tool', e.data, 'orchestrator');
             }
         };
         source.onerror = function () { source.close(); };
@@ -58,7 +189,9 @@
         panel.classList.remove('d-none');
         var html = '<div class="small fw-semibold mb-1">Agent plan</div><ul class="list-unstyled mb-0 small">';
         todos.forEach(function (t) {
-            html += '<li><span class="badge bg-light text-dark me-1">' + t.status + '</span>' + t.content + '</li>';
+            html += '<li><span class="badge bg-light text-dark me-1">' + escapeHtml(t.status) + '</span>' +
+                escapeHtml(t.content) + '</li>';
+            addActivityEntry('plan', t.status + ': ' + t.content, 'orchestrator');
         });
         html += '</ul>';
         panel.innerHTML = html;
@@ -70,7 +203,7 @@
         panel.classList.remove('d-none');
         var html = '<div class="small fw-semibold mb-1">Clarification needed</div>';
         data.questions.forEach(function (q, idx) {
-            html += '<div class="mb-2"><label class="form-label small">' + q.question + '</label>' +
+            html += '<div class="mb-2"><label class="form-label small">' + escapeHtml(q.question) + '</label>' +
                 '<input class="form-control form-control-sm agent-answer" data-qidx="' + idx + '" type="text"/></div>';
         });
         html += '<button class="btn btn-sm btn-outline-primary" id="submitAgentAnswers" type="button">Submit answers</button>';
@@ -106,7 +239,12 @@
 
     function sendMessageStream(chatId, text, agentId, btn) {
         var sid = sessionId();
+        resetActivityPanel();
+        addActivityEntry('start', 'Starting agent turn…', agentId || 'auto');
+        appendUserBubble(text);
+        beginAssistantBubble();
         var logSource = startLogStream(sid);
+
         fetch('/api/v1/chats/' + encodeURIComponent(chatId) + '/messages/stream', {
             method: 'POST',
             headers: apiHeaders(),
@@ -121,16 +259,34 @@
             function pump() {
                 return reader.read().then(function (result) {
                     if (result.done) {
-                        reloadWithChat(chatId);
+                        finalizeAssistantBubble();
+                        collapseActivityPanel();
+                        if (btn) btn.disabled = false;
                         return;
                     }
                     buffer += decoder.decode(result.value, { stream: true });
                     var parts = buffer.split('\n\n');
                     buffer = parts.pop() || '';
                     parts.forEach(function (block) {
-                        if (block.indexOf('event:done') >= 0) {
+                        if (!block.trim()) return;
+                        var evt = parseSseBlock(block);
+                        if (evt.event === 'token') {
+                            currentMarkdownBuffer += evt.data;
+                            updateAssistantBubble();
+                        } else if (evt.event === 'agent') {
+                            try {
+                                var agentPayload = JSON.parse(evt.data);
+                                if (agentPayload.type === 'agent_start') {
+                                    addActivityEntry('agent', 'Active: ' + agentPayload.agentId, agentPayload.agentId);
+                                } else if (agentPayload.type === 'agent_done') {
+                                    addActivityEntry('done', 'Completed', agentPayload.agentId);
+                                }
+                            } catch (ignore) { /* non-json agent payload */ }
+                        } else if (evt.event === 'done') {
                             if (logSource) logSource.close();
-                            reloadWithChat(chatId);
+                            finalizeAssistantBubble();
+                            collapseActivityPanel();
+                            pollAgenticState();
                         }
                     });
                     return pump();
@@ -140,9 +296,19 @@
         }).catch(function (err) {
             console.error(err);
             if (logSource) logSource.close();
+            addActivityEntry('done', 'Error: stream failed', agentId || 'auto');
+            collapseActivityPanel();
             if (btn) btn.disabled = false;
         });
     }
+
+    document.getElementById('agentActivitySummary')?.addEventListener('click', expandActivityPanel);
+    document.getElementById('agentActivitySummary')?.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            expandActivityPanel();
+        }
+    });
 
     document.getElementById('newChatBtn')?.addEventListener('click', function () {
         fetch('/api/v1/chats', {
@@ -195,6 +361,7 @@
         syncUserIdCookie();
     }
 
+    initHistoricalMarkdown();
     pollAgenticState();
     setInterval(pollAgenticState, 5000);
 })();

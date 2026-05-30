@@ -23,4 +23,4 @@
 ## References
 
 - `llm/automemory/AutoMemoryService.java`, `PhiGuard.java`
-- `plans/M08-agentic-patterns-improvements.md` Follow-ups
+- `.agents/plans/M08-agentic-patterns-improvements.md` Follow-ups

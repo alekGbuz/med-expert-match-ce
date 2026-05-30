@@ -10,20 +10,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@Tag(name = "A2A Bridge", description = "A2A sendMessage endpoint (JSON-RPC at /a2a/v1/jsonrpc)")
+@Tag(name = "A2A Bridge", description = "JSON-RPC 2.0 A2A message endpoint")
 @RestController
 @RequestMapping("/a2a/v1")
-public class A2AMessageController {
+public class A2aJsonRpcController {
 
     private final A2AMessageService a2aMessageService;
 
-    public A2AMessageController(A2AMessageService a2aMessageService) {
+    public A2aJsonRpcController(A2AMessageService a2aMessageService) {
         this.a2aMessageService = a2aMessageService;
     }
 
-    @Operation(summary = "Send a message to a MedExpertMatch skill (PHI-safe stub)")
-    @PostMapping("/sendMessage")
-    public Map<String, Object> sendMessage(@RequestBody Map<String, Object> body) {
-        return a2aMessageService.sendMessage(body);
+    @Operation(summary = "JSON-RPC 2.0 sendMessage (PHI-safe, routes to domain skills)")
+    @PostMapping("/jsonrpc")
+    public Map<String, Object> jsonRpc(@RequestBody Map<String, Object> body) {
+        return a2aMessageService.handleJsonRpc(body);
     }
 }

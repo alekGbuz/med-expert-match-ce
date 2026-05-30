@@ -13,4 +13,4 @@ Per-user chat sessions, sidebar UI, agent picker shell, and message persistence.
 
 **Verification:** `mvn test` — unit tests including `ChatServiceOwnershipTest`, `CaseIntakeClarificationTest`.
 
-**Next:** `plans/M14-ai-chat-agent-routing.md`
+**Next:** `.agents/plans/M14-ai-chat-agent-routing.md`

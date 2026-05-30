@@ -21,7 +21,7 @@ M13 adds a dedicated **AI Chat** navbar tab with multi-session history, per-user
 
 **Phase A + M14 complete: ~25h**
 
-> **Next milestone:** `plans/M15-a2a-streaming-hardening.md`
+> **Next milestone:** `.agents/plans/M15-a2a-streaming-hardening.md`
 
 ---
 
@@ -260,4 +260,4 @@ Steps 1–4 deliver a usable chat with manual agent selection. Steps 5–6 add A
 ## References
 
 - aist-expertmatch: `docs/CONVERSATION_HISTORY_MANAGEMENT.md`, `docs/API_ENDPOINTS.md`
-- MedExpertMatch: `web/AGENTS.md`, `llm/AGENTS.md`, `plans/M08-agentic-patterns-improvements.md`
+- MedExpertMatch: `web/AGENTS.md`, `llm/AGENTS.md`, `.agents/plans/M08-agentic-patterns-improvements.md`

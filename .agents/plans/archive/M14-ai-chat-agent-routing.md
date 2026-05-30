@@ -31,4 +31,4 @@ M13 Phase A delivered the chat domain module, per-user isolation, AI Chat tab, a
 
 ## Next
 
-**`plans/M15-a2a-streaming-hardening.md`**
+**`.agents/plans/M15-a2a-streaming-hardening.md`**

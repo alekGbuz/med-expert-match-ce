@@ -3,9 +3,11 @@ package com.berdachuk.medexpertmatch.llm.service;
 import java.util.Map;
 
 /**
- * Lightweight A2A-style message bridge pending full spring-ai-a2a-server integration (M15).
+ * A2A-style message bridge with JSON-RPC 2.0 support and domain skill routing.
  */
 public interface A2AMessageService {
 
     Map<String, Object> sendMessage(Map<String, Object> request);
+
+    Map<String, Object> handleJsonRpc(Map<String, Object> request);
 }
