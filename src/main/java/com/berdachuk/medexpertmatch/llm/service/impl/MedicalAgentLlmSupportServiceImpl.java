@@ -4,6 +4,7 @@ import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
+import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.net.ConnectException;
 
 /**
  * Shared LLM support for workflow-oriented agent services.
@@ -105,7 +107,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         } catch (Exception e) {
             log.error("Error analyzing case with LLM: {}", caseId, e);
             logStreamService.logError(sessionId, "LLM case analysis failed", e.getMessage());
-            return String.format("Case %s analysis is currently unavailable. The system encountered an error while processing this request.", caseId);
+            throw new AgentExecutionException(buildLlmErrorMessage("case analysis", e), e);
         }
     }
 
@@ -189,8 +191,33 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         } catch (Exception e) {
             log.error("Error interpreting results with LLM", e);
             logStreamService.logError(sessionId, "LLM result interpretation failed", e.getMessage());
-            throw e;
+            throw new AgentExecutionException(buildLlmErrorMessage("result interpretation", e), e);
         }
+    }
+
+    private static String buildLlmErrorMessage(String operation, Exception e) {
+        if (isConnectivityFailure(e)) {
+            return "LLM service is unreachable during " + operation
+                    + ". Check CHAT_BASE_URL / OLLAMA_BASE_URL and ensure the provider (e.g. Ollama) is running.";
+        }
+        return "LLM " + operation + " failed: " + e.getMessage();
+    }
+
+    private static boolean isConnectivityFailure(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof ConnectException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && (message.contains("Connection refused")
+                    || message.contains("Failed to connect")
+                    || message.contains("connect timed out"))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     @Override

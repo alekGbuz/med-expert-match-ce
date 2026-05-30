@@ -85,6 +85,20 @@ class RateLimitingConfigTest {
     }
 
     @Test
+    void shouldExcludeSyntheticDataProgressFromRateLimiting() throws Exception {
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
+
+        for (int i = 0; i < 10; i++) {
+            var request = new MockHttpServletRequest("GET",
+                    "/api/v1/synthetic-data/progress/885871a0-29f6-4dd5-aad2-e5c398dd67f2");
+            var response = new MockHttpServletResponse();
+            var chain = new MockFilterChain();
+            filter.doFilter(request, response, chain);
+            assertEquals(200, response.getStatus());
+        }
+    }
+
+    @Test
     void shouldRespectXForwardedForHeader() throws Exception {
         var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
 

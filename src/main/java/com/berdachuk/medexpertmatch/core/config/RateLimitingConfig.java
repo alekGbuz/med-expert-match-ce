@@ -62,7 +62,7 @@ public class RateLimitingConfig {
             HttpServletResponse httpResponse = (HttpServletResponse) response;
 
             String path = httpRequest.getRequestURI();
-            if (path.contains("/health") || path.contains("/actuator")) {
+            if (isExcludedFromRateLimit(path)) {
                 chain.doFilter(request, response);
                 return;
             }
@@ -82,6 +82,12 @@ public class RateLimitingConfig {
                 httpResponse.setContentType("application/json");
                 httpResponse.getWriter().write("{\"error\":\"Too Many Requests\",\"retryAfterSeconds\":" + windowSeconds + "}");
             }
+        }
+
+        static boolean isExcludedFromRateLimit(String path) {
+            return path.contains("/health")
+                    || path.contains("/actuator")
+                    || path.contains("/synthetic-data/progress/");
         }
 
         private String getClientIp(HttpServletRequest request) {

@@ -39,6 +39,9 @@ spring:
       fetch-size: 100
   jackson:
     time-zone: UTC
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
   flyway:
     baseline-on-migrate: true
     baseline-version: 0
@@ -84,6 +87,12 @@ spring:
       pgvector:
         index-type: HNSW
         distance-type: COSINE_DISTANCE
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 server:
   port: ${SERVER_PORT:8080}
@@ -116,14 +125,6 @@ management:
     export:
       prometheus:
         enabled: true
-
-spring:
-  lifecycle:
-    timeout-per-shutdown-phase: 30s
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
 
 springdoc:
   api-docs:
@@ -261,9 +262,4 @@ logging:
     org.springframework.security: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/med-expert-match.log
-    max-size: 10MB
-    max-history: 30
-
 
