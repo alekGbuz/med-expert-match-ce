@@ -48,18 +48,23 @@ public class A2aJsonRpcController {
     @Operation(summary = "JSON-RPC 2.0 sendMessage (PHI-safe, routes to domain skills)")
     @PostMapping("/jsonrpc")
     public Map<String, Object> jsonRpc(@RequestBody Map<String, Object> body) {
+        enforceRateLimit();
         return a2aMessageService.handleJsonRpc(body);
     }
 
     @Operation(summary = "Stream skill result with chat-compatible SSE token envelope")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@RequestBody Map<String, Object> body) {
+        enforceRateLimit();
+        return a2aMessageService.streamMessage(body);
+    }
+
+    private void enforceRateLimit() {
         String userId = userContext.currentUserId();
         if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier())) {
             throw new RateLimitExceededException(
-                    "A2A stream rate limit exceeded",
+                    "A2A rate limit exceeded",
                     chatRateLimitService.windowSeconds());
         }
-        return a2aMessageService.streamMessage(body);
     }
 }

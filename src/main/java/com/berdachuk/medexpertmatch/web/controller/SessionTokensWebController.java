@@ -31,6 +31,7 @@ public class SessionTokensWebController {
         List<ApiSessionTokenView> tokens = sessionTokenAdminService.listTokens();
         model.addAttribute("currentPage", "session-tokens");
         model.addAttribute("tokens", tokens);
+        model.addAttribute("expiryWarningDays", 7);
         return "admin/session-tokens";
     }
 }

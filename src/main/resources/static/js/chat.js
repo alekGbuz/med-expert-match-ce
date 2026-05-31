@@ -459,6 +459,33 @@
         }
     });
 
+    document.getElementById('exportBundleBtn')?.addEventListener('click', function () {
+        fetch('/api/v1/chats/export-bundle', { headers: apiHeaders() })
+            .then(function (r) {
+                if (!r.ok) throw new Error('Export failed');
+                return r.json();
+            })
+            .then(function (bundle) {
+                var blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'chat-export-bundle.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(function (e) { console.error('Export bundle failed', e); alert('Export failed'); });
+    });
+
+    document.getElementById('confirmDeleteAllDataBtn')?.addEventListener('click', function () {
+        fetch('/api/v1/chats/data', { method: 'DELETE', headers: apiHeaders() })
+            .then(function (r) {
+                if (!r.ok) throw new Error('Delete failed');
+                window.location.href = '/chat';
+            })
+            .catch(function (e) { console.error('Delete all data failed', e); alert('Delete failed'); });
+    });
+
     if (typeof syncUserIdCookie === 'function') {
         syncUserIdCookie();
     }

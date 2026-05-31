@@ -13,6 +13,22 @@ groups:
           summary: Elevated chat SSE rate limiting
           description: More than 0.5 chat turns/sec are being rejected (429). Check abuse or lower tier limits.
 
+      - alert: ChatRateLimitSpikeDefault
+        expr: rate(chat_rate_limited_total{tier="DEFAULT"}[5m]) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated DEFAULT tier chat/A2A rate limiting
+
+      - alert: ChatRateLimitSpikeHigh
+        expr: rate(chat_rate_limited_total{tier="HIGH"}[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated HIGH tier chat/A2A rate limiting
+
       - alert: ChatStreamErrors
         expr: rate(chat_stream_errors_total[5m]) > 0.1
         for: 15m

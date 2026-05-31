@@ -67,6 +67,9 @@
                             <a class="btn btn-outline-secondary mb-2 d-block"
                                th:href="@{/admin/session-tokens(user=admin)}"
                                th:if="${isAdmin}">Session Tokens</a>
+                            <a class="btn btn-outline-secondary mb-2 d-block"
+                               th:href="@{/admin/chat-exports(user=admin)}"
+                               th:if="${isAdmin}">Chat Export Audit</a>
                         </div>
                     </div>
                 </div>

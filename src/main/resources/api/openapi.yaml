@@ -151,6 +151,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/A2aJsonRpcResponse'
+        '429':
+          description: Rate limit exceeded (Retry-After header in seconds)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
 
   /a2a/v1/stream:
     post:

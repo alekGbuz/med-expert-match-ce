@@ -5,6 +5,10 @@
     <div class="p-3 border-end bg-light h-100">
         <h5 class="mb-3" th:text="#{chat.sidebar.title}">Chats</h5>
         <button class="btn btn-primary btn-sm mb-3 w-100" id="newChatBtn" type="button" th:text="#{chat.new}">New Chat</button>
+        <div class="d-grid gap-2 mb-3">
+            <button class="btn btn-outline-secondary btn-sm" id="exportBundleBtn" type="button">Export All (JSON)</button>
+            <button class="btn btn-outline-danger btn-sm" id="deleteAllDataBtn" type="button" data-bs-target="#deleteAllDataModal" data-bs-toggle="modal">Delete All Data</button>
+        </div>
         <ul class="list-group list-group-flush" id="chatList">
             <li class="list-group-item list-group-item-action chat-item d-flex justify-content-between align-items-start"
                 th:classappend="${currentChat != null and currentChat.id() == chat.id()} ? 'active' : ''"

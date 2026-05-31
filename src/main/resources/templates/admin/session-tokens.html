@@ -61,12 +61,17 @@
                         </tr>
                         </thead>
                         <tbody id="tokenTableBody">
-                        <tr th:each="token : ${tokens}">
+                        <tr th:each="token : ${tokens}"
+                            th:classappend="${token.expiresAt() != null and token.expiresAt().isBefore(T(java.time.Instant).now().plusSeconds(expiryWarningDays * 86400L))} ? 'table-warning' : ''">
                             <td th:text="${token.id()}">id</td>
                             <td th:text="${token.description()}">desc</td>
                             <td><code th:text="${token.apiKeyPrefix()}">key</code></td>
                             <td th:text="${token.rateLimitTier()}">DEFAULT</td>
-                            <td th:text="${token.expiresAt() != null ? token.expiresAt() : '—'}">—</td>
+                            <td>
+                                <span th:text="${token.expiresAt() != null ? token.expiresAt() : '—'}">—</span>
+                                <span class="badge text-bg-warning ms-1"
+                                      th:if="${token.expiresAt() != null and token.expiresAt().isBefore(T(java.time.Instant).now().plusSeconds(expiryWarningDays * 86400L))}">Expires soon</span>
+                            </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-danger revoke-btn" th:data-token-id="${token.id()}"
                                         type="button">Revoke</button>
@@ -86,6 +91,15 @@
 <script>
     (function () {
         const adminHeaders = {'Content-Type': 'application/json'};
+        const expiryWarningDays = 7;
+
+        function isExpiringSoon(expiresAt) {
+            if (!expiresAt) return false;
+            var exp = new Date(expiresAt);
+            var warn = new Date();
+            warn.setDate(warn.getDate() + expiryWarningDays);
+            return exp <= warn;
+        }
 
         function showAlert(id, message) {
             const el = document.getElementById(id);
@@ -114,11 +128,18 @@
                     }
                     tokens.forEach(function (token) {
                         const row = document.createElement('tr');
+                        if (isExpiringSoon(token.expiresAt)) {
+                            row.className = 'table-warning';
+                        }
+                        var expiryCell = (token.expiresAt || '—');
+                        if (isExpiringSoon(token.expiresAt)) {
+                            expiryCell += ' <span class="badge text-bg-warning ms-1">Expires soon</span>';
+                        }
                         row.innerHTML = '<td>' + token.id + '</td>'
                             + '<td>' + (token.description || '') + '</td>'
                             + '<td><code>' + token.apiKeyPrefix + '</code></td>'
                             + '<td>' + token.rateLimitTier + '</td>'
-                            + '<td>' + (token.expiresAt || '—') + '</td>'
+                            + '<td>' + expiryCell + '</td>'
                             + '<td><button class="btn btn-sm btn-outline-danger revoke-btn" data-token-id="'
                             + token.id + '" type="button">Revoke</button></td>';
                         tbody.appendChild(row);
