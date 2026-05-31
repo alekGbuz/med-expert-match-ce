@@ -10,4 +10,6 @@ import java.util.List;
 public interface ChatExportAuditQueryService {
 
     List<AuditLog> listChatExports(int limit, int offset);
+
+    List<AuditLog> listChatExports(int limit, int offset, String action);
 }

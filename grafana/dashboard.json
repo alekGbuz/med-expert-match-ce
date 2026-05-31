@@ -110,6 +110,24 @@
       ]
     },
     {
+      "title": "Chat Rate Limited by Tier",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_rate_limited_total{tier=\"DEFAULT\"}[5m])", "legendFormat": "DEFAULT"},
+        {"expr": "rate(chat_rate_limited_total{tier=\"HIGH\"}[5m])", "legendFormat": "HIGH"},
+        {"expr": "rate(chat_rate_limited_total{tier=\"UNLIMITED\"}[5m])", "legendFormat": "UNLIMITED"}
+      ]
+    },
+    {
+      "title": "Chat Turn Duration p95 by Tier (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le, tier) (rate(chat_turn_duration_seconds_bucket[5m]))) * 1000", "legendFormat": "{{tier}}"}
+      ]
+    },
+    {
       "title": "Chat Exports",
       "type": "stat",
       "datasource": {"type": "prometheus"},

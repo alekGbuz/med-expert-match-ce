@@ -14,4 +14,6 @@ public interface AuditLogRepository {
     List<AuditLog> findByAction(String action, int limit);
 
     List<AuditLog> findByAction(String action, int limit, int offset);
+
+    List<AuditLog> findByActions(java.util.List<String> actions, int limit, int offset);
 }

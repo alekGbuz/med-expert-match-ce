@@ -1,5 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.rest;
 
+import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
+import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
+import com.berdachuk.medexpertmatch.core.security.UserContext;
 import com.berdachuk.medexpertmatch.llm.service.A2AMessageService;
 import com.berdachuk.medexpertmatch.llm.service.A2aSkillRegistryService;
 import com.berdachuk.medexpertmatch.llm.domain.A2aSkillDescriptor;
@@ -23,11 +26,17 @@ public class A2aJsonRpcController {
 
     private final A2AMessageService a2aMessageService;
     private final A2aSkillRegistryService a2aSkillRegistryService;
+    private final ChatRateLimitService chatRateLimitService;
+    private final UserContext userContext;
 
     public A2aJsonRpcController(A2AMessageService a2aMessageService,
-                                  A2aSkillRegistryService a2aSkillRegistryService) {
+                                  A2aSkillRegistryService a2aSkillRegistryService,
+                                  ChatRateLimitService chatRateLimitService,
+                                  UserContext userContext) {
         this.a2aMessageService = a2aMessageService;
         this.a2aSkillRegistryService = a2aSkillRegistryService;
+        this.chatRateLimitService = chatRateLimitService;
+        this.userContext = userContext;
     }
 
     @Operation(summary = "List supported A2A bridge skills with input schema hints")
@@ -45,6 +54,12 @@ public class A2aJsonRpcController {
     @Operation(summary = "Stream skill result with chat-compatible SSE token envelope")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@RequestBody Map<String, Object> body) {
+        String userId = userContext.currentUserId();
+        if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier())) {
+            throw new RateLimitExceededException(
+                    "A2A stream rate limit exceeded",
+                    chatRateLimitService.windowSeconds());
+        }
         return a2aMessageService.streamMessage(body);
     }
 }

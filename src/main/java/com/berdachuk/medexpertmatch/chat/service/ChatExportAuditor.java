@@ -6,4 +6,6 @@ package com.berdachuk.medexpertmatch.chat.service;
 public interface ChatExportAuditor {
 
     void recordExport(String userId, String chatId, int messageCount);
+
+    void recordExportBundle(String userId, int chatCount, int messageCount);
 }

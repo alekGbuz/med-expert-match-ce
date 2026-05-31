@@ -15,6 +15,7 @@ import java.util.Map;
 public class ChatExportAuditorImpl implements ChatExportAuditor {
 
     public static final String ACTION = "CHAT_EXPORT";
+    public static final String BUNDLE_ACTION = "CHAT_EXPORT_BUNDLE";
 
     private final AuditLogRepository auditLogRepository;
     private final ChatTurnMetrics chatTurnMetrics;
@@ -35,6 +36,21 @@ public class ChatExportAuditorImpl implements ChatExportAuditor {
                 chatHash,
                 userHash,
                 Map.of("messageCount", messageCount),
+                Instant.now());
+        auditLogRepository.insert(auditLog);
+        chatTurnMetrics.recordExport();
+    }
+
+    @Override
+    public void recordExportBundle(String userId, int chatCount, int messageCount) {
+        String userHash = IdentifierHasher.sha256Hex(userId);
+        AuditLog auditLog = new AuditLog(
+                IdGenerator.generateId(),
+                BUNDLE_ACTION,
+                "chat_bundle",
+                userHash,
+                userHash,
+                Map.of("chatCount", chatCount, "messageCount", messageCount),
                 Instant.now());
         auditLogRepository.insert(auditLog);
         chatTurnMetrics.recordExport();

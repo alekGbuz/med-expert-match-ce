@@ -75,9 +75,10 @@ public class AdminController {
     @GetMapping("/audit/chat-exports")
     public List<Map<String, Object>> listChatExportAudits(
             @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(required = false) String action) {
         adminAccessGuard.requireAdmin();
-        return chatExportAuditQueryService.listChatExports(limit, offset).stream()
+        return chatExportAuditQueryService.listChatExports(limit, offset, action).stream()
                 .map(this::toAuditResponse)
                 .toList();
     }

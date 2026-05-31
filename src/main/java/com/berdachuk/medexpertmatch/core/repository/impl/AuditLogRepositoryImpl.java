@@ -32,6 +32,9 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
     @InjectSql("/sql/core/auditLogFindByActionPaged.sql")
     private String findByActionPagedSql;
 
+    @InjectSql("/sql/core/auditLogFindByActionsPaged.sql")
+    private String findByActionsPagedSql;
+
     public AuditLogRepositoryImpl(
             NamedParameterJdbcTemplate namedJdbcTemplate,
             AuditLogMapper auditLogMapper,
@@ -68,6 +71,16 @@ public class AuditLogRepositoryImpl implements AuditLogRepository {
         return namedJdbcTemplate.query(
                 findByActionPagedSql,
                 new MapSqlParameterSource("action", action)
+                        .addValue("limit", limit)
+                        .addValue("offset", offset),
+                auditLogMapper);
+    }
+
+    @Override
+    public List<AuditLog> findByActions(List<String> actions, int limit, int offset) {
+        return namedJdbcTemplate.query(
+                findByActionsPagedSql,
+                new MapSqlParameterSource("actions", actions)
                         .addValue("limit", limit)
                         .addValue("offset", offset),
                 auditLogMapper);

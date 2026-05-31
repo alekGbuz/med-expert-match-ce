@@ -68,8 +68,9 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
             List<ChatMessage> history = chatService.getHistory(chat.id(), userId, 10_000, 0);
             totalMessages += history.size();
             chatExports.add(toChatExport(chat, history));
-            chatExportAuditor.recordExport(userId, chat.id(), history.size());
         }
+
+        chatExportAuditor.recordExportBundle(userId, chatExports.size(), totalMessages);
 
         Map<String, Object> bundle = new LinkedHashMap<>();
         bundle.put("userIdHash", IdentifierHasher.sha256Hex(userId));

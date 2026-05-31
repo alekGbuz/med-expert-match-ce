@@ -33,8 +33,40 @@ tags:
     description: Synthetic data generation endpoints
   - name: A2A Bridge
     description: JSON-RPC 2.0 and SSE streaming bridge for agent interoperability
+  - name: AI Chat
+    description: Per-user chat sessions, exports, and data lifecycle
 
 paths:
+  /api/v1/chats/export-bundle:
+    get:
+      tags:
+        - AI Chat
+      summary: Export anonymized bundle of all user chats
+      description: PHI-redacted export of every chat owned by the authenticated user (via X-User-Id).
+      operationId: exportUserChatBundle
+      responses:
+        '200':
+          description: Export bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatExportBundleResponse'
+
+  /api/v1/chats/data:
+    delete:
+      tags:
+        - AI Chat
+      summary: Delete all user chat data
+      description: Soft-deletes messages and removes non-default chats for the authenticated user.
+      operationId: deleteAllUserChatData
+      responses:
+        '200':
+          description: Deletion summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatDataDeleteResponse'
+
   /api/v1/evidence/verify-pubmed:
     get:
       tags:
@@ -143,6 +175,13 @@ paths:
               schema:
                 type: string
                 description: SSE stream with token and done events
+        '429':
+          description: Rate limit exceeded (Retry-After header in seconds)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
 
   /api/v1/agent/match/{caseId}:
     post:
@@ -798,6 +837,38 @@ components:
         inputSchema:
           type: object
           description: JSON Schema hints for skill params
+
+    ChatExportBundleResponse:
+      type: object
+      properties:
+        userIdHash:
+          type: string
+          description: SHA-256 hash of user id (non-reversible)
+        exportedAt:
+          type: string
+          format: date-time
+        phiRedacted:
+          type: boolean
+          example: true
+        chatCount:
+          type: integer
+        messageCount:
+          type: integer
+        chats:
+          type: array
+          items:
+            type: object
+
+    ChatDataDeleteResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: deleted
+        chatsRemoved:
+          type: integer
+        messagesSoftDeleted:
+          type: integer
 
     A2aJsonRpcRequest:
       type: object

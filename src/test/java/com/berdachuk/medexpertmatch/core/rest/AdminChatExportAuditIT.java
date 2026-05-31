@@ -67,4 +67,28 @@ class AdminChatExportAuditIT extends BaseIntegrationTest {
         assertEquals("hashed-chat-id", rows.get(0).get("resourceIdHash").asText());
         assertEquals(3, rows.get(0).get("details").get("messageCount").asInt());
     }
+
+    @Test
+    @DisplayName("Admin can filter chat export audits by action")
+    void filterByAction() throws Exception {
+        auditLogRepository.insert(new AuditLog(
+                IdGenerator.generateId(),
+                ChatExportAuditorImpl.BUNDLE_ACTION,
+                "chat_bundle",
+                "hashed-user",
+                "hashed-user",
+                Map.of("chatCount", 2, "messageCount", 5),
+                Instant.now()));
+
+        var bundleOnly = mockMvc.perform(get("/api/v1/admin/audit/chat-exports")
+                        .param("action", ChatExportAuditorImpl.BUNDLE_ACTION)
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, AdminAccessGuard.ADMIN_USER_ID))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode rows = objectMapper.readTree(bundleOnly.getResponse().getContentAsString());
+        assertEquals(1, rows.size());
+        assertEquals(ChatExportAuditorImpl.BUNDLE_ACTION, rows.get(0).get("action").asText());
+        assertEquals(2, rows.get(0).get("details").get("chatCount").asInt());
+    }
 }
