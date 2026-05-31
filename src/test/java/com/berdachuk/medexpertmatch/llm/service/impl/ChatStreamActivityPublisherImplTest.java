@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
+import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.core.event.ToolCallLoggedEvent;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoUpdateEvent;
 import org.junit.jupiter.api.AfterEach;
@@ -22,7 +24,8 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class ChatStreamActivityPublisherImplTest {
 
-    private final ChatStreamActivityPublisherImpl publisher = new ChatStreamActivityPublisherImpl();
+    private final ChatStreamActivityPublisherImpl publisher =
+            new ChatStreamActivityPublisherImpl(new ChatTurnMetrics(new SimpleMeterRegistry()));
 
     @AfterEach
     void clearContext() {

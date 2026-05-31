@@ -90,7 +90,7 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("Chat page exposes activity panel and historical data-markdown attributes")
+    @DisplayName("Chat page exposes activity panel and server-rendered markdown history")
     void chatPageIncludesActivityPanelAndMarkdownHistory() throws Exception {
         String userId = "agentic-panel-user";
         var chat = chatService.createChat(userId, "Panel UX", "auto");
@@ -102,11 +102,11 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"agentActivityPanel\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"agentActivitySummary\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-markdown")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<strong>Bold</strong>")));
     }
 
     @Test
-    @DisplayName("Malicious markdown is stored escaped and not emitted as executable href")
+    @DisplayName("Malicious markdown is sanitized server-side and not emitted as executable href")
     void markdownXssPayloadIsNotRenderedAsScriptLink() throws Exception {
         String userId = "agentic-xss-user";
         String payload = "**[click](javascript:alert(1))**";
@@ -120,7 +120,7 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
                 .andReturn();
 
         String html = result.getResponse().getContentAsString();
-        assertTrue(html.contains("data-markdown"), "historical assistant messages must use data-markdown");
+        assertTrue(html.contains("<strong>click</strong>"), "SSR must render safe bold text");
         assertFalse(html.contains("href=\"javascript:"), "SSR must not emit javascript: href");
     }
 

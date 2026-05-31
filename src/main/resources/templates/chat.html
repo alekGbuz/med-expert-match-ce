@@ -24,7 +24,7 @@
                              th:text="${msg.content()}">message</div>
                         <div th:if="${msg.role() != 'user'}"
                              class="p-2 rounded d-inline-block text-start bg-light border chat-markdown"
-                             th:attr="data-markdown=${msg.content()}"></div>
+                             th:utext="${msg.renderedHtml()}"></div>
                     </div>
                 </div>
             </div>

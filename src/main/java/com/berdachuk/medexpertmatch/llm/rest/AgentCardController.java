@@ -23,8 +23,18 @@ public class AgentCardController {
 
     @GetMapping(value = "/.well-known/agent-card.json", produces = "application/json")
     public Map<String, Object> agentCard(HttpServletRequest request) {
+        return buildCard(request);
+    }
+
+    @GetMapping(value = "/.well-known/agent.json", produces = "application/json")
+    public Map<String, Object> agentCardAlias(HttpServletRequest request) {
+        return buildCard(request);
+    }
+
+    private Map<String, Object> buildCard(HttpServletRequest request) {
         String baseUrl = request.getRequestURL().toString()
-                .replace("/.well-known/agent-card.json", "");
+                .replace("/.well-known/agent-card.json", "")
+                .replace("/.well-known/agent.json", "");
         return agentCardService.buildAgentCard(baseUrl);
     }
 }

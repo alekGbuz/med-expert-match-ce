@@ -2,4 +2,4 @@
 
 This milestone is complete. See **`.agents/plans/archive/M13-ai-chat-tab-and-specialized-agents.md`**.
 
-Next milestone: **`.agents/plans/M18-chat-production-readiness.md`**
+Next milestone: **`.agents/plans/M19-chat-ops-and-interop.md`**

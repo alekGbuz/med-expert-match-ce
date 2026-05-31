@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
+import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
+import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +41,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final LogStreamService logStreamService;
     private final ChatStreamActivityPublisher chatStreamActivityPublisher;
     private final LlmCallLimiter llmCallLimiter;
+    private final ChatTurnMetrics chatTurnMetrics;
     private final PromptTemplate chatAgentSystemTemplate;
     private final String functionGemmaModelName;
 
@@ -49,6 +52,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             LogStreamService logStreamService,
             ChatStreamActivityPublisher chatStreamActivityPublisher,
             LlmCallLimiter llmCallLimiter,
+            ChatTurnMetrics chatTurnMetrics,
             @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName) {
         this.chatService = chatService;
         this.chatClient = chatClient;
@@ -56,6 +60,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.logStreamService = logStreamService;
         this.chatStreamActivityPublisher = chatStreamActivityPublisher;
         this.llmCallLimiter = llmCallLimiter;
+        this.chatTurnMetrics = chatTurnMetrics;
         this.functionGemmaModelName = functionGemmaModelName;
         this.chatAgentSystemTemplate = new PromptTemplate(new ClassPathResource("prompts/chat-agent-system.st"));
     }
@@ -83,6 +88,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         SseEmitter emitter = new SseEmitter(120_000L);
         CompletableFuture.runAsync(() -> {
             StringBuilder full = new StringBuilder();
+            Timer.Sample turnSample = chatTurnMetrics.startTurn();
             chatStreamActivityPublisher.register(ctx.sessionId(), emitter);
             try {
                 sendAgentEvent(emitter, Map.of(
@@ -118,6 +124,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                                         "id", assistant.id(),
                                         "content", reply)));
+                                chatTurnMetrics.recordTurnSuccess(turnSample);
                                 emitter.complete();
                             } catch (IOException e) {
                                 emitter.completeWithError(e);
@@ -128,6 +135,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                         })
                         .doOnError(error -> {
                             log.warn("Chat stream failed for chat {}: {}", chatId, error.getMessage());
+                            chatTurnMetrics.recordStreamError();
                             try {
                                 chatService.appendAssistantMessage(chatId, userId,
                                         "Sorry, the assistant encountered an error. Please try again.");

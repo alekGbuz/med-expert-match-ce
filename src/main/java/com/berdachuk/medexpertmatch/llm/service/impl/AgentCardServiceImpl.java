@@ -28,6 +28,8 @@ public class AgentCardServiceImpl implements AgentCardService {
                                 "description", "Retrieve PubMed literature and clinical guideline summaries")),
                 "capabilities", Map.of(
                         "streaming", true,
-                        "pushNotifications", false));
+                        "pushNotifications", false),
+                "endpoints", Map.of(
+                        "jsonrpc", baseUrl + "/a2a/v1/jsonrpc"));
     }
 }

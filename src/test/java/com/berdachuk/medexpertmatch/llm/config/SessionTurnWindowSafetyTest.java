@@ -9,7 +9,7 @@ import org.springframework.ai.session.Session;
 import org.springframework.ai.session.SessionEvent;
 import org.springframework.ai.session.compaction.CompactionRequest;
 import org.springframework.ai.session.compaction.CompactionResult;
-import org.springframework.ai.session.compaction.TurnWindowCompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionStrategy;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 
 import java.time.Instant;
@@ -29,8 +29,8 @@ class SessionTurnWindowSafetyTest {
     void retainedWindowStartsOnUser() {
         AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
-        TurnWindowCompactionStrategy strategy = (TurnWindowCompactionStrategy) config.sessionCompactionStrategy(
-                props, new JTokkitTokenCountEstimator());
+        CompactionStrategy strategy = config.sessionCompactionStrategy(
+                props, new JTokkitTokenCountEstimator(), new SessionCompactionObservability());
 
         Session session = Session.builder()
                 .id("turn-safety-test")

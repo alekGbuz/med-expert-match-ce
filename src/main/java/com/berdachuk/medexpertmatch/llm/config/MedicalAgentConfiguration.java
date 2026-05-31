@@ -193,11 +193,13 @@ public class MedicalAgentConfiguration {
      */
     @Bean
     CompactionStrategy sessionCompactionStrategy(AgentSessionProperties properties,
-                                                 TokenCountEstimator tokenCountEstimator) {
-        return TurnWindowCompactionStrategy.builder()
+                                                 TokenCountEstimator tokenCountEstimator,
+                                                 SessionCompactionObservability observability) {
+        CompactionStrategy delegate = TurnWindowCompactionStrategy.builder()
                 .maxTurns(properties.maxWindowTurns())
                 .tokenCountEstimator(tokenCountEstimator)
                 .build();
+        return new ObservingCompactionStrategy(delegate, observability);
     }
 
     @Bean

@@ -12,35 +12,31 @@ Nice-to-have features and UX improvements not yet scheduled in an active milesto
 **Status:** ✅ Delivered in **M17**  
 **Related:** `static/js/chat.js`, `static/css/chat.css`, `templates/chat.html`
 
-### Delivered
-
-- Agents column with live SSE `agent_start` / `agent_done` events
-- Rich `tool_call`, `reasoning`, and inline `todo_update` SSE activity events
-- Collapse summary row (agents · steps · duration) with chevron expand
-- `ChatAgenticUxIT` panel lifecycle assertions
-
 ---
 
-## W-02: Markdown rendering in AI chat responses — ✅ Delivered (M17)
+## W-02: Markdown rendering in AI chat responses — ✅ Delivered (M17 + M18)
 
 **Priority:** High (chat UX)  
-**Status:** ✅ Delivered in **M17** (client); server-side allowlist deferred to **M18**  
-**Related:** `templates/chat.html`, `static/js/chat.js`
+**Status:** ✅ Delivered in **M17** (client streaming) + **M18** (SSR allowlist)  
+**Related:** `web/service/ChatMarkdownRenderer.java`, `static/js/chat.js`, `templates/chat.html`
 
 ### Delivered
 
-- `marked` + DOMPurify client-side rendering
-- `data-markdown` for historical assistant messages
-- Streaming-safe re-render during SSE
-- Automated XSS integration test (`ChatAgenticUxIT`)
-
-### Remaining (M18)
-
-- Optional server-side CommonMark allowlist for SSR
+- Client `marked` + DOMPurify for streaming tokens
+- Server-side allowlist renderer for historical assistant messages
+- JSON-wrapped SSE tokens preserving whitespace
+- XSS + E2E smoke integration tests
 
 ---
 
-## W-03: *(placeholder for future items)*
+## W-03: Playwright chat browser verification — 📋 Planned (M19)
+
+**Priority:** Medium (CI confidence)  
+**Status:** MockMvc smoke in M18; Playwright optional in **M19**  
+**Related:** `.agents/plans/M19-chat-ops-and-interop.md`
+
+---
+
+## W-04: *(placeholder for future items)*
 
 Add new wishlist entries as `W-{NN}` with the same structure.
-

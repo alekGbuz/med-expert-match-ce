@@ -3,6 +3,8 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
+import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
@@ -35,7 +37,8 @@ class ChatAssistantServiceImplTest {
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
-            chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter, "functiongemma");
+            chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
+            new ChatTurnMetrics(new SimpleMeterRegistry()), "functiongemma");
 
     @AfterEach
     void clearContext() {

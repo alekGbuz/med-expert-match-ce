@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
+import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.core.event.ToolCallLoggedEvent;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoUpdateEvent;
@@ -20,7 +21,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class ChatStreamActivityPublisherImpl implements ChatStreamActivityPublisher {
 
+    private final ChatTurnMetrics chatTurnMetrics;
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+
+    public ChatStreamActivityPublisherImpl(ChatTurnMetrics chatTurnMetrics) {
+        this.chatTurnMetrics = chatTurnMetrics;
+    }
 
     @Override
     public void register(String sessionId, SseEmitter emitter) {
@@ -50,6 +56,7 @@ public class ChatStreamActivityPublisherImpl implements ChatStreamActivityPublis
         publish(event.sessionId(), "tool_call", Map.of(
                 "toolName", event.toolName(),
                 "message", "Tool: " + event.toolName()));
+        chatTurnMetrics.recordToolCall();
     }
 
     @EventListener

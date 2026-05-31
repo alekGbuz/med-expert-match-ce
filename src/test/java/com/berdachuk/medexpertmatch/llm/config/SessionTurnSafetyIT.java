@@ -11,6 +11,7 @@ import org.springframework.ai.session.SessionEvent;
 import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.compaction.CompactionResult;
 import org.springframework.ai.session.compaction.CompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionStrategy;
 import org.springframework.ai.session.compaction.CompactionTrigger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,7 +43,8 @@ class SessionTurnSafetyIT extends BaseIntegrationTest {
         AgentSessionProperties props = new AgentSessionProperties(20, 4000, 10);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(new DefaultResourceLoader());
         CompactionTrigger trigger = config.sessionCompactionTrigger(props, config.sessionTokenCountEstimator());
-        CompactionStrategy strategy = config.sessionCompactionStrategy(props, config.sessionTokenCountEstimator());
+        CompactionStrategy strategy = config.sessionCompactionStrategy(
+                props, config.sessionTokenCountEstimator(), new SessionCompactionObservability());
 
         String sessionId = "turn-safety-jdbc-" + UUID.randomUUID();
         sessionService.create(CreateSessionRequest.builder()
