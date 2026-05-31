@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.automemory;
 
+import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import com.berdachuk.medexpertmatch.llm.config.AgentMemoryProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

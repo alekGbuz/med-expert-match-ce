@@ -1,4 +1,4 @@
-package com.berdachuk.medexpertmatch.llm.automemory;
+package com.berdachuk.medexpertmatch.core.compliance;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,11 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Verifies the PHI guard rejects/redacts patient-identifying content so it can never be persisted
- * to long-term memory. Long-term memory must hold ONLY non-PHI (clinician preferences, routing
- * policies, model config) per AGENTS.md HIPAA rules.
- */
 class PhiGuardTest {
 
     @ParameterizedTest

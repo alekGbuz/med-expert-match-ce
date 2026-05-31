@@ -51,6 +51,6 @@ class ChatOwnershipIT extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/v1/chats/" + chatId)
                         .header(HeaderBasedUserContext.USER_ID_HEADER, intruder))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isForbidden());
     }
 }

@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
+import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
-import com.berdachuk.medexpertmatch.llm.automemory.PhiGuard;
 import com.berdachuk.medexpertmatch.llm.service.A2AMessageService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;

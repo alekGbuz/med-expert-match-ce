@@ -4,7 +4,7 @@ import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
-import com.berdachuk.medexpertmatch.llm.automemory.PhiGuard;
+import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
