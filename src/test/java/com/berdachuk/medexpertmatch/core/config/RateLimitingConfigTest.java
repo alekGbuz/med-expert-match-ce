@@ -111,6 +111,23 @@ class RateLimitingConfigTest {
     }
 
     @Test
+    void shouldExcludeChatAndA2aEndpointsFromRateLimiting() throws Exception {
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, registry);
+
+        for (int i = 0; i < 10; i++) {
+            var chatRequest = new MockHttpServletRequest("DELETE", "/api/v1/chats/chat-id");
+            var chatResponse = new MockHttpServletResponse();
+            filter.doFilter(chatRequest, chatResponse, new MockFilterChain());
+            assertEquals(200, chatResponse.getStatus());
+
+            var a2aRequest = new MockHttpServletRequest("POST", "/a2a/v1/jsonrpc");
+            var a2aResponse = new MockHttpServletResponse();
+            filter.doFilter(a2aRequest, a2aResponse, new MockFilterChain());
+            assertEquals(200, a2aResponse.getStatus());
+        }
+    }
+
+    @Test
     void shouldRespectXForwardedForHeader() throws Exception {
         var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
 

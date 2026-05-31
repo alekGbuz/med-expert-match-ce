@@ -11,7 +11,8 @@ Operational guide for chat SSE, A2A federation, exports, retention, and audit. A
 
 - **429 response** includes `Retry-After: 60` (seconds).
 - Tier from `X-API-Key` session token: `DEFAULT`, `HIGH`, or `UNLIMITED`.
-- Metrics: `chat_rate_limited_total{tier=...}`, `chat_turn_duration_seconds{tier=...}`.
+- Metrics: `chat_rate_limited_total{tier=..., scope=CHAT_SSE|A2A}`, `chat_turn_duration_seconds{tier=...}`.
+- Retention metrics: `chat_retention_runs_total`, `chat_retention_chats_purged_total`, `chat_retention_messages_purged_total`.
 
 ## Chat retention
 

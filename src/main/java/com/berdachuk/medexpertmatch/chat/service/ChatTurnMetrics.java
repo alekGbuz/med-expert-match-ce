@@ -7,12 +7,13 @@ import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Component;
 
 /**
- * Micrometer metrics for chat SSE turns (M18, M22 tier tags).
+ * Micrometer metrics for chat SSE turns (M18, M22 tier tags, M26 scope tags).
  */
 @Component
 public class ChatTurnMetrics {
 
     private static final String TIER_TAG = "tier";
+    private static final String SCOPE_TAG = "scope";
 
     private final MeterRegistry meterRegistry;
     private final Counter streamErrors;
@@ -51,7 +52,11 @@ public class ChatTurnMetrics {
     }
 
     public void recordRateLimited(RateLimitTier tier) {
-        rateLimitedCounter(tier).increment();
+        recordRateLimited(tier, RateLimitScope.CHAT_SSE);
+    }
+
+    public void recordRateLimited(RateLimitTier tier, RateLimitScope scope) {
+        rateLimitedCounter(tier, scope).increment();
     }
 
     public void recordExport() {
@@ -65,10 +70,12 @@ public class ChatTurnMetrics {
                 .register(meterRegistry);
     }
 
-    private Counter rateLimitedCounter(RateLimitTier tier) {
+    private Counter rateLimitedCounter(RateLimitTier tier, RateLimitScope scope) {
+        RateLimitScope bucketScope = scope != null ? scope : RateLimitScope.CHAT_SSE;
         return Counter.builder("chat.rate.limited")
-                .description("Chat SSE turns rejected by per-user rate limiter")
+                .description("Chat and A2A turns rejected by per-user rate limiter")
                 .tag(TIER_TAG, tier.name())
+                .tag(SCOPE_TAG, bucketScope.name())
                 .register(meterRegistry);
     }
 }

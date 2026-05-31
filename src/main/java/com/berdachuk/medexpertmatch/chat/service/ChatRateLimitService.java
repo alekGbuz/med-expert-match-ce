@@ -57,7 +57,7 @@ public class ChatRateLimitService {
         if (bucket.tryConsume()) {
             return true;
         }
-        chatTurnMetrics.recordRateLimited(tier);
+        chatTurnMetrics.recordRateLimited(tier, bucketScope);
         return false;
     }
 

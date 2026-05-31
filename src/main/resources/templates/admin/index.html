@@ -48,6 +48,32 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Chat Retention</h5>
+                            <p class="card-text small text-muted">
+                                <span th:if="${retentionEnabled}">Idle purge after <span th:text="${retentionIdleDays}">0</span> days.</span>
+                                <span th:unless="${retentionEnabled}">Retention disabled (<code>chat.retention.idle-days=0</code>).</span>
+                            </p>
+                            <ul class="small mb-3" th:if="${retentionLastRunAt != null}">
+                                <li>Last run: <span th:text="${retentionLastRunAt}">—</span></li>
+                                <li>Chats purged: <span th:text="${retentionChatsPurged}">0</span></li>
+                                <li>Messages purged: <span th:text="${retentionMessagesPurged}">0</span></li>
+                            </ul>
+                            <p class="small text-muted mb-0" th:unless="${retentionLastRunAt != null}">No retention run recorded yet.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Operator Runbook</h5>
+                            <p class="card-text small text-muted">Chat SSE, A2A federation, exports, retention, and audit procedures.</p>
+                            <a class="btn btn-outline-secondary" th:href="${runbookUrl}" target="_blank" rel="noopener">Open Runbook</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

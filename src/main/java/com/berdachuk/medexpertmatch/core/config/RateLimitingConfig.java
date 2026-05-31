@@ -89,7 +89,9 @@ public class RateLimitingConfig {
             return path.contains("/health")
                     || path.contains("/actuator")
                     || path.contains("/synthetic-data/progress/")
-                    || path.contains("/api/v1/admin/");
+                    || path.contains("/api/v1/admin/")
+                    || path.startsWith("/api/v1/chats")
+                    || path.startsWith("/a2a/");
         }
 
         private String getClientIp(HttpServletRequest request) {

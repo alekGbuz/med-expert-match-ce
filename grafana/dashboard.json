@@ -134,6 +134,32 @@
       "targets": [
         {"expr": "rate(chat_export_count_total[5m])"}
       ]
+    },
+    {
+      "title": "Chat Retention Purges",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_retention_chats_purged_total[5m])", "legendFormat": "chats"},
+        {"expr": "rate(chat_retention_messages_purged_total[5m])", "legendFormat": "messages"}
+      ]
+    },
+    {
+      "title": "Chat Rate Limited by Scope",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_rate_limited_total{scope=\"CHAT_SSE\"}[5m])", "legendFormat": "CHAT_SSE"},
+        {"expr": "rate(chat_rate_limited_total{scope=\"A2A\"}[5m])", "legendFormat": "A2A"}
+      ]
+    },
+    {
+      "title": "Operator Runbook",
+      "type": "text",
+      "options": {
+        "mode": "markdown",
+        "content": "## Chat & A2A Ops\\n\\nSee [docs/chat-ops-runbook.md](https://github.com/berdachuk/med-expert-match-ce/blob/develop/docs/chat-ops-runbook.md) for rate limits, retention, exports, audit, and Grafana alert triage."
+      }
     }
   ],
   "refresh": "30s"

@@ -19,11 +19,15 @@ class ChatTurnMetricsTest {
         metrics.recordTurnSuccess(sample, RateLimitTier.DEFAULT);
         metrics.recordStreamError();
         metrics.recordToolCall();
-        metrics.recordRateLimited(RateLimitTier.HIGH);
+        metrics.recordRateLimited(RateLimitTier.HIGH, RateLimitScope.A2A);
 
         assertEquals(1.0, registry.get("chat.turn.duration").tag("tier", "DEFAULT").timer().count());
         assertEquals(1.0, registry.get("chat.stream.errors").counter().count());
         assertEquals(1.0, registry.get("chat.turn.tool_calls").counter().count());
-        assertEquals(1.0, registry.get("chat.rate.limited").tag("tier", "HIGH").counter().count());
+        assertEquals(1.0, registry.get("chat.rate.limited")
+                .tag("tier", "HIGH")
+                .tag("scope", "A2A")
+                .counter()
+                .count());
     }
 }

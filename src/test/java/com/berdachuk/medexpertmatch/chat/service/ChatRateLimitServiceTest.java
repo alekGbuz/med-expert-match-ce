@@ -38,7 +38,25 @@ class ChatRateLimitServiceTest {
             assertTrue(service.tryAcquire("user-b"));
         }
         assertFalse(service.tryAcquire("user-b"));
-        assertEquals(1.0, registry.get("chat.rate.limited").tag("tier", "DEFAULT").counter().count());
+        assertEquals(1.0, registry.get("chat.rate.limited")
+                .tag("tier", "DEFAULT")
+                .tag("scope", "CHAT_SSE")
+                .counter()
+                .count());
+    }
+
+    @Test
+    @DisplayName("Rate limit metric includes A2A scope label")
+    void rateLimitMetricIncludesScope() {
+        for (int i = 0; i < 3; i++) {
+            assertTrue(service.tryAcquire("user-scope", RateLimitTier.DEFAULT, RateLimitScope.A2A));
+        }
+        assertFalse(service.tryAcquire("user-scope", RateLimitTier.DEFAULT, RateLimitScope.A2A));
+        assertEquals(1.0, registry.get("chat.rate.limited")
+                .tag("tier", "DEFAULT")
+                .tag("scope", "A2A")
+                .counter()
+                .count());
     }
 
     @Test

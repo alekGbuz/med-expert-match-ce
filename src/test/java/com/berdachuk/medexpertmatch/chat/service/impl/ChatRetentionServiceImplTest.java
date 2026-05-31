@@ -2,13 +2,17 @@ package com.berdachuk.medexpertmatch.chat.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.config.ChatRetentionProperties;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
+import com.berdachuk.medexpertmatch.chat.repository.ChatMessageRepository;
 import com.berdachuk.medexpertmatch.chat.repository.ChatRepository;
+import com.berdachuk.medexpertmatch.chat.service.ChatRetentionMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,7 +30,11 @@ class ChatRetentionServiceImplTest {
     @Mock
     private ChatRepository chatRepository;
 
+    @Mock
+    private ChatMessageRepository chatMessageRepository;
+
     private ChatRetentionProperties properties;
+    private ChatRetentionMetrics chatRetentionMetrics;
     private ChatRetentionServiceImpl service;
 
     @BeforeEach
@@ -34,7 +42,8 @@ class ChatRetentionServiceImplTest {
         properties = new ChatRetentionProperties();
         properties.setIdleDays(30);
         properties.setBatchSize(10);
-        service = new ChatRetentionServiceImpl(properties, chatRepository);
+        chatRetentionMetrics = new ChatRetentionMetrics(new SimpleMeterRegistry(), properties);
+        service = new ChatRetentionServiceImpl(properties, chatRepository, chatMessageRepository, chatRetentionMetrics);
     }
 
     @Test
@@ -51,6 +60,7 @@ class ChatRetentionServiceImplTest {
         Chat idle = new Chat("c1", "u1", "Old", "auto", false,
                 Instant.now(), Instant.now(), Instant.now().minusSeconds(86400L * 40), 0);
         when(chatRepository.findIdleNonDefaultChatsBefore(any(), eq(10))).thenReturn(List.of(idle));
+        when(chatMessageRepository.getHistory("c1", 10_000, 0)).thenReturn(List.of());
         when(chatRepository.deleteChat("c1")).thenReturn(true);
 
         assertEquals(1, service.purgeIdleChats());

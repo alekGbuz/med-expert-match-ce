@@ -27,7 +27,9 @@ class AdminDashboardWebControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/index"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Session Tokens")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Chat Export Audit")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Chat Export Audit")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Chat Retention")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Operator Runbook")));
     }
 
     @Test

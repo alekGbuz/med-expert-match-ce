@@ -29,7 +29,12 @@ class A2aAgentCardIT extends BaseIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.skills[?(@.id=='doctor_match')]").exists())
                     .andExpect(jsonPath("$.skills[?(@.id=='evidence_search')]").exists())
-                    .andExpect(jsonPath("$.endpoints.jsonrpc").exists());
+                    .andExpect(jsonPath("$.endpoints.jsonrpc").exists())
+                    .andExpect(jsonPath("$.endpoints.stream").exists())
+                    .andExpect(jsonPath("$.endpoints.skills").exists())
+                    .andExpect(jsonPath("$.rateLimits.windowSeconds").exists())
+                    .andExpect(jsonPath("$.rateLimits.scopes[?(@=='CHAT_SSE')]").exists())
+                    .andExpect(jsonPath("$.rateLimits.scopes[?(@=='A2A')]").exists());
         }
     }
 }

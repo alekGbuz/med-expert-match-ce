@@ -861,6 +861,9 @@ components:
           type: integer
         messageCount:
           type: integer
+        auditReferenceHash:
+          type: string
+          description: SHA-256 hash of audit log id for operator correlation
         chats:
           type: array
           items:
