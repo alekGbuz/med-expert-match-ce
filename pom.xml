@@ -37,6 +37,7 @@
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <datafaker.version>2.5.3</datafaker.version>
         <playwright.version>1.49.0</playwright.version>
+        <json-schema-validator.version>1.5.6</json-schema-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -279,6 +280,12 @@
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
             <version>${playwright.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${json-schema-validator.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

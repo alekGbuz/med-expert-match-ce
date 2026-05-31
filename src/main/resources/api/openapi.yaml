@@ -35,8 +35,44 @@ tags:
     description: JSON-RPC 2.0 and SSE streaming bridge for agent interoperability
   - name: AI Chat
     description: Per-user chat sessions, exports, and data lifecycle
+  - name: Admin
+    description: Simulated admin APIs (requires X-User-Id admin)
 
 paths:
+  /.well-known/agent.json:
+    get:
+      tags:
+        - A2A Bridge
+      summary: A2A agent discovery card
+      description: |
+        Well-known agent metadata for federation: skills, JSON-RPC/stream/skills endpoints,
+        and rate-limit hints. Alias path `/.well-known/agent-card.json` returns the same payload.
+      operationId: getAgentCard
+      responses:
+        '200':
+          description: Agent card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentCardResponse'
+
+  /api/v1/admin/chat-retention:
+    get:
+      tags:
+        - Admin
+      summary: Chat retention configuration and last purge snapshot
+      description: Requires `X-User-Id: admin`. Returns hashed-safe retention stats only.
+      operationId: adminChatRetentionStats
+      responses:
+        '200':
+          description: Retention stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRetentionStatsResponse'
+        '403':
+          description: Non-admin access denied
+
   /api/v1/chats/export-bundle:
     get:
       tags:
@@ -844,6 +880,99 @@ components:
         inputSchema:
           type: object
           description: JSON Schema hints for skill params
+
+    AgentCardResponse:
+      type: object
+      required:
+        - name
+        - description
+        - url
+        - version
+        - protocolVersion
+        - skills
+        - capabilities
+        - endpoints
+        - rateLimits
+      properties:
+        name:
+          type: string
+          example: MedExpertMatch
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        version:
+          type: string
+          example: "1.0.0"
+        protocolVersion:
+          type: string
+          example: "0.2.0"
+        skills:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - description
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+        capabilities:
+          type: object
+          properties:
+            streaming:
+              type: boolean
+            pushNotifications:
+              type: boolean
+        endpoints:
+          type: object
+          required:
+            - jsonrpc
+            - stream
+            - skills
+          properties:
+            jsonrpc:
+              type: string
+            stream:
+              type: string
+            skills:
+              type: string
+        rateLimits:
+          type: object
+          properties:
+            windowSeconds:
+              type: integer
+            defaultPerMinute:
+              type: integer
+            highPerMinute:
+              type: integer
+            scopes:
+              type: array
+              items:
+                type: string
+                enum: [CHAT_SSE, A2A]
+
+    ChatRetentionStatsResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        idleDays:
+          type: integer
+        lastRunAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastChatsPurged:
+          type: integer
+        lastMessagesPurged:
+          type: integer
 
     ChatExportBundleResponse:
       type: object

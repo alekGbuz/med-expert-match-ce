@@ -34,4 +34,15 @@ class ChatRetentionMetricsTest {
         assertTrue(snapshot.enabled());
         assertEquals(30, snapshot.idleDays());
     }
+
+    @Test
+    @DisplayName("Records retention scheduler failures")
+    void recordsFailure() {
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        ChatRetentionMetrics metrics = new ChatRetentionMetrics(registry, new ChatRetentionProperties());
+
+        metrics.recordFailure();
+
+        assertEquals(1.0, registry.get("chat.retention.failures").counter().count());
+    }
 }

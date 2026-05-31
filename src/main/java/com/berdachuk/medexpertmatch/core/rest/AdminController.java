@@ -1,11 +1,13 @@
 package com.berdachuk.medexpertmatch.core.rest;
 
+import com.berdachuk.medexpertmatch.core.domain.ChatRetentionStats;
 import com.berdachuk.medexpertmatch.core.domain.ApiSessionTokenCreated;
 import com.berdachuk.medexpertmatch.core.domain.ApiSessionTokenView;
 import com.berdachuk.medexpertmatch.core.domain.AuditLog;
 import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.security.AdminAccessGuard;
 import com.berdachuk.medexpertmatch.core.service.ApiSessionTokenAdminService;
+import com.berdachuk.medexpertmatch.core.service.ChatRetentionQueryService;
 import com.berdachuk.medexpertmatch.core.service.ChatExportAuditQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,14 +35,17 @@ public class AdminController {
     private final AdminAccessGuard adminAccessGuard;
     private final ApiSessionTokenAdminService sessionTokenAdminService;
     private final ChatExportAuditQueryService chatExportAuditQueryService;
+    private final ChatRetentionQueryService chatRetentionQueryService;
 
     public AdminController(
             AdminAccessGuard adminAccessGuard,
             ApiSessionTokenAdminService sessionTokenAdminService,
-            ChatExportAuditQueryService chatExportAuditQueryService) {
+            ChatExportAuditQueryService chatExportAuditQueryService,
+            ChatRetentionQueryService chatRetentionQueryService) {
         this.adminAccessGuard = adminAccessGuard;
         this.sessionTokenAdminService = sessionTokenAdminService;
         this.chatExportAuditQueryService = chatExportAuditQueryService;
+        this.chatRetentionQueryService = chatRetentionQueryService;
     }
 
     @Operation(summary = "List API session tokens (masked keys)")
@@ -81,6 +86,20 @@ public class AdminController {
         return chatExportAuditQueryService.listChatExports(limit, offset, action).stream()
                 .map(this::toAuditResponse)
                 .toList();
+    }
+
+    @Operation(summary = "Chat retention configuration and last purge snapshot")
+    @GetMapping("/chat-retention")
+    public Map<String, Object> chatRetentionStats() {
+        adminAccessGuard.requireAdmin();
+        ChatRetentionStats stats = chatRetentionQueryService.getStats();
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("enabled", stats.enabled());
+        response.put("idleDays", stats.idleDays());
+        response.put("lastRunAt", stats.lastRunAt() != null ? stats.lastRunAt().toString() : null);
+        response.put("lastChatsPurged", stats.lastChatsPurged());
+        response.put("lastMessagesPurged", stats.lastMessagesPurged());
+        return response;
     }
 
     private Map<String, Object> toAuditResponse(AuditLog log) {

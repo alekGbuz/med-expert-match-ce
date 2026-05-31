@@ -11,10 +11,15 @@ public class ChatRetentionScheduler {
 
     private final ChatRetentionService chatRetentionService;
     private final ChatRetentionProperties properties;
+    private final ChatRetentionMetrics chatRetentionMetrics;
 
-    public ChatRetentionScheduler(ChatRetentionService chatRetentionService, ChatRetentionProperties properties) {
+    public ChatRetentionScheduler(
+            ChatRetentionService chatRetentionService,
+            ChatRetentionProperties properties,
+            ChatRetentionMetrics chatRetentionMetrics) {
         this.chatRetentionService = chatRetentionService;
         this.properties = properties;
+        this.chatRetentionMetrics = chatRetentionMetrics;
     }
 
     @Scheduled(cron = "${chat.retention.cron:0 0 3 * * *}")
@@ -22,6 +27,12 @@ public class ChatRetentionScheduler {
         if (!properties.enabled()) {
             return;
         }
-        chatRetentionService.purgeIdleChats();
+        try {
+            chatRetentionService.purgeIdleChats();
+        } catch (RuntimeException ex) {
+            chatRetentionMetrics.recordFailure();
+            log.error("Chat retention purge failed", ex);
+            throw ex;
+        }
     }
 }

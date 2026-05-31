@@ -37,6 +37,8 @@ class ChatAdminPlaywrightSmokeTest extends BaseIntegrationTest {
             page.waitForSelector("text=Admin Operations");
             assertTrue(page.locator("a:has-text('Session Tokens')").count() > 0);
             assertTrue(page.locator("a:has-text('Chat Export Audit')").count() > 0);
+            assertTrue(page.locator("text=Chat Retention").count() > 0);
+            assertTrue(page.locator("a:has-text('Open Runbook')").count() > 0);
 
             page.navigate(baseUrl + "/admin/session-tokens?user=admin");
             page.waitForSelector("text=API Session Tokens");

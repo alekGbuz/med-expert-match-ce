@@ -17,6 +17,7 @@ public class ChatRetentionMetrics {
     private final Counter runs;
     private final Counter chatsPurged;
     private final Counter messagesPurged;
+    private final Counter failures;
     private final ChatRetentionProperties properties;
     private final AtomicReference<RetentionRunSnapshot> lastRun = new AtomicReference<>(RetentionRunSnapshot.empty());
 
@@ -31,6 +32,13 @@ public class ChatRetentionMetrics {
         this.messagesPurged = Counter.builder("chat.retention.messages_purged")
                 .description("Messages removed with purged chats")
                 .register(meterRegistry);
+        this.failures = Counter.builder("chat.retention.failures")
+                .description("Failed chat retention purge runs")
+                .register(meterRegistry);
+    }
+
+    public void recordFailure() {
+        failures.increment();
     }
 
     public void recordPurgeRun(Instant runAt, int chatsRemoved, int messagesRemoved, boolean enabled, int idleDays) {

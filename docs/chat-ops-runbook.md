@@ -19,6 +19,8 @@ Operational guide for chat SSE, A2A federation, exports, retention, and audit. A
 - Config: `chat.retention.idle-days` (default `0` = disabled).
 - Scheduler purges idle **non-default** chats past the cutoff.
 - Default chat is kept; messages may be soft-deleted via user data delete.
+- Metrics: `chat_retention_runs_total`, `chat_retention_chats_purged_total`, `chat_retention_messages_purged_total`, `chat_retention_failures_total`.
+- Admin API: `GET /api/v1/admin/chat-retention` (requires `X-User-Id: admin`).
 
 ## Exports & data lifecycle
 

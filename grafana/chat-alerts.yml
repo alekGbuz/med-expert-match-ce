@@ -45,3 +45,38 @@ groups:
         annotations:
           summary: Unusual chat export volume
           description: Review audit_log CHAT_EXPORT entries (hashed ids only).
+
+      - alert: ChatRetentionPurgeFailure
+        expr: increase(chat_retention_failures_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: Chat retention purge failed
+          description: Inspect application logs and chat.retention.failures metric; purge may need manual intervention.
+
+      - alert: ChatRateLimitScopeImbalance
+        expr: |
+          rate(chat_rate_limited_total{scope="A2A"}[5m]) > 3
+          and rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m]) > 0.05
+          and rate(chat_rate_limited_total{scope="A2A"}[5m])
+            > 3 * rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m])
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A2A rate limiting dominates chat SSE
+          description: Federation clients may be misconfigured or abusing A2A endpoints; compare scoped buckets in runbook.
+
+      - alert: ChatRateLimitScopeImbalanceSse
+        expr: |
+          rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m]) > 3
+          and rate(chat_rate_limited_total{scope="A2A"}[5m]) > 0.05
+          and rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m])
+            > 3 * rate(chat_rate_limited_total{scope="A2A"}[5m])
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Chat SSE rate limiting dominates A2A
+          description: UI chat traffic may be starved or mis-tiered; review session token tiers and scoped limits.
