@@ -1,11 +1,13 @@
 package com.berdachuk.medexpertmatch.core.config;
 
 import com.berdachuk.medexpertmatch.core.exception.MedExpertMatchException;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -94,5 +96,18 @@ class GlobalExceptionHandlerTest {
 
         assertEquals("DATABASE_CONNECTION_FAILED", problem.getProperties().get("errorCode"));
         assertTrue(problem.getDetail().contains("internal application error"));
+    }
+
+    @Test
+    @DisplayName("ResponseStatusException preserves HTTP status (e.g. 429)")
+    void preservesResponseStatus() {
+        var request = new ServletWebRequest(
+                new MockHttpServletRequest("POST", "/api/v1/chats/x/messages/stream"));
+        var problem = handler.handleResponseStatus(
+                new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Chat rate limit exceeded"),
+                request);
+
+        assertEquals(429, problem.getStatus());
+        assertEquals("Chat rate limit exceeded", problem.getDetail());
     }
 }

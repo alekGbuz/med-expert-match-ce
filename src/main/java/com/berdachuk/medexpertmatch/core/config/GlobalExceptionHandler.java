@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
@@ -69,6 +70,23 @@ public class GlobalExceptionHandler {
         problem.setType(URI.create("about:blank"));
         problem.setInstance(URI.create(path));
         problem.setProperty("errorCode", "NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ProblemDetail handleResponseStatus(ResponseStatusException ex, WebRequest request) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        if (status.is5xxServerError()) {
+            log.error("Response status {}: {}", status.value(), ex.getReason());
+        } else {
+            log.warn("Response status {}: {}", status.value(), ex.getReason());
+        }
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status,
+                ex.getReason() != null ? ex.getReason() : status.getReasonPhrase());
+        problem.setTitle(status.getReasonPhrase());
+        problem.setType(URI.create("about:blank"));
+        problem.setInstance(URI.create(((ServletWebRequest) request).getRequest().getRequestURI()));
+        problem.setProperty("errorCode", "HTTP_" + status.value());
         return problem;
     }
 

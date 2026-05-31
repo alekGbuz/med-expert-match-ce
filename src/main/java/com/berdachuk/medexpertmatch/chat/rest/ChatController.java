@@ -3,12 +3,16 @@ package com.berdachuk.medexpertmatch.chat.rest;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
+import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
+import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,11 +33,20 @@ public class ChatController {
 
     private final ChatService chatService;
     private final ChatAssistantService chatAssistantService;
+    private final ChatExportService chatExportService;
+    private final ChatRateLimitService chatRateLimitService;
     private final UserContext userContext;
 
-    public ChatController(ChatService chatService, ChatAssistantService chatAssistantService, UserContext userContext) {
+    public ChatController(
+            ChatService chatService,
+            ChatAssistantService chatAssistantService,
+            ChatExportService chatExportService,
+            ChatRateLimitService chatRateLimitService,
+            UserContext userContext) {
         this.chatService = chatService;
         this.chatAssistantService = chatAssistantService;
+        this.chatExportService = chatExportService;
+        this.chatRateLimitService = chatRateLimitService;
         this.userContext = userContext;
     }
 
@@ -84,16 +97,28 @@ public class ChatController {
                 chatId, userContext.currentUserId(), content.trim(), agentId));
     }
 
+    @Operation(summary = "Export anonymized chat transcript as JSON")
+    @GetMapping("/{chatId}/export")
+    public Map<String, Object> exportChat(@PathVariable String chatId) {
+        return chatExportService.exportTranscript(chatId, userContext.currentUserId());
+    }
+
     @Operation(summary = "Stream assistant reply tokens over SSE")
     @PostMapping(value = "/{chatId}/messages/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamMessage(
             @PathVariable String chatId,
             @RequestBody Map<String, String> body) {
+        String userId = userContext.currentUserId();
+        if (!chatRateLimitService.tryAcquire(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "Chat rate limit exceeded");
+        }
         String content = body.get("content");
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("content is required");
         }
         return chatAssistantService.streamMessage(
-                chatId, userContext.currentUserId(), content.trim(), body.get("agentId"));
+                chatId, userId, content.trim(), body.get("agentId"));
     }
 }

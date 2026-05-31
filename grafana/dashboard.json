@@ -76,6 +76,38 @@
       "targets": [
         {"expr": "rate(medexpertmatch_api_usage_latency_seconds_sum[5m]) / rate(medexpertmatch_api_usage_latency_seconds_count[5m]) * 1000"}
       ]
+    },
+    {
+      "title": "Chat Turn Duration p95 (ms)",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, rate(chat_turn_duration_seconds_bucket[5m])) * 1000"}
+      ]
+    },
+    {
+      "title": "Chat Stream Errors",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_stream_errors_total[5m])"}
+      ]
+    },
+    {
+      "title": "Chat Tool Calls",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_turn_tool_calls_total[5m])"}
+      ]
+    },
+    {
+      "title": "Chat Rate Limited",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_rate_limited_total[5m])"}
+      ]
     }
   ],
   "refresh": "30s"

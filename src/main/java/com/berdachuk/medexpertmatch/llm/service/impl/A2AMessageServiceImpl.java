@@ -9,11 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -75,6 +78,60 @@ public class A2AMessageServiceImpl implements A2AMessageService {
         } catch (ResponseStatusException ex) {
             return jsonRpcError(id, mapHttpStatus(ex.getStatusCode().value()), ex.getReason());
         }
+    }
+
+    @Override
+    public SseEmitter streamMessage(Map<String, Object> request) {
+        SseEmitter emitter = new SseEmitter(120_000L);
+        CompletableFuture.runAsync(() -> {
+            try {
+                Map<String, Object> result = sendMessage(request);
+                String text = extractStreamText(result);
+                for (String chunk : chunkText(text)) {
+                    emitter.send(SseEmitter.event().name("token").data(Map.of("t", chunk)));
+                }
+                emitter.send(SseEmitter.event().name("done").data(result.get("skill")));
+                emitter.complete();
+            } catch (ResponseStatusException ex) {
+                try {
+                    emitter.send(SseEmitter.event().name("error").data(ex.getReason()));
+                } catch (IOException ignored) {
+                    // emitter already failed
+                }
+                emitter.completeWithError(ex);
+            } catch (Exception ex) {
+                emitter.completeWithError(ex);
+            }
+        });
+        return emitter;
+    }
+
+    private static String extractStreamText(Map<String, Object> result) {
+        Object nested = result.get("result");
+        if (!(nested instanceof Map<?, ?> resultMap)) {
+            return result.toString();
+        }
+        Object message = resultMap.get("message");
+        if (message != null) {
+            return message.toString();
+        }
+        Object summary = resultMap.get("summary");
+        if (summary != null) {
+            return summary.toString();
+        }
+        return resultMap.toString();
+    }
+
+    private static List<String> chunkText(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of("");
+        }
+        int chunkSize = Math.max(8, text.length() / 10);
+        List<String> chunks = new java.util.ArrayList<>();
+        for (int i = 0; i < text.length(); i += chunkSize) {
+            chunks.add(text.substring(i, Math.min(text.length(), i + chunkSize)));
+        }
+        return chunks;
     }
 
     private Map<String, Object> executeSkill(String skill, String message) {

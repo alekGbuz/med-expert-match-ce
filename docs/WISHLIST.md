@@ -20,23 +20,24 @@ Nice-to-have features and UX improvements not yet scheduled in an active milesto
 **Status:** ✅ Delivered in **M17** (client streaming) + **M18** (SSR allowlist)  
 **Related:** `web/service/ChatMarkdownRenderer.java`, `static/js/chat.js`, `templates/chat.html`
 
-### Delivered
-
-- Client `marked` + DOMPurify for streaming tokens
-- Server-side allowlist renderer for historical assistant messages
-- JSON-wrapped SSE tokens preserving whitespace
-- XSS + E2E smoke integration tests
-
 ---
 
-## W-03: Playwright chat browser verification — 📋 Planned (M19)
+## W-03: Playwright chat browser verification — ✅ Profile delivered (M19)
 
 **Priority:** Medium (CI confidence)  
-**Status:** MockMvc smoke in M18; Playwright optional in **M19**  
-**Related:** `.agents/plans/M19-chat-ops-and-interop.md`
+**Status:** MockMvc smoke in M18; Playwright profile + docs in **M19**; full navigation in **M20**  
+**Related:** `.agents/plans/M20-chat-governance-and-a2a-contracts.md`, `ChatPlaywrightSmokeTest`
 
 ---
 
-## W-04: *(placeholder for future items)*
+## W-04: Chat transcript export — ✅ Delivered (M19)
+
+**Priority:** Medium (compliance / portability)  
+**Status:** ✅ `GET /api/v1/chats/{id}/export` with PHI redaction  
+**Related:** `ChatExportService.java`
+
+---
+
+## W-05: *(placeholder for future items)*
 
 Add new wishlist entries as `W-{NN}` with the same structure.

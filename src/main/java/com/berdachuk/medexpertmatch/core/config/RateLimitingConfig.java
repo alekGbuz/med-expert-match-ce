@@ -7,6 +7,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.berdachuk.medexpertmatch.core.util.TokenBucket;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
@@ -99,33 +100,4 @@ public class RateLimitingConfig {
         }
     }
 
-    static class TokenBucket {
-        private final double maxTokens;
-        private final double refillRate;
-        private double tokens;
-        private long lastRefill;
-
-        TokenBucket(int maxRequests, int windowSeconds) {
-            this.maxTokens = maxRequests;
-            this.refillRate = (double) maxRequests / windowSeconds;
-            this.tokens = maxRequests;
-            this.lastRefill = System.nanoTime();
-        }
-
-        synchronized boolean tryConsume() {
-            refill();
-            if (tokens >= 1.0) {
-                tokens -= 1.0;
-                return true;
-            }
-            return false;
-        }
-
-        private void refill() {
-            long now = System.nanoTime();
-            double elapsed = (now - lastRefill) / 1_000_000_000.0;
-            tokens = Math.min(maxTokens, tokens + elapsed * refillRate);
-            lastRefill = now;
-        }
-    }
 }
