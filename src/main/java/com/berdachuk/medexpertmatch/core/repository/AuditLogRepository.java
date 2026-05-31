@@ -12,4 +12,6 @@ public interface AuditLogRepository {
     String insert(AuditLog auditLog);
 
     List<AuditLog> findByAction(String action, int limit);
+
+    List<AuditLog> findByAction(String action, int limit, int offset);
 }

@@ -27,6 +27,12 @@ public class ApiSessionTokenRepositoryImpl implements ApiSessionTokenRepository 
     @InjectSql("/sql/core/apiSessionTokenFindByApiKey.sql")
     private String findByApiKeySql;
 
+    @InjectSql("/sql/core/apiSessionTokenFindAll.sql")
+    private String findAllSql;
+
+    @InjectSql("/sql/core/apiSessionTokenDeleteById.sql")
+    private String deleteByIdSql;
+
     @InjectSql("/sql/core/apiSessionTokenUpdateLastUsed.sql")
     private String updateLastUsedSql;
 
@@ -58,6 +64,16 @@ public class ApiSessionTokenRepositoryImpl implements ApiSessionTokenRepository 
                 new MapSqlParameterSource("apiKey", apiKey),
                 apiSessionTokenMapper);
         return Optional.ofNullable(DataAccessUtils.uniqueResult(results));
+    }
+
+    @Override
+    public List<ApiSessionToken> findAll() {
+        return namedJdbcTemplate.query(findAllSql, apiSessionTokenMapper);
+    }
+
+    @Override
+    public boolean deleteById(String id) {
+        return namedJdbcTemplate.update(deleteByIdSql, new MapSqlParameterSource("id", id)) > 0;
     }
 
     @Override

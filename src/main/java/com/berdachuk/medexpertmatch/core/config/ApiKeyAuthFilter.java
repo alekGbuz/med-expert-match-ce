@@ -17,6 +17,7 @@ import java.util.Set;
 
 @Component
 @ConditionalOnProperty(name = "medexpertmatch.auth.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "medexpertmatch.auth.session-tokens.enabled", havingValue = "false", matchIfMissing = true)
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(ApiKeyAuthFilter.class);

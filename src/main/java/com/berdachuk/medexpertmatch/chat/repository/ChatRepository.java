@@ -22,4 +22,6 @@ public interface ChatRepository {
     boolean deleteChat(String chatId);
 
     void updateLastActivity(String chatId);
+
+    List<Chat> findIdleNonDefaultChatsBefore(java.time.Instant cutoff, int limit);
 }

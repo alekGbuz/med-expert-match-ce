@@ -46,6 +46,9 @@ public class ChatRepositoryImpl implements ChatRepository {
     @InjectSql("/sql/chat/updateLastActivity.sql")
     private String updateLastActivitySql;
 
+    @InjectSql("/sql/chat/findIdleNonDefaultChats.sql")
+    private String findIdleNonDefaultChatsSql;
+
     public ChatRepositoryImpl(NamedParameterJdbcTemplate namedJdbcTemplate, ChatMapper chatMapper) {
         this.namedJdbcTemplate = namedJdbcTemplate;
         this.chatMapper = chatMapper;
@@ -124,5 +127,13 @@ public class ChatRepositoryImpl implements ChatRepository {
                 new MapSqlParameterSource("id", chatId)
                         .addValue("lastActivityAt", Timestamp.from(now))
                         .addValue("updatedAt", Timestamp.from(now)));
+    }
+
+    @Override
+    public List<Chat> findIdleNonDefaultChatsBefore(Instant cutoff, int limit) {
+        return namedJdbcTemplate.query(
+                findIdleNonDefaultChatsSql,
+                new MapSqlParameterSource("cutoff", Timestamp.from(cutoff)).addValue("limit", limit),
+                chatMapper);
     }
 }
