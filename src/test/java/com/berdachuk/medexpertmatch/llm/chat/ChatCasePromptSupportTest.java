@@ -1,14 +1,17 @@
 package com.berdachuk.medexpertmatch.llm.chat;
 
+import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundle;
+import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundleService;
+import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -18,8 +21,9 @@ class ChatCasePromptSupportTest {
 
     private final PromptTemplate caseIdHintTemplate = mock(PromptTemplate.class);
     private final PromptTemplate noCaseIdHintTemplate = mock(PromptTemplate.class);
+    private final CaseContextBundleService caseContextBundleService = mock(CaseContextBundleService.class);
     private final ChatCasePromptSupport support =
-            new ChatCasePromptSupport(caseIdHintTemplate, noCaseIdHintTemplate);
+            new ChatCasePromptSupport(caseIdHintTemplate, noCaseIdHintTemplate, caseContextBundleService);
 
     @Test
     @DisplayName("buildCaseToolHints guides text-based matching when no case ID")
@@ -41,11 +45,15 @@ class ChatCasePromptSupportTest {
         String caseId = "6a1c68963a08e800010de68e";
         when(caseIdHintTemplate.render(eq(Map.of("caseId", caseId))))
                 .thenReturn("Case ID " + caseId + " for match_doctors_to_case");
+        when(caseContextBundleService.build(caseId, CaseContextIntent.CHAT_AUTO))
+                .thenReturn(new CaseContextBundle(caseId, CaseContextIntent.CHAT_AUTO,
+                        List.of("urgency=HIGH"), List.of(), "summary", Map.of()));
 
         String hints = support.buildCaseToolHints("Case ID: " + caseId);
 
         assertTrue(hints.contains(caseId));
         assertTrue(hints.contains("match_doctors_to_case"));
+        assertTrue(hints.contains("Context bundle"));
         verify(caseIdHintTemplate).render(Map.of("caseId", caseId));
     }
 }

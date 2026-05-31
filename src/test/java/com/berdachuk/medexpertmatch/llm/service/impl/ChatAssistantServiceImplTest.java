@@ -9,6 +9,8 @@ import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
+import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import org.junit.jupiter.api.AfterEach;
@@ -42,11 +44,13 @@ class ChatAssistantServiceImplTest {
     private final PromptTemplate chatAgentOrchestratorInstructionsTemplate = mock(PromptTemplate.class);
     private final PromptTemplate chatUserMessageTemplate = mock(PromptTemplate.class);
     private final ChatCasePromptSupport chatCasePromptSupport = mock(ChatCasePromptSupport.class);
+    private final MedicalAgentCriticService medicalAgentCriticService = mock(MedicalAgentCriticService.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
             new ChatTurnMetrics(new SimpleMeterRegistry()), chatAgentSystemTemplate,
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
+            medicalAgentCriticService, HarnessProperties.defaults(),
             "functiongemma");
 
     @AfterEach
@@ -76,6 +80,8 @@ class ChatAssistantServiceImplTest {
         when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
         when(requestSpec.call()).thenReturn(callSpec);
         when(callSpec.content()).thenReturn("Here is evidence");
+        when(medicalAgentCriticService.review(any(), any()))
+                .thenReturn(new MedicalAgentCriticService.CriticResult(true, "Here is evidence", null, null));
 
         Map<String, ChatMessage> result = service.processMessage("c1", "user-a", "Find evidence", "auto");
 

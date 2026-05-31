@@ -215,6 +215,12 @@ medexpertmatch:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS:1}
     tool-calling:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS:1}
+    harness:
+      critic-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CRITIC_ENABLED:true}
+      critic-chat-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CRITIC_CHAT_ENABLED:true}
+      max-iterations: ${MEDEXPERTMATCH_LLM_HARNESS_MAX_ITERATIONS:2}
+      retry-on-verify-fail: ${MEDEXPERTMATCH_LLM_HARNESS_RETRY_ON_VERIFY_FAIL:true}
+      doctor-match-min-matches: ${MEDEXPERTMATCH_LLM_HARNESS_DOCTOR_MATCH_MIN_MATCHES:1}
   synthetic-data: # Test data generation; batch sizes and timeouts
     embedding:
       thread-pool-size: ${SYNTHETIC_DATA_EMBEDDING_THREAD_POOL_SIZE:10}

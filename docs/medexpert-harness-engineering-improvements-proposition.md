@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-05-31  
 **Audience:** Engineering leads, LLM module owners, platform/ops  
-**Status:** Strategic proposition — implementation plan: [`.agents/plans/M29-harness-engineering-improvements.md`](../.agents/plans/M29-harness-engineering-improvements.md)
+**Status:** Strategic proposition — M29 ✅ [archive](../.agents/plans/archive/M29-harness-engineering-improvements.md); next: [M30](../.agents/plans/M30-harness-orchestration-expansion.md)
 
 ---
 
@@ -348,7 +348,7 @@ flowchart TB
 
 ## 10. Recommended next steps
 
-**Implementation plan:** Execute [M29: Harness Engineering Improvements](../.agents/plans/M29-harness-engineering-improvements.md) in ship order (Steps 1–12).
+**Implementation plan:** M29 complete. Execute [M30: Harness Orchestration Expansion](../.agents/plans/M30-harness-orchestration-expansion.md).
 
 1. **Review Phase A** (M29 Steps 1–5) with LLM module owners.  
 2. **Wire eval CI** (M29 Step 6) — builds on existing `llm/evaluation/`.  

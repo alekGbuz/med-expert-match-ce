@@ -13,6 +13,9 @@ import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.agent.SessionAdvisorSupport;
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
+import com.berdachuk.medexpertmatch.llm.chat.ChatToolContextHolder;
+import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final PromptTemplate chatAgentOrchestratorInstructionsTemplate;
     private final PromptTemplate chatUserMessageTemplate;
     private final ChatCasePromptSupport chatCasePromptSupport;
+    private final MedicalAgentCriticService medicalAgentCriticService;
+    private final HarnessProperties harnessProperties;
     private final String functionGemmaModelName;
 
     public ChatAssistantServiceImpl(
@@ -62,6 +67,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             @Qualifier("chatAgentOrchestratorInstructionsPromptTemplate") PromptTemplate chatAgentOrchestratorInstructionsTemplate,
             @Qualifier("chatUserMessagePromptTemplate") PromptTemplate chatUserMessageTemplate,
             ChatCasePromptSupport chatCasePromptSupport,
+            MedicalAgentCriticService medicalAgentCriticService,
+            HarnessProperties harnessProperties,
             @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName) {
         this.chatService = chatService;
         this.chatClient = chatClient;
@@ -74,6 +81,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.chatAgentOrchestratorInstructionsTemplate = chatAgentOrchestratorInstructionsTemplate;
         this.chatUserMessageTemplate = chatUserMessageTemplate;
         this.chatCasePromptSupport = chatCasePromptSupport;
+        this.medicalAgentCriticService = medicalAgentCriticService;
+        this.harnessProperties = harnessProperties;
         this.functionGemmaModelName = functionGemmaModelName;
     }
 
@@ -186,7 +195,15 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         if (reply == null || reply.isBlank()) {
             return "I could not generate a response. Please try again or rephrase your question.";
         }
-        return reply.trim();
+        return applyChatCritic(reply.trim(), Map.of("agentId", ctx.profile().agentId()));
+    }
+
+    private String applyChatCritic(String reply, Map<String, Object> metadata) {
+        if (!harnessProperties.criticChatEnabled()) {
+            return reply;
+        }
+        MedicalAgentCriticService.CriticResult critic = medicalAgentCriticService.review(reply, metadata);
+        return critic.sanitizedResponse();
     }
 
     /**
@@ -195,7 +212,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
      */
     private String resolveReplyAfterStream(TurnContext ctx, String streamedText) {
         if (streamedText != null && !streamedText.isBlank()) {
-            return streamedText.trim();
+            return applyChatCritic(streamedText.trim(), Map.of("agentId", ctx.profile().agentId()));
         }
         log.warn("Chat stream returned no text for session {}; retrying sync tool-calling turn",
                 ctx.sessionId());
@@ -224,6 +241,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         String sessionId = userId + "-" + chatId;
         logStreamService.setCurrentSessionId(sessionId);
         OrchestrationContextHolder.setSessionId(sessionId);
+        ChatToolContextHolder.setProfile(profile);
 
         String systemPrompt = buildSystemPrompt(profile);
         String userPrompt = buildUserPrompt(profile, content);
@@ -231,6 +249,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     }
 
     private void clearTurnContext(String sessionId) {
+        ChatToolContextHolder.clear();
         OrchestrationContextHolder.clear();
         logStreamService.clearCurrentSessionId();
     }

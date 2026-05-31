@@ -1,8 +1,10 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
+import com.berdachuk.medexpertmatch.llm.harness.ToolScopeEnforcingResolver;
 import com.berdachuk.medexpertmatch.llm.tool.NormalizingToolCallbackResolver;
 import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.ContextBuilderAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
@@ -44,6 +46,7 @@ public class AgentToolCallingConfiguration {
             ClinicalAdvisorAgentTools clinicalAdvisorAgentTools,
             GraphAnalyticsAgentTools graphAnalyticsAgentTools,
             RoutingAgentTools routingAgentTools,
+            ContextBuilderAgentTools contextBuilderAgentTools,
             FileSystemTools fileSystemTools,
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
@@ -59,6 +62,7 @@ public class AgentToolCallingConfiguration {
                         clinicalAdvisorAgentTools,
                         graphAnalyticsAgentTools,
                         routingAgentTools,
+                        contextBuilderAgentTools,
                         fileSystemTools,
                         autoMemoryTools,
                         todoWriteTool,
@@ -72,6 +76,7 @@ public class AgentToolCallingConfiguration {
         }
         List<ToolCallback> uniqueCallbacks = List.copyOf(uniqueByName.values());
         ToolCallbackResolver delegate = new StaticToolCallbackResolver(uniqueCallbacks);
-        return new NormalizingToolCallbackResolver(delegate, uniqueCallbacks);
+        ToolCallbackResolver normalizing = new NormalizingToolCallbackResolver(delegate, uniqueCallbacks);
+        return new ToolScopeEnforcingResolver(normalizing);
     }
 }

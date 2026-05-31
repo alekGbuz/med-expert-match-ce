@@ -2,12 +2,15 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
 import com.berdachuk.medexpertmatch.chat.service.RateLimitScope;
+import com.berdachuk.medexpertmatch.llm.harness.ChatAgentToolScope;
 import com.berdachuk.medexpertmatch.llm.service.AgentCardService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class AgentCardServiceImpl implements AgentCardService {
@@ -27,14 +30,19 @@ public class AgentCardServiceImpl implements AgentCardService {
         card.put("version", "1.0.0");
         card.put("protocolVersion", "0.2.0");
         card.put("skills", List.of(
-                Map.of(
-                        "id", "doctor_match",
-                        "name", "Doctor Match",
-                        "description", "Rank specialists for anonymized clinical cases using GraphRAG hybrid retrieval"),
-                Map.of(
-                        "id", "evidence_search",
-                        "name", "Evidence Search",
-                        "description", "Retrieve PubMed literature and clinical guideline summaries")));
+                skillEntry(
+                        "doctor_match",
+                        "Doctor Match",
+                        "Rank specialists for anonymized clinical cases using GraphRAG hybrid retrieval",
+                        "specialist-matcher"),
+                skillEntry(
+                        "evidence_search",
+                        "Evidence Search",
+                        "Retrieve PubMed literature and clinical guideline summaries",
+                        "evidence-scout")));
+        card.put("allowedTools", Map.of(
+                "doctor_match", toolList("specialist-matcher"),
+                "evidence_search", toolList("evidence-scout")));
         card.put("capabilities", Map.of(
                 "streaming", true,
                 "pushNotifications", false));
@@ -48,5 +56,19 @@ public class AgentCardServiceImpl implements AgentCardService {
                 "highPerMinute", 30,
                 "scopes", List.of(RateLimitScope.CHAT_SSE.name(), RateLimitScope.A2A.name())));
         return card;
+    }
+
+    private static Map<String, Object> skillEntry(String id, String name, String description, String agentId) {
+        Map<String, Object> skill = new LinkedHashMap<>();
+        skill.put("id", id);
+        skill.put("name", name);
+        skill.put("description", description);
+        skill.put("allowedTools", toolList(agentId));
+        return skill;
+    }
+
+    private static List<String> toolList(String agentId) {
+        Set<String> tools = ChatAgentToolScope.allowedToolsForAgentCard(agentId);
+        return new ArrayList<>(tools);
     }
 }
