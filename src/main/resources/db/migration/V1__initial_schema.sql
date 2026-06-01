@@ -479,6 +479,21 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.llm_harness_workflow_run (
 CREATE INDEX IF NOT EXISTS idx_llm_harness_workflow_run_session ON medexpertmatch.llm_harness_workflow_run (session_id);
 
 -- ============================================
+-- LLM Harness Chain Events (M33)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.llm_harness_chain_event (
+    id VARCHAR(36) PRIMARY KEY,
+    chain_root_session_id VARCHAR(128) NOT NULL,
+    session_id VARCHAR(128) NOT NULL,
+    case_id VARCHAR(24),
+    step VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_harness_chain_root ON medexpertmatch.llm_harness_chain_event (chain_root_session_id);
+
+-- ============================================
 -- Document Ingestion Tables
 -- ============================================
 

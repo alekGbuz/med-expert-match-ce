@@ -33,6 +33,11 @@ public class JdbcHarnessWorkflowRunStore implements HarnessWorkflowRunStore {
     }
 
     @Override
+    public java.util.List<HarnessWorkflowRun> findRecentByStates(java.util.List<DoctorMatchWorkflowState> states, int limit) {
+        return repository.findRecentByStates(states, limit);
+    }
+
+    @Override
     public void updateState(String runId, DoctorMatchWorkflowState state) {
         repository.updateState(runId, state);
     }

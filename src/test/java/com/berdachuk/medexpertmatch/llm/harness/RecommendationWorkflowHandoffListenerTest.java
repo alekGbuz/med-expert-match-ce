@@ -24,7 +24,7 @@ class RecommendationWorkflowHandoffListenerTest {
         MedicalAgentService agentService = mock(MedicalAgentService.class);
         HarnessProperties properties = new HarnessProperties(true, true, 2, true, 1, 0, false, false, true);
         RecommendationWorkflowHandoffListener listener =
-                new RecommendationWorkflowHandoffListener(agentService, properties);
+                new RecommendationWorkflowHandoffListener(agentService, properties, mock(org.springframework.context.ApplicationEventPublisher.class));
         when(agentService.generateRecommendations(any(), any()))
                 .thenReturn(new MedicalAgentService.AgentResponse("ok", Map.of()));
 
@@ -41,7 +41,8 @@ class RecommendationWorkflowHandoffListenerTest {
     void skipsWhenDisabled() {
         MedicalAgentService agentService = mock(MedicalAgentService.class);
         RecommendationWorkflowHandoffListener listener =
-                new RecommendationWorkflowHandoffListener(agentService, HarnessProperties.defaults());
+                new RecommendationWorkflowHandoffListener(agentService, HarnessProperties.defaults(),
+                        mock(org.springframework.context.ApplicationEventPublisher.class));
 
         listener.onDoctorMatchCompleted(new DoctorMatchCompletedEvent(
                 "6a1c68963a08e800010de68e", "sess-match", Instant.now()));

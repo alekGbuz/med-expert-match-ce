@@ -71,6 +71,27 @@ public class HarnessWorkflowRunJdbcRepository {
                 limit);
     }
 
+    public java.util.List<HarnessWorkflowRun> findRecentByStates(java.util.List<DoctorMatchWorkflowState> states, int limit) {
+        if (states == null || states.isEmpty()) {
+            return java.util.List.of();
+        }
+        String placeholders = String.join(",", java.util.Collections.nCopies(states.size(), "?"));
+        Object[] args = new Object[states.size() + 1];
+        for (int i = 0; i < states.size(); i++) {
+            args[i] = states.get(i).name();
+        }
+        args[states.size()] = limit;
+        return jdbcTemplate.query("""
+                        SELECT run_id, session_id, case_id, workflow_type, state, resume_token, payload_json, created_at, updated_at
+                        FROM medexpertmatch.llm_harness_workflow_run
+                        WHERE state IN (%s)
+                        ORDER BY updated_at DESC
+                        LIMIT ?
+                        """.formatted(placeholders),
+                rowMapper(),
+                args);
+    }
+
     public static String newRunId() {
         return UUID.randomUUID().toString();
     }

@@ -18,9 +18,36 @@ public class HarnessWorkflowRunQueryService {
     }
 
     public List<Map<String, Object>> listAwaitingHumanReview(int limit) {
-        return runStore.findByState(DoctorMatchWorkflowState.NEEDS_HUMAN, limit).stream()
+        return listByState(DoctorMatchWorkflowState.NEEDS_HUMAN, limit);
+    }
+
+    public List<Map<String, Object>> listByState(DoctorMatchWorkflowState state, int limit) {
+        return runStore.findByState(state, limit).stream()
                 .map(this::toView)
                 .toList();
+    }
+
+    public List<Map<String, Object>> listRecentFailedWithBacklog(int limit) {
+        return runStore.findRecentByStates(List.of(DoctorMatchWorkflowState.FAILED), limit).stream()
+                .map(run -> {
+                    Map<String, Object> view = toView(run);
+                    view.put("backlogMarkdown", HarnessFailureBacklogSupport.buildBacklogMarkdown(
+                            inferFailureReason(run),
+                            run.runId(),
+                            run.workflowType()));
+                    return view;
+                })
+                .toList();
+    }
+
+    private static String inferFailureReason(HarnessWorkflowRun run) {
+        if (run.payloadJson() == null) {
+            return "UNKNOWN";
+        }
+        if (run.payloadJson().contains("harnessFailureReason")) {
+            return "TOOL_OUTPUT_INVALID";
+        }
+        return "UNKNOWN";
     }
 
     private Map<String, Object> toView(HarnessWorkflowRun run) {

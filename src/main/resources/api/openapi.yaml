@@ -73,6 +73,77 @@ paths:
         '403':
           description: Non-admin access denied
 
+  /api/v1/workflows/runs:
+    get:
+      tags:
+        - Harness Workflows
+      summary: List harness workflow runs by state
+      description: Requires `X-User-Id: admin` or `clinician`. Returns hashed session ids only.
+      operationId: listHarnessWorkflowRuns
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+            default: NEEDS_HUMAN
+            enum: [NEEDS_HUMAN, FAILED, DONE]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        '200':
+          description: Harness workflow run views
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        '403':
+          description: Checkpoint reviewer access required
+
+  /api/v1/workflows/{runId}/checkpoint:
+    post:
+      tags:
+        - Harness Workflows
+      summary: Approve or reject a paused harness workflow run
+      description: Requires `X-User-Id: admin` or `clinician`.
+      operationId: harnessWorkflowCheckpoint
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, resumeToken]
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVE, REJECT]
+                resumeToken:
+                  type: string
+      responses:
+        '200':
+          description: Checkpoint result
+        '403':
+          description: Invalid token or access denied
+        '404':
+          description: Run not found
+        '409':
+          description: Run not awaiting review
+
   /api/v1/chats/export-bundle:
     get:
       tags:

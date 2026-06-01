@@ -37,11 +37,19 @@ class ChatAdminPlaywrightSmokeTest extends BaseIntegrationTest {
             page.waitForSelector("text=Admin Operations");
             assertTrue(page.locator("a:has-text('Session Tokens')").count() > 0);
             assertTrue(page.locator("a:has-text('Chat Export Audit')").count() > 0);
+            assertTrue(page.locator("a:has-text('Harness Runs')").count() > 0);
+            assertTrue(page.locator("a:has-text('Harness Chains')").count() > 0);
             assertTrue(page.locator("text=Chat Retention").count() > 0);
             assertTrue(page.locator("a:has-text('Open Runbook')").count() > 0);
 
             page.navigate(baseUrl + "/admin/session-tokens?user=admin");
             page.waitForSelector("text=API Session Tokens");
+
+            page.navigate(baseUrl + "/admin/harness-runs?user=admin");
+            page.waitForSelector("text=Harness Workflow Runs");
+
+            page.navigate(baseUrl + "/admin/harness-chains?user=admin");
+            page.waitForSelector("text=Harness Event Chains");
 
             page.navigate(baseUrl + "/chat");
             page.waitForSelector("#exportBundleBtn");

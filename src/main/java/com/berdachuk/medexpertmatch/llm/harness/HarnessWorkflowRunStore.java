@@ -10,5 +10,7 @@ public interface HarnessWorkflowRunStore {
 
     java.util.List<HarnessWorkflowRun> findByState(DoctorMatchWorkflowState state, int limit);
 
+    java.util.List<HarnessWorkflowRun> findRecentByStates(java.util.List<DoctorMatchWorkflowState> states, int limit);
+
     void updateState(String runId, DoctorMatchWorkflowState state);
 }

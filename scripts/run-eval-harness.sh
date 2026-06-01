@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# M29 eval harness gate: fails if pass rate drops more than 5% below baseline file.
+# M29/M33 eval harness gate: structural integrity + optional full pass-rate IT in CI verify.
 set -euo pipefail
 
 BASELINE_FILE="src/main/resources/evaluation/baseline-pass-rate.txt"
@@ -13,7 +13,6 @@ fi
 BASELINE=$(tr -d '[:space:]' < "$BASELINE_FILE")
 echo "Eval harness baseline pass rate: $BASELINE (dataset=$DATASET)"
 
-# Offline eval requires running app + DB; CI can wire mvn test -Dtest=EvalHarnessBaselineTest
-mvn -q test -Dtest=EvalHarnessBaselineTest
+mvn -q test -Dtest=EvalHarnessBaselineTest,EvalHarnessPassRateGateTest,EvalDatasetIntegrityServiceTest
 
 echo "Eval harness gate passed."
