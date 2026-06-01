@@ -7,19 +7,29 @@ import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.agent.SessionAdvisorSupport;
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
+import com.berdachuk.medexpertmatch.llm.chat.ChatToolContextHolder;
+import com.berdachuk.medexpertmatch.llm.chat.ConversationGoalContext;
+import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
+import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
+import com.berdachuk.medexpertmatch.llm.chat.GoalType;
+import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.session.SessionService;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
@@ -27,6 +37,7 @@ import reactor.core.publisher.Flux;
 import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +55,15 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final LlmCallLimiter llmCallLimiter;
     private final ChatTurnMetrics chatTurnMetrics;
     private final PromptTemplate chatAgentSystemTemplate;
+    private final PromptTemplate chatAgentOrchestratorInstructionsTemplate;
+    private final PromptTemplate chatUserMessageTemplate;
+    private final ChatCasePromptSupport chatCasePromptSupport;
+    private final MedicalAgentCriticService medicalAgentCriticService;
+    private final HarnessProperties harnessProperties;
     private final String functionGemmaModelName;
+    private final GoalClassifier goalClassifier;
+    private final MedicalAgentService medicalAgentService;
+    private final SessionService sessionService;
 
     public ChatAssistantServiceImpl(
             ChatService chatService,
@@ -54,7 +73,16 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             ChatStreamActivityPublisher chatStreamActivityPublisher,
             LlmCallLimiter llmCallLimiter,
             ChatTurnMetrics chatTurnMetrics,
-            @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName) {
+            @Qualifier("chatAgentSystemPromptTemplate") PromptTemplate chatAgentSystemTemplate,
+            @Qualifier("chatAgentOrchestratorInstructionsPromptTemplate") PromptTemplate chatAgentOrchestratorInstructionsTemplate,
+            @Qualifier("chatUserMessagePromptTemplate") PromptTemplate chatUserMessageTemplate,
+            ChatCasePromptSupport chatCasePromptSupport,
+            MedicalAgentCriticService medicalAgentCriticService,
+            HarnessProperties harnessProperties,
+            @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName,
+            GoalClassifier goalClassifier,
+            MedicalAgentService medicalAgentService,
+            SessionService sessionService) {
         this.chatService = chatService;
         this.chatClient = chatClient;
         this.promptSupportService = promptSupportService;
@@ -62,16 +90,33 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.chatStreamActivityPublisher = chatStreamActivityPublisher;
         this.llmCallLimiter = llmCallLimiter;
         this.chatTurnMetrics = chatTurnMetrics;
+        this.chatAgentSystemTemplate = chatAgentSystemTemplate;
+        this.chatAgentOrchestratorInstructionsTemplate = chatAgentOrchestratorInstructionsTemplate;
+        this.chatUserMessageTemplate = chatUserMessageTemplate;
+        this.chatCasePromptSupport = chatCasePromptSupport;
+        this.medicalAgentCriticService = medicalAgentCriticService;
+        this.harnessProperties = harnessProperties;
         this.functionGemmaModelName = functionGemmaModelName;
-        this.chatAgentSystemTemplate = new PromptTemplate(new ClassPathResource("prompts/chat-agent-system.st"));
+        this.goalClassifier = goalClassifier;
+        this.medicalAgentService = medicalAgentService;
+        this.sessionService = sessionService;
     }
 
     @Override
     public Map<String, ChatMessage> processMessage(String chatId, String userId, String content, String agentIdOverride) {
-        TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride);
+        GoalClassification goal = goalClassifier.classify(content);
+        log.info("Goal classified: {} (caseId={})", goal.goalType(), goal.caseId().orElse("none"));
+
+        if (goal.isRoutableToEngine() && goal.hasCaseId()) {
+            return processViaHarnessEngine(chatId, userId, content, goal);
+        }
+
+        TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride, goal);
         try {
             String reply = invokeSync(ctx);
             ChatMessage assistantMessage = chatService.appendAssistantMessage(chatId, userId, reply);
+            ConversationGoalContext.set(goal.goalType(),
+                    goal.caseId().orElse(null), ctx.sessionId());
             return Map.of("userMessage", ctx.userMessage(), "assistantMessage", assistantMessage);
         } catch (Exception e) {
             log.warn("Chat LLM turn failed for chat {}: {}", chatId, e.getMessage());
@@ -86,7 +131,9 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     @Override
     public SseEmitter streamMessage(String chatId, String userId, String content, String agentIdOverride,
                                       RateLimitTier tier) {
-        TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride);
+        GoalClassification goal = goalClassifier.classify(content);
+        log.info("Goal classified: {} (caseId={})", goal.goalType(), goal.caseId().orElse("none"));
+        TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride, goal);
         SseEmitter emitter = new SseEmitter(120_000L);
         RateLimitTier metricsTier = tier != null ? tier : RateLimitTier.DEFAULT;
         CompletableFuture.runAsync(() -> {
@@ -119,10 +166,11 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                         })
                         .doOnComplete(() -> {
                             try {
-                                String reply = full.toString().isBlank()
-                                        ? "I could not generate a response. Please try again."
-                                        : full.toString().trim();
+                                String reply = resolveReplyAfterStream(ctx, full.toString());
+                                streamReplyTokens(emitter, full.toString(), reply);
                                 ChatMessage assistant = chatService.appendAssistantMessage(chatId, userId, reply);
+                                ConversationGoalContext.set(ctx.goal().goalType(),
+                                        ctx.goal().caseId().orElse(null), ctx.sessionId());
                                 sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", ctx.profile().agentId()));
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                                         "id", assistant.id(),
@@ -176,10 +224,41 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         if (reply == null || reply.isBlank()) {
             return "I could not generate a response. Please try again or rephrase your question.";
         }
-        return reply.trim();
+        return applyChatCritic(reply.trim(), Map.of("agentId", ctx.profile().agentId()));
+    }
+
+    private String applyChatCritic(String reply, Map<String, Object> metadata) {
+        if (!harnessProperties.criticChatEnabled()) {
+            return reply;
+        }
+        MedicalAgentCriticService.CriticResult critic = medicalAgentCriticService.review(reply, metadata);
+        return critic.sanitizedResponse();
+    }
+
+    private String resolveReplyAfterStream(TurnContext ctx, String streamedText) {
+        if (streamedText != null && !streamedText.isBlank()) {
+            return applyChatCritic(streamedText.trim(), Map.of("agentId", ctx.profile().agentId()));
+        }
+        log.warn("Chat stream returned no text for session {}; retrying sync tool-calling turn",
+                ctx.sessionId());
+        logStreamService.sendLog(ctx.sessionId(), "WARN", "Chat Agent",
+                "Stream empty — retrying sync " + functionGemmaModelName + " turn");
+        return invokeSync(ctx);
+    }
+
+    private void streamReplyTokens(SseEmitter emitter, String streamedText, String reply) throws IOException {
+        if (streamedText != null && !streamedText.isBlank()) {
+            return;
+        }
+        emitter.send(SseEmitter.event().name("token").data(Map.of("t", reply)));
     }
 
     private TurnContext prepareTurn(String chatId, String userId, String content, String agentIdOverride) {
+        return prepareTurn(chatId, userId, content, agentIdOverride, GoalClassification.general());
+    }
+
+    private TurnContext prepareTurn(String chatId, String userId, String content, String agentIdOverride,
+                                     GoalClassification goal) {
         Chat chat = chatService.requireOwnedChat(chatId, userId);
         ChatAgentProfile profile = resolveProfile(chat, agentIdOverride);
 
@@ -192,14 +271,17 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         String sessionId = userId + "-" + chatId;
         logStreamService.setCurrentSessionId(sessionId);
         OrchestrationContextHolder.setSessionId(sessionId);
+        ChatToolContextHolder.setProfile(profile);
 
         String systemPrompt = buildSystemPrompt(profile);
-        String userPrompt = buildUserPrompt(profile, content);
-        return new TurnContext(userMessage, sessionId, profile, systemPrompt, userPrompt);
+        String userPrompt = buildUserPrompt(profile, content, goal);
+        return new TurnContext(userMessage, sessionId, profile, goal, systemPrompt, userPrompt);
     }
 
     private void clearTurnContext(String sessionId) {
+        ChatToolContextHolder.clear();
         OrchestrationContextHolder.clear();
+        ConversationGoalContext.clear(sessionId);
         logStreamService.clearCurrentSessionId();
     }
 
@@ -219,11 +301,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
 
     private String buildAgentInstructions(ChatAgentProfile profile) {
         if (profile.orchestrator()) {
-            return """
-                    You are in Auto orchestrator mode. Answer directly when possible.
-                    For specialized domains, use TodoWrite to plan and Task to delegate to subagents:
-                    triage-intake, case-analyzer, evidence-scout, specialist-matcher, routing-planner, network-analyst.
-                    Merge subagent results into one cohesive reply.""";
+            return chatAgentOrchestratorInstructionsTemplate.render(Collections.emptyMap());
         }
         List<String> skillBodies = new ArrayList<>();
         for (String skill : profile.skills()) {
@@ -233,12 +311,30 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     }
 
     private String buildUserPrompt(ChatAgentProfile profile, String content) {
+        String routingHint = "";
         if (profile.orchestrator()) {
-            return ChatAgentProfile.classifyIntent(content)
-                    .map(hint -> "Routing hint — consider specialist: " + hint.agentId() + "\n\nUser message:\n" + content)
-                    .orElse(content);
+            routingHint = ChatAgentProfile.classifyIntent(content)
+                    .map(hint -> "Routing hint — consider specialist: " + hint.agentId() + "\n\n")
+                    .orElse("");
         }
-        return "User message:\n" + content;
+        return chatUserMessageTemplate.render(Map.of(
+                "caseToolHints", chatCasePromptSupport.buildCaseToolHints(content),
+                "routingHint", routingHint,
+                "userMessage", content));
+    }
+
+    private String buildUserPrompt(ChatAgentProfile profile, String content, GoalClassification goal) {
+        String goalHint = "Goal identified: " + goal.goalType().name()
+                + (goal.caseId().isPresent() ? " | case ID: " + goal.caseId().get() : "") + "\n\n";
+        String routingHint = "";
+        if (profile.orchestrator() && goal.goalType() != GoalType.GENERAL_QUESTION) {
+            routingHint = "Use tools matching the identified goal (" + goal.goalType().name()
+                    + "). Do NOT delegate via Task — call the appropriate tool directly.\n\n";
+        }
+        return chatUserMessageTemplate.render(Map.of(
+                "caseToolHints", chatCasePromptSupport.buildCaseToolHints(content),
+                "routingHint", goalHint + routingHint,
+                "userMessage", content));
     }
 
     private static void sendAgentEvent(SseEmitter emitter, Map<String, Object> payload) {
@@ -249,10 +345,53 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         }
     }
 
+    private Map<String, ChatMessage> processViaHarnessEngine(
+            String chatId, String userId, String content, GoalClassification goal) {
+        String caseId = goal.caseId().orElseThrow();
+        log.info("Routing to harness engine: goal={}, caseId={}", goal.goalType(), caseId);
+
+        ChatMessage userMessage = chatService.appendUserMessage(chatId, userId, content.trim());
+        String sessionId = userId + "-" + chatId;
+        logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
+
+        try {
+            logStreamService.sendLog(sessionId, "INFO", "HARNESS_GOAL",
+                    "Goal identified: " + goal.goalType() + " — routing to workflow engine");
+
+            MedicalAgentService.AgentResponse engineResponse = switch (goal.goalType()) {
+                case MATCH_DOCTORS -> medicalAgentService.matchDoctors(caseId, Map.of("sessionId", sessionId));
+                case ROUTE_CASE -> medicalAgentService.routeCase(caseId, Map.of("sessionId", sessionId));
+                default -> new MedicalAgentService.AgentResponse(
+                        "Goal " + goal.goalType() + " is not supported by harness engines yet.",
+                        Map.of("goalType", goal.goalType().name()));
+            };
+
+            ChatMessage assistantMessage = chatService.appendAssistantMessage(
+                    chatId, userId, engineResponse.response());
+            ConversationGoalContext.set(goal.goalType(), caseId, sessionId);
+            try {
+                sessionService.appendMessage(sessionId, new AssistantMessage(engineResponse.response()));
+            } catch (Exception ignored) {
+                // best effort
+            }
+            return Map.of("userMessage", userMessage, "assistantMessage", assistantMessage);
+        } catch (Exception e) {
+            log.warn("Harness engine failed for chat {} goal {}: {}", chatId, goal.goalType(), e.getMessage());
+            ChatMessage assistantMessage = chatService.appendAssistantMessage(
+                    chatId, userId, "Sorry, the specialist matching engine encountered an error. Please try again.");
+            return Map.of("userMessage", userMessage, "assistantMessage", assistantMessage);
+        } finally {
+            OrchestrationContextHolder.clear();
+            logStreamService.clearCurrentSessionId();
+        }
+    }
+
     private record TurnContext(
             ChatMessage userMessage,
             String sessionId,
             ChatAgentProfile profile,
+            GoalClassification goal,
             String systemPrompt,
             String userPrompt) {}
 }

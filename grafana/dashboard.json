@@ -154,6 +154,30 @@
       ]
     },
     {
+      "title": "Harness Verify Failures by Reason",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "sum by (reason) (rate(harness_verify_failure_reason_total[5m]))", "legendFormat": "{{reason}}"}
+      ]
+    },
+    {
+      "title": "Harness Verify Failures",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(harness_verify_failure_total[5m])"}
+      ]
+    },
+    {
+      "title": "Harness Critic Failures",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(harness_critic_failure_total[5m])"}
+      ]
+    },
+    {
       "title": "Operator Runbook",
       "type": "text",
       "options": {

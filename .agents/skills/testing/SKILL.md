@@ -21,6 +21,19 @@ Always use TDD. Before implementing any functionality, follow this four-step loo
 3. **Implement** the functionality — only after the test is written and verified.
 4. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
 
+### Ralph Loop (coding harness)
+
+For agent-assisted code changes, use an automated **Formulate → Change → Run → Observe → Fix** loop:
+
+1. **Change** — small, scoped diff or patch.
+2. **Run** — `mvn test` (unit) or `mvn verify` (IT) for touched modules.
+3. **Observe** — read compiler/test output; structure errors (file, line, message) for the agent.
+4. **Fix** — one issue class per iteration; stop when green or at iteration limit.
+
+Log recurring failure classes in `.agents/templates/harness-backlog-item.md` (harness improvement, not “model was dumb”).
+
+Eval prompt changes: run `scripts/run-eval-harness.sh` after updating `.st` files or tool behavior.
+
 ### Test Types
 
 - **Integration tests**: `*IT.java` suffix, extend `BaseIntegrationTest`, run via `mvn verify`

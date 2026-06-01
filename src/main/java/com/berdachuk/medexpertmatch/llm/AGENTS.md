@@ -7,6 +7,7 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 - `MedicalAgentService` — primary orchestrator
 - Workflow services for: case analysis, case intake, doctor matching, queue prioritization, routing, recommendations, network analytics
 - `LlmResponseSanitizer` — strips PHI from LLM outputs before logging/storage
+- `llm/harness/` — verify/critic loops, context bundles, tool scope, `DoctorMatchWorkflowEngine` (M29)
 - Spring AI Agent Utils integration (runtime skills in `src/main/resources/skills/`)
 
 ## Owned Domain Models
@@ -19,8 +20,9 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 
 ## Conventions
 
-- All LLM prompts use external `.st` files in `src/main/resources/prompts/` — never hardcode prompt strings
-- Prompt templates are configured as Spring beans in `PromptTemplateConfig` with `@Qualifier`
+- All LLM prompts use external `.st` files in `src/main/resources/prompts/` — never hardcode prompt strings in Java
+- Register prompts as `@Qualifier` `PromptTemplate` beans in `core/config/PromptTemplateConfig.java` using `.resource(classpath:...)` (Spring AI resource pattern), not inline `.template("...")` or text blocks
+- Prompt templates are configured with `StTemplateRenderer` (`<variable>` delimiters) and injected via constructor
 - Medical disclaimers must be included in ALL medical AI prompts
 - Agent Skills (runtime) live in `src/main/resources/skills/` — distinct from `.agents/skills/` (development)
 - Sanitize all LLM outputs through `LlmResponseSanitizer` before logging or storing
@@ -32,9 +34,17 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 - Never hardcode API keys — use environment variables or Spring config
 - Agent Skill .md files in `src/main/resources/skills/` are runtime prompts, NOT development guides
 
+## Harness (M29)
+
+- Config: `medexpertmatch.llm.harness.*` (`HarnessProperties`)
+- Doctor match API uses `DoctorMatchWorkflowEngine` (states logged as `HARNESS_STATE`)
+- Chat: `ChatToolContextHolder` + `ToolScopeEnforcingResolver`; critic via `MedicalAgentCriticService`
+- Harness backlog template: `.agents/templates/harness-backlog-item.md`
+
 ## Related Skills
 
 - `llm-prompts` — prompt template creation and management
+- `testing` — TDD and Ralph Loop for harness changes
 - `code-style` — service implementation patterns
 - `testing` — mocking AI providers in integration tests
 - `core-architecture` — cross-module orchestration boundaries

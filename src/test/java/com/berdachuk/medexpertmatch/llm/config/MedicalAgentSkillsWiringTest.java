@@ -2,11 +2,12 @@ package com.berdachuk.medexpertmatch.llm.config;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.util.StreamUtils;
 
-import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -15,10 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Verifies the Agent Skills wiring in {@link MedicalAgentConfiguration}: the {@code skillsTool}
- * factory builds a {@link ToolCallback} from the default classpath {@code skills} directory, the
- * {@code fileSystemTools} factory exposes the read-capable tool, and that {@code ShellTools} is
- * intentionally NOT wired (HIPAA: no unsandboxed script execution). Pure unit test (no Spring
- * context, no Testcontainers, no LLM call).
+ * factory builds a {@link ToolCallback} from the default classpath {@code skills} directory,
+ * and that {@code FileSystemTools} and {@code ShellTools} are intentionally NOT wired
+ * (HIPAA: no unsandboxed script execution, and to prevent LLM from misreading case IDs as file paths).
+ * Pure unit test (no Spring context, no Testcontainers, no LLM call).
  */
 class MedicalAgentSkillsWiringTest {
 
@@ -36,13 +37,13 @@ class MedicalAgentSkillsWiringTest {
     }
 
     @Test
-    @DisplayName("fileSystemTools factory exposes the read tool for skill reference files")
-    void fileSystemToolsExposesRead() throws Exception {
-        FileSystemTools tools = config.fileSystemTools();
+    @DisplayName("fileSystemTools is NOT exposed — prevents LLM from misreading case IDs as file paths")
+    void fileSystemToolsIsNotWired() {
+        boolean hasFileSystemToolsBean = Arrays.stream(MedicalAgentConfiguration.class.getDeclaredMethods())
+                .anyMatch(m -> m.getReturnType().getName().contains("FileSystemTools"));
 
-        assertNotNull(tools, "FileSystemTools bean must be created");
-        Method read = tools.getClass().getMethod("read", String.class, Integer.class, Integer.class);
-        assertNotNull(read, "FileSystemTools must expose a read(...) tool method");
+        assertFalse(hasFileSystemToolsBean,
+                "FileSystemTools must not be registered — prevents LLM from reading case IDs as files");
     }
 
     @Test
@@ -57,8 +58,11 @@ class MedicalAgentSkillsWiringTest {
 
     @Test
     @DisplayName("Memory system prompt remains PHI-safe alongside skills wiring")
-    void memoryPromptStillPhiSafe() {
-        assertTrue(MedicalAgentConfiguration.MEMORY_SYSTEM_PROMPT.toLowerCase().contains("phi"),
+    void memoryPromptStillPhiSafe() throws Exception {
+        String prompt = StreamUtils.copyToString(
+                new ClassPathResource("prompts/auto-memory-system.st").getInputStream(),
+                StandardCharsets.UTF_8);
+        assertTrue(prompt.toLowerCase().contains("phi"),
                 "memory system prompt must still warn about PHI after skills wiring");
     }
 }

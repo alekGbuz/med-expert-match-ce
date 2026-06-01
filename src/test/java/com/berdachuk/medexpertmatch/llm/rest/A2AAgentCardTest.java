@@ -36,5 +36,9 @@ class A2AAgentCardTest {
         Map<String, Object> rateLimits = (Map<String, Object>) card.get("rateLimits");
         assertTrue(rateLimits.containsKey("windowSeconds"));
         assertTrue(rateLimits.containsKey("scopes"));
+        assertTrue(card.containsKey("allowedTools"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> allowedTools = (Map<String, Object>) card.get("allowedTools");
+        assertTrue(allowedTools.containsKey("doctor_match"));
     }
 }

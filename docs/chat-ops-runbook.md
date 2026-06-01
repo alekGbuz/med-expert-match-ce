@@ -45,6 +45,25 @@ Access with `?user=admin` (sets `medexpertmatch-user-id=admin` cookie).
 
 Audit API: `GET /api/v1/admin/audit/chat-exports?action=CHAT_EXPORT_BUNDLE` (optional filter).
 
+## LLM harness metrics (M29/M30)
+
+Micrometer counters (no PHI in labels):
+
+| Metric | Meaning |
+|--------|---------|
+| `harness.verify.failure` | Post-tool verification failed (doctor/routing) |
+| `harness.critic.failure` | Critic pass rejected or policy violation |
+
+Workflow logs emit `HARNESS_STATE` transitions on the active session id (doctor match, routing, case intake).
+
+- Config: `medexpertmatch.llm.harness.*` in `application.yml`
+- Human checkpoint: `POST /api/v1/workflows/{runId}/checkpoint` with `X-User-Id: admin` or `clinician`, body `{ "decision": "APPROVE"|"REJECT", "resumeToken": "..." }` (enable via `human-checkpoint-enabled`)
+- Admin UI: `/admin/harness-runs?user=admin` lists `NEEDS_HUMAN` runs; `/admin/harness-chains?user=admin` traces analysis→match→recommend
+- REST: `GET /api/v1/workflows/runs?state=NEEDS_HUMAN` (admin/clinician)
+- Analysis→match handoff: `chain-analysis-to-match`; match→recommend: `chain-match-to-recommend`
+- Eval gate: `scripts/run-eval-harness.sh` (CI after unit tests)
+- Harness backlog template: `.agents/templates/harness-backlog-item.md`
+
 ## Observability
 
 - Dashboard: `grafana/dashboard.json`

@@ -6,10 +6,14 @@ import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.agent.tools.AskUserQuestionTool;
-import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.SkillsTool;
 import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springaicommunity.agent.tools.task.TaskTool;
@@ -20,6 +24,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.session.DefaultSessionService;
 import org.springframework.ai.session.SessionRepository;
@@ -46,6 +51,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import java.util.Collections;
+
 /**
  * Configuration for Medical Agent with Spring AI Agent Skills integration.
  * <p>
@@ -65,21 +72,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
         matchIfMissing = true
 )
 public class MedicalAgentConfiguration {
-
-    /**
-     * System guidance that turns the AutoMemory tools into a usable long-term memory layer
-     * (Option B: explicit tools + prompt, since this spring-ai-agent-utils version exposes no
-     * {@code AutoMemoryToolsAdvisor}). It instructs the agent to curate durable cross-session
-     * facts and — critically — to store ONLY non-PHI (preferences, routing policies, model config),
-     * never patient data. A defense-in-depth complement to the {@code PhiGuard} hard reject.
-     */
-    public static final String MEMORY_SYSTEM_PROMPT = """
-            You have a durable long-term memory across sessions via the AutoMemory tools \
-            (automemory_append, automemory_read, automemory_index). Use automemory_read at the \
-            start of relevant tasks to recall clinician preferences, routing policies, and model \
-            configuration, and automemory_append to persist new durable, non-patient facts. \
-            CRITICAL HIPAA RULE: never write PHI (patient names, SSN, MRN, DOB, contact details, \
-            or any patient-identifying data) to memory. Store ONLY non-PHI operational knowledge.""";
 
     private final ResourceLoader resourceLoader;
 
@@ -143,21 +135,15 @@ public class MedicalAgentConfiguration {
     }
 
     /**
-     * Creates the {@link FileSystemTools} bean (Read) so skills can pull in reference files and
-     * assets on demand.
+     * NOTE: {@link FileSystemTools} from spring-ai-agent-utils is intentionally NOT registered.
+     * The Read tool would give the LLM unrestricted filesystem access — when asked for case
+     * information the agent tries to read case IDs as file paths instead of using the proper
+     * domain tools ({@code analyze_case}, {@code match_doctors_to_case}, etc.).
      * <p>
-     * NOTE: {@code ShellTools} from spring-ai-agent-utils is intentionally NOT registered. Under
-     * HIPAA and the project's AGENTS.md constraints, the agent must not execute unsandboxed shell
-     * scripts; exposing {@code bash}/{@code killShell} tools would create an arbitrary
-     * code-execution surface and a PHI-exfiltration risk. File access is limited to the read-only
-     * {@link FileSystemTools} surface.
+     * {@code ShellTools} is also excluded: under HIPAA and the project's AGENTS.md constraints,
+     * the agent must not execute unsandboxed shell scripts; exposing {@code bash}/{@code killShell}
+     * tools would create an arbitrary code-execution surface and a PHI-exfiltration risk.
      */
-    @Bean
-    public FileSystemTools fileSystemTools() {
-        log.info("Creating FileSystemTools bean for reading skill references (ShellTools intentionally disabled per HIPAA)");
-        return FileSystemTools.builder()
-                .build();
-    }
 
     /**
      * Non-LLM token estimator shared by the token-count trigger and the window strategy. Keeps
@@ -261,16 +247,34 @@ public class MedicalAgentConfiguration {
 
     /**
      * Task tool for Auto orchestrator subagent delegation (M08 Step 6 / M14).
+     * Subagents get the same medical @Tool components so they can call
+     * match_doctors_to_case, analyze_case, etc. directly.
      */
     @Bean
     @org.springframework.beans.factory.annotation.Qualifier("taskTool")
     ToolCallback taskTool(
             @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
-            ResourceLoader resourceLoader) {
+            ResourceLoader resourceLoader,
+            CaseAnalysisAgentTools caseAnalysisAgentTools,
+            DoctorMatchingAgentTools doctorMatchingAgentTools,
+            EvidenceAgentTools evidenceAgentTools,
+            ClinicalAdvisorAgentTools clinicalAdvisorAgentTools,
+            GraphAnalyticsAgentTools graphAnalyticsAgentTools,
+            RoutingAgentTools routingAgentTools,
+            TodoWriteTool todoWriteTool,
+            AskUserQuestionTool askUserQuestionTool) {
         log.info("Creating TaskTool with specialist subagents from classpath:agents");
         try {
             var subagentReferences = loadSubagentReferences(resourceLoader);
-            ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel);
+            ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel)
+                    .defaultTools(caseAnalysisAgentTools)
+                    .defaultTools(doctorMatchingAgentTools)
+                    .defaultTools(evidenceAgentTools)
+                    .defaultTools(clinicalAdvisorAgentTools)
+                    .defaultTools(graphAnalyticsAgentTools)
+                    .defaultTools(routingAgentTools)
+                    .defaultTools(todoWriteTool)
+                    .defaultTools(askUserQuestionTool);
             return TaskTool.builder()
                     .subagentReferences(subagentReferences)
                     .subagentTypes(ClaudeSubagentType.builder()
@@ -318,8 +322,8 @@ public class MedicalAgentConfiguration {
 
     /**
      * Creates a ChatClient with Agent Skills and Medical Tools enabled.
-     * This ChatClient includes SkillsTool for skill discovery, FileSystemTools
-     * for reading reference materials, and MedicalAgentTools for Java @Tool methods.
+     * This ChatClient includes SkillsTool for skill discovery and agent tool
+     * components for Java @Tool methods (no filesystem tools exposed).
      * <p>
      * Uses toolCallingChatModel (FunctionGemma) instead of primaryChatModel (LLM)
      * because FunctionGemma supports tool calling while the primary chat model often does not.
@@ -333,14 +337,19 @@ public class MedicalAgentConfiguration {
             @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
             @org.springframework.beans.factory.annotation.Qualifier("skillsTool") ToolCallback skillsTool,
             @org.springframework.beans.factory.annotation.Qualifier("taskTool") ToolCallback taskTool,
-            FileSystemTools fileSystemTools,
-            MedicalAgentTools medicalAgentTools,
+            CaseAnalysisAgentTools caseAnalysisAgentTools,
+            DoctorMatchingAgentTools doctorMatchingAgentTools,
+            EvidenceAgentTools evidenceAgentTools,
+            ClinicalAdvisorAgentTools clinicalAdvisorAgentTools,
+            GraphAnalyticsAgentTools graphAnalyticsAgentTools,
+            RoutingAgentTools routingAgentTools,
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool,
             ToolCallAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
-            AgentMemoryProperties agentMemoryProperties
+            AgentMemoryProperties agentMemoryProperties,
+            @Qualifier("autoMemorySystemPromptTemplate") PromptTemplate autoMemorySystemPromptTemplate
     ) {
         log.info("Creating medicalAgentChatClient with Agent Skills and Medical Tools enabled");
         log.info("Using toolCallingChatModel: {} for tool invocations", toolCallingChatModel.getClass().getSimpleName());
@@ -348,9 +357,13 @@ public class MedicalAgentConfiguration {
         log.info("AutoMemory long-term memory directory: {}", agentMemoryProperties.dir());
 
         ChatClient.Builder builder = ChatClient.builder(toolCallingChatModel)
-                .defaultSystem(MEMORY_SYSTEM_PROMPT)
-                .defaultTools(fileSystemTools)
-                .defaultTools(medicalAgentTools)
+                .defaultSystem(autoMemorySystemPromptTemplate.render(Collections.emptyMap()))
+                .defaultTools(caseAnalysisAgentTools)
+                .defaultTools(doctorMatchingAgentTools)
+                .defaultTools(evidenceAgentTools)
+                .defaultTools(clinicalAdvisorAgentTools)
+                .defaultTools(graphAnalyticsAgentTools)
+                .defaultTools(routingAgentTools)
                 .defaultTools(autoMemoryTools)
                 .defaultTools(todoWriteTool)
                 .defaultTools(askUserQuestionTool)
