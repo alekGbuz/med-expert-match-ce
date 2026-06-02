@@ -81,7 +81,7 @@ class ChatAssistantServiceImplTest {
         when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
         when(chatAgentSystemTemplate.render(any())).thenReturn("system");
         when(chatUserMessageTemplate.render(any())).thenReturn("user prompt");
-        when(chatCasePromptSupport.buildCaseToolHints(any())).thenReturn("");
+        when(chatCasePromptSupport.buildCaseToolHints(any(), any())).thenReturn("");
         when(chatClient.prompt()).thenReturn(requestSpec);
         when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.user(any(String.class))).thenReturn(requestSpec);

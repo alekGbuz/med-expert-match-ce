@@ -225,6 +225,12 @@ medexpertmatch:
       human-checkpoint-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_HUMAN_CHECKPOINT_ENABLED:false}
       chain-analysis-to-match: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_ANALYSIS_TO_MATCH:false}
       chain-match-to-recommend: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_MATCH_TO_RECOMMEND:false}
+      zero-result-fallback-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_ZERO_RESULT_FALLBACK_ENABLED:false}
+      retention:
+        enabled: ${MEDEXPERTMATCH_LLM_HARNESS_RETENTION_ENABLED:false}
+        retention-days: ${MEDEXPERTMATCH_LLM_HARNESS_RETENTION_DAYS:90}
+        batch-size: ${MEDEXPERTMATCH_LLM_HARNESS_RETENTION_BATCH_SIZE:100}
+        cron: ${MEDEXPERTMATCH_LLM_HARNESS_RETENTION_CRON:0 0 3 * * ?}
   synthetic-data: # Test data generation; batch sizes and timeouts
     embedding:
       thread-pool-size: ${SYNTHETIC_DATA_EMBEDDING_THREAD_POOL_SIZE:10}

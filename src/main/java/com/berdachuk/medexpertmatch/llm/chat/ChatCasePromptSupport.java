@@ -31,12 +31,24 @@ public class ChatCasePromptSupport {
     }
 
     public String buildCaseToolHints(String content) {
+        return buildCaseToolHints(content, null);
+    }
+
+    public String buildCaseToolHints(String content, GoalClassification goal) {
+        CaseContextIntent intent = resolveIntent(goal);
         return CaseIdExtractor.extractFromText(content)
                 .map(caseId -> {
                     String hint = caseIdHintTemplate.render(Map.of("caseId", caseId));
-                    CaseContextBundle bundle = caseContextBundleService.build(caseId, CaseContextIntent.CHAT_AUTO);
+                    CaseContextBundle bundle = caseContextBundleService.build(caseId, intent);
                     return hint + "\n\nContext bundle: " + bundle.summary();
                 })
                 .orElseGet(() -> noCaseIdHintTemplate.render(Collections.emptyMap()));
+    }
+
+    private static CaseContextIntent resolveIntent(GoalClassification goal) {
+        if (goal != null && goal.goalType() != GoalType.GENERAL_QUESTION && goal.goalType() != GoalType.GENERATE_RECOMMENDATIONS) {
+            return GoalClassifier.toContextIntent(goal.goalType());
+        }
+        return CaseContextIntent.CHAT_AUTO;
     }
 }

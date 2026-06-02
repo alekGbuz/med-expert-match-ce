@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -198,6 +199,21 @@ public class GoalClassifier {
                         .content());
 
         return parseClassification(response, caseId);
+    }
+
+    /**
+     * Maps a high-level goal type to the appropriate {@link CaseContextIntent}
+     * for building context bundles with the right fields per goal.
+     */
+    public static CaseContextIntent toContextIntent(GoalType goalType) {
+        return switch (goalType) {
+            case MATCH_DOCTORS -> CaseContextIntent.MATCH;
+            case ANALYZE_CASE -> CaseContextIntent.ANALYZE;
+            case ROUTE_CASE -> CaseContextIntent.ROUTE;
+            case TRIAGE_INTAKE -> CaseContextIntent.MATCH;
+            case SEARCH_EVIDENCE -> CaseContextIntent.EVIDENCE;
+            default -> CaseContextIntent.CHAT_AUTO;
+        };
     }
 
     /**
