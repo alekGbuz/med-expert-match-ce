@@ -116,6 +116,9 @@ nav:
       - Architecture Overview: ARCHITECTURE.md
       - Apache AGE Graph Analysis: APACHE_AGE_GRAPH_ANALYSIS.md
       - Integration Plan: INTEGRATION_PLAN.md
+      - Diagrams:
+          - Data Flow Architecture: architecture/diagrams/data-flow-architecture.md
+          - Expert Matching Sequence: architecture/diagrams/expert-matching-sequence.md
   - Development:
       - Fix Plan: FIX_PLAN.md
       - Implementation Plan: IMPLEMENTATION_PLAN.md

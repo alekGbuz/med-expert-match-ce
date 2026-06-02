@@ -100,7 +100,7 @@ class ChatTurnContinuityE2ETest {
         ConversationGoalContext.set(turn1Goal.goalType(), CASE_ID, SESSION_ID);
         ConversationGoalContext.clear(SESSION_ID);
 
-        verify(goalContextRepository, times(1)).deleteBySessionId(SESSION_ID);
+        verify(goalContextRepository, times(2)).deleteBySessionId(SESSION_ID);
 
         GoalClassification turn2Goal = goalClassifier.classify("yes");
 

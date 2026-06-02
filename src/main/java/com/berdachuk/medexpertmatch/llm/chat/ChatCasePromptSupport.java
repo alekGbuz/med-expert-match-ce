@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.chat;
 
 import com.berdachuk.medexpertmatch.core.util.CaseIdExtractor;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundle;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundleService;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Builds chat prompt hints for case-ID vs free-text clinical requests from external templates.
@@ -37,6 +39,17 @@ public class ChatCasePromptSupport {
     public String buildCaseToolHints(String content, GoalClassification goal) {
         CaseContextIntent intent = resolveIntent(goal);
         return CaseIdExtractor.extractFromText(content)
+                .or(() -> goal != null ? goal.caseId() : Optional.empty())
+                .or(() -> {
+                    String sid = OrchestrationContextHolder.sessionIdOrNull();
+                    if (sid != null) {
+                        ConversationGoalContext.Entry ctx = ConversationGoalContext.get(sid);
+                        if (ctx != null && ctx.lastCaseId() != null) {
+                            return Optional.of(ctx.lastCaseId());
+                        }
+                    }
+                    return Optional.empty();
+                })
                 .map(caseId -> {
                     String hint = caseIdHintTemplate.render(Map.of("caseId", caseId));
                     CaseContextBundle bundle = caseContextBundleService.build(caseId, intent);

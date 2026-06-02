@@ -9,8 +9,10 @@ import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
+import com.berdachuk.medexpertmatch.llm.chat.ConversationGoalContext;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
+import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
@@ -25,12 +27,19 @@ import org.springframework.ai.session.SessionService;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -97,5 +106,75 @@ class ChatAssistantServiceImplTest {
         assertEquals("Here is evidence", result.get("assistantMessage").content());
         verify(logStreamService).setCurrentSessionId("user-a-c1");
         verify(logStreamService).clearCurrentSessionId();
+    }
+
+    @Test
+    @DisplayName("shouldNotClearConversationGoalContextOnTurnEnd — context survives across turn boundaries")
+    void shouldNotClearConversationGoalContextOnTurnEnd() {
+        Chat chat = new Chat("c1", "user-a", "Test", "auto", false,
+                Instant.now(), Instant.now(), Instant.now(), 0);
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "Find evidence", 1, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "Here is evidence", 2, null, Instant.now());
+
+        when(chatService.requireOwnedChat("c1", "user-a")).thenReturn(chat);
+        when(chatService.appendUserMessage("c1", "user-a", "Find evidence")).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage("c1", "user-a", "Here is evidence")).thenReturn(assistantMsg);
+        when(goalClassifier.classify(any())).thenReturn(
+                new GoalClassification(GoalType.SEARCH_EVIDENCE, Optional.empty(), Optional.empty(), "keyword: evidence search"));
+        when(promptSupport.loadSkill(any())).thenReturn("skill body");
+        when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
+        when(chatAgentSystemTemplate.render(any())).thenReturn("system");
+        when(chatUserMessageTemplate.render(any())).thenReturn("user prompt");
+        when(chatCasePromptSupport.buildCaseToolHints(any(), any())).thenReturn("");
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.user(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
+        when(requestSpec.call()).thenReturn(callSpec);
+        when(callSpec.content()).thenReturn("Here is evidence");
+        when(medicalAgentCriticService.review(any(), any()))
+                .thenReturn(new MedicalAgentCriticService.CriticResult(true, "Here is evidence", null, null));
+
+        service.processMessage("c1", "user-a", "Find evidence", "auto");
+
+        ConversationGoalContext.Entry entry = ConversationGoalContext.get("user-a-c1");
+        assertNotNull(entry);
+        assertEquals(GoalType.SEARCH_EVIDENCE, entry.lastGoal());
+    }
+
+    @Test
+    @DisplayName("shouldInjectHistoryIntoFollowUpPrompt — history appears in prompt when follow-up detected")
+    void shouldInjectHistoryIntoFollowUpPrompt() {
+        Chat chat = new Chat("c1", "user-a", "Test", "auto", false,
+                Instant.now(), Instant.now(), Instant.now(), 0);
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "more", 2, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "Here is more info", 3, null, Instant.now());
+        ChatMessage prevAssistant = new ChatMessage("m0", "c1", "assistant", "Dr. Smith is a cardiologist", 1, null, Instant.now());
+
+        when(chatService.requireOwnedChat("c1", "user-a")).thenReturn(chat);
+        when(chatService.appendUserMessage("c1", "user-a", "more")).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage("c1", "user-a", "Here is more info")).thenReturn(assistantMsg);
+        when(chatService.getHistory("c1", "user-a", 6, 0))
+                .thenReturn(List.of(prevAssistant, userMsg));
+        when(goalClassifier.classify(any())).thenReturn(
+                new GoalClassification(GoalType.ANALYZE_CASE, Optional.of("case123"),
+                        Optional.empty(), "follow-up: ANALYZE_CASE"));
+        when(promptSupport.loadSkill(any())).thenReturn("skill body");
+        when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
+        when(chatAgentSystemTemplate.render(any())).thenReturn("system");
+        when(chatUserMessageTemplate.render(any())).thenReturn("user prompt with history");
+        when(chatCasePromptSupport.buildCaseToolHints(any(), any())).thenReturn("");
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.user(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
+        when(requestSpec.call()).thenReturn(callSpec);
+        when(callSpec.content()).thenReturn("Here is more info");
+        when(medicalAgentCriticService.review(any(), any()))
+                .thenReturn(new MedicalAgentCriticService.CriticResult(true, "Here is more info", null, null));
+
+        service.processMessage("c1", "user-a", "more", "auto");
+
+        verify(chatService).getHistory("c1", "user-a", 6, 0);
     }
 }

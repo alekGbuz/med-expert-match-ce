@@ -236,4 +236,91 @@ class GoalClassifierFollowUpTest {
 
         assertNull(result);
     }
+
+    @Test
+    @DisplayName("provide more details about Dr. X detected as follow-up")
+    void shouldDetectFollowUpWithProvideMoreDetailsPhrasing() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "provide more details about Dr. Young McGlynn", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertTrue(result.caseId().isPresent());
+        assertEquals(CASE_ID, result.caseId().get());
+    }
+
+    @Test
+    @DisplayName("tell me more about... detected as follow-up")
+    void shouldDetectFollowUpWithTellMeMoreAbout() {
+        ConversationGoalContext.set(GoalType.ANALYZE_CASE, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "tell me more about this case", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
+    }
+
+    @Test
+    @DisplayName("what about phrasing detected as follow-up")
+    void shouldDetectFollowUpWithWhatAboutPhrasing() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "what about the specialist recommendation", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+    }
+
+    @Test
+    @DisplayName("elaborate detected as follow-up")
+    void shouldDetectFollowUpWithElaborate() {
+        ConversationGoalContext.set(GoalType.ROUTE_CASE, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "elaborate on the routing options", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.ROUTE_CASE, result.goalType());
+    }
+
+    @Test
+    @DisplayName("expand on detected as follow-up")
+    void shouldDetectFollowUpWithExpand() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "expand on the doctor details", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+    }
+
+    @Test
+    @DisplayName("new explicit goal keyword clears context and starts fresh")
+    void shouldClearContextOnNewExplicitGoal() {
+        ConversationGoalContext.set(GoalType.ANALYZE_CASE, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "find specialist for this case", Optional.of(CASE_ID));
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertNull(ConversationGoalContext.get(SESSION_ID));
+    }
+
+    @Test
+    @DisplayName("case switch clears context in detectFollowUp")
+    void shouldClearContextOnCaseSwitchInFollowUp() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "yes but for a different case", Optional.empty());
+
+        assertNull(result);
+        assertNull(ConversationGoalContext.get(SESSION_ID));
+    }
 }

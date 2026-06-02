@@ -13,19 +13,79 @@
     font-size: 0.875rem;
 }
 
-#agentActivityPanel {
-    max-height: calc(100vh - 220px);
+.agent-panel-wrap .agent-panel-expanded {
+    max-height: 200px;
+}
+
+.agent-panel-wrap .agent-panel-entries {
+    max-height: 150px;
     overflow-y: auto;
 }
 
-#agentActivitySummary {
+.agent-activity-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #e9ecef;
+    border-top-color: #1a5490;
+    border-radius: 50%;
+    animation: agent-spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 0.35rem;
+}
+
+@keyframes agent-spin {
+    to { transform: rotate(360deg); }
+}
+
+.agent-activity-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
     cursor: pointer;
+}
+
+.agent-activity-header .agent-activity-spinner {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-width: 2px;
+}
+
+.agent-activity-collapse {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.agent-activity-collapse:hover {
+    color: #1a5490;
+}
+
+.agent-panel-summary {
+    cursor: pointer;
+}
+
+.agent-activity-entry.start {
+    border-left-color: #0d6efd;
 }
 
 .agent-activity-entry {
     border-left: 3px solid #0d6efd;
     padding-left: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.agent-activity-entry:last-child {
+    margin-bottom: 0;
 }
 
 .agent-activity-entry.tool,
@@ -49,21 +109,4 @@
 .chat-streaming .chat-markdown {
     min-height: 1.5rem;
     white-space: pre-wrap;
-}
-
-.harness-progress-step {
-    border-left: 3px solid #198754;
-    padding: 0.25rem 0.5rem;
-    margin-bottom: 0.25rem;
-    font-size: 0.8rem;
-}
-
-.harness-progress-label {
-    font-weight: 600;
-    color: #198754;
-}
-
-.harness-progress-detail {
-    display: block;
-    margin-top: 0.125rem;
 }

@@ -39,6 +39,11 @@ public class GoalClassifier {
     private static final Pattern CASE_SWITCH_PATTERN = Pattern.compile(
             "\\b(different|other|another|separate)\\s+case\\b", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern FOLLOW_UP_PHRASING = Pattern.compile(
+            "\\b(tell me more|more (?:details|info|information)|provide more|what about|" +
+            "how about|elaborate|expand|details? (?:about|on|for)|explain (?:more|further))\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private final ChatClient chatClient;
     private final PromptTemplate goalClassificationTemplate;
     private final ObjectMapper objectMapper;
@@ -97,6 +102,7 @@ public class GoalClassifier {
                 || lower.contains("recommend doctor") || lower.contains("expert match")
                 || lower.contains("find doctors") || lower.contains("rank doctors")
                 || lower.contains("best doctor") || lower.contains("find expert")) {
+            clearCurrentContext();
             return caseId.isPresent()
                     ? GoalClassification.matchDoctors(caseId.get(), "keyword: doctor matching with case ID")
                     : GoalClassification.matchDoctors("", "keyword: doctor matching from text");
@@ -105,23 +111,27 @@ public class GoalClassifier {
         if (lower.contains("analyze case") || lower.contains("analyze this case")
                 || lower.contains("icd") || lower.contains("diagnosis hint")
                 || lower.contains("clinical findings") || lower.contains("case summary")) {
+            clearCurrentContext();
             return caseId.map(id -> GoalClassification.analyzeCase(id, "keyword: case analysis"))
                     .orElse(null);
         }
 
         if (lower.contains("route") || lower.contains("facility")
                 || lower.contains("referral") || lower.contains("where to send")) {
+            clearCurrentContext();
             return caseId.map(id -> GoalClassification.routeCase(id, "keyword: facility routing"))
                     .orElse(null);
         }
 
         if (lower.contains("urgency") || lower.contains("triage")
                 || lower.contains("intake") || lower.contains("red flag")) {
+            clearCurrentContext();
             return GoalClassification.triageIntake("keyword: triage");
         }
 
         if (lower.contains("pubmed") || lower.contains("evidence")
                 || lower.contains("guideline") || lower.contains("literature")) {
+            clearCurrentContext();
             return GoalClassification.searchEvidence("keyword: evidence search");
         }
 
@@ -129,6 +139,10 @@ public class GoalClassifier {
     }
 
     GoalClassification detectFollowUp(String message, Optional<String> caseId) {
+        if (CASE_SWITCH_PATTERN.matcher(message).find()) {
+            clearCurrentContext();
+            return null;
+        }
         if (!isFollowUpSignal(message)) {
             return null;
         }
@@ -166,6 +180,9 @@ public class GoalClassifier {
         if (FOLLOW_UP_PREFIX.matcher(trimmed).matches()) {
             return true;
         }
+        if (FOLLOW_UP_PHRASING.matcher(trimmed).find()) {
+            return true;
+        }
         if (trimmed.length() <= 20
                 && !trimmed.matches(".*\\b(no|cancel|stop|quit|help|hello|hi|what|why|how|who|when|where)\\b.*")
                 && !containsDomainKeyword(trimmed)) {
@@ -180,6 +197,13 @@ public class GoalClassifier {
                 || lower.contains("facility") || lower.contains("route") || lower.contains("evidence")
                 || lower.contains("pubmed") || lower.contains("icd") || lower.contains("triage")
                 || lower.contains("urgency");
+    }
+
+    private static void clearCurrentContext() {
+        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+        if (sessionId != null) {
+            ConversationGoalContext.clear(sessionId);
+        }
     }
 
     /**
