@@ -85,6 +85,7 @@ public class RoutingWorkflowEngine {
             matches = routingAgentTools.match_facilities_for_case(caseId, maxResults, null, null, null, null);
 
             transition(sessionId, DoctorMatchWorkflowState.VERIFYING, "Verifying facility matches");
+            harnessMetrics.recordVerifyAttempt();
             verification = agentResponseVerifier.verify(
                     VerificationRequest.forRouting(caseId, matches, minMatches));
             if (verification.passed()) {

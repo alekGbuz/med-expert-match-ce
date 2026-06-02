@@ -1,14 +1,5 @@
-# M33: Harness Full Eval & Chain Visibility — ✅ Complete
+# M33: Harness Full Eval & Chain Visibility — ✅ Archived
 
-**Completed:** 2026-06-01 · Branch: `feat/m33-harness-eval-chain`
+See **`.agents/plans/archive/M33-harness-full-eval-and-chain-ui.md`**.
 
-**Next milestone:** [M34-harness-production-readiness.md](../M34-harness-production-readiness.md)
-
-## Delivered
-
-- `EvaluationServicePassRateIT` with mocked ground-truth agent responses + baseline gate
-- CI step for eval pass rate IT; enhanced `run-eval-harness.sh`
-- `HarnessChainTraceService`, JDBC chain events, admin `/admin/harness-chains`
-- `GET /api/v1/workflows/runs` REST + OpenAPI
-- Playwright smoke for harness runs/chains admin pages
-- `HarnessFailureBacklogSupport` prefilled backlog markdown for failed runs
+**Next:** **`.agents/plans/M34-harness-production-readiness.md`**

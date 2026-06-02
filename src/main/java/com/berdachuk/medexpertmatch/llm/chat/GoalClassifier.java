@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -28,11 +29,15 @@ import java.util.regex.Pattern;
 public class GoalClassifier {
 
     private static final Set<String> FOLLOW_UP_AFFIRMATIVES = Set.of(
-            "yes", "yeah", "yep", "ok", "okay", "sure", "go ahead", "please", "proceed", "continue");
+            "yes", "yeah", "yep", "ok", "okay", "sure", "go ahead", "please", "proceed", "continue",
+            "go on", "tell me more");
 
     private static final Pattern FOLLOW_UP_PREFIX = Pattern.compile(
             "^\\s*(more|other|another|next|show me more|show more|any other|additional)\\b.*",
             Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern CASE_SWITCH_PATTERN = Pattern.compile(
+            "\\b(different|other|another|separate)\\s+case\\b", Pattern.CASE_INSENSITIVE);
 
     private final ChatClient chatClient;
     private final PromptTemplate goalClassificationTemplate;
@@ -151,6 +156,9 @@ public class GoalClassifier {
         if (message == null) {
             return false;
         }
+        if (CASE_SWITCH_PATTERN.matcher(message).find()) {
+            return false;
+        }
         String trimmed = message.trim().toLowerCase();
         if (FOLLOW_UP_AFFIRMATIVES.contains(trimmed)) {
             return true;
@@ -191,6 +199,21 @@ public class GoalClassifier {
                         .content());
 
         return parseClassification(response, caseId);
+    }
+
+    /**
+     * Maps a high-level goal type to the appropriate {@link CaseContextIntent}
+     * for building context bundles with the right fields per goal.
+     */
+    public static CaseContextIntent toContextIntent(GoalType goalType) {
+        return switch (goalType) {
+            case MATCH_DOCTORS -> CaseContextIntent.MATCH;
+            case ANALYZE_CASE -> CaseContextIntent.ANALYZE;
+            case ROUTE_CASE -> CaseContextIntent.ROUTE;
+            case TRIAGE_INTAKE -> CaseContextIntent.MATCH;
+            case SEARCH_EVIDENCE -> CaseContextIntent.EVIDENCE;
+            default -> CaseContextIntent.CHAT_AUTO;
+        };
     }
 
     /**

@@ -1,0 +1,12 @@
+groups:
+  - name: harness
+    rules:
+      - alert: HarnessVerifyFailureRateHigh
+        expr: rate(harness_verify_failures_total[5m]) / rate(harness_verify_attempts_total[5m]) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+          component: harness
+        annotations:
+          summary: "Harness verify failure rate exceeds 30%"
+          description: "The verification step failure rate is {{ $value | humanizePercentage }} over the last 5 minutes."
