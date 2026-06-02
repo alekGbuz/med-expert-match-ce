@@ -159,6 +159,7 @@
         activityCollapsed = false;
         var panel = document.getElementById('agentActivityPanel');
         var summary = document.getElementById('agentActivitySummary');
+        var harnessPanel = document.getElementById('harnessProgress');
         if (panel) {
             panel.classList.remove('d-none');
             panel.innerHTML = '';
@@ -166,6 +167,10 @@
         if (summary) {
             summary.classList.add('d-none');
             summary.innerHTML = '';
+        }
+        if (harnessPanel) {
+            harnessPanel.classList.remove('d-none');
+            harnessPanel.innerHTML = '';
         }
     }
 
@@ -228,6 +233,25 @@
         renderActivityPanel();
     }
 
+    function renderHarnessProgress(rawMessage) {
+        var panel = document.getElementById('harnessProgress');
+        if (!panel) return;
+        try {
+            var parsed = typeof rawMessage === 'string' ? JSON.parse(rawMessage) : rawMessage;
+            var step = document.createElement('div');
+            step.className = 'harness-progress-step';
+            step.innerHTML = '<span class="harness-progress-label">' + escapeHtml(parsed.engine) + '</span>' +
+                '<span class="badge bg-secondary ms-1">' + escapeHtml(parsed.state) + '</span>' +
+                '<span class="harness-progress-detail small text-muted ms-1">' + escapeHtml(parsed.detail) + '</span>';
+            panel.appendChild(step);
+        } catch (e) {
+            var step = document.createElement('div');
+            step.className = 'harness-progress-step';
+            step.innerHTML = '<span class="small">' + escapeHtml(rawMessage || '') + '</span>';
+            panel.appendChild(step);
+        }
+    }
+
     function parseSseDataLine(line) {
         if (line.indexOf('data:') !== 0) return null;
         var value = line.slice(5);
@@ -283,7 +307,11 @@
         source.onmessage = function (e) {
             try {
                 var payload = JSON.parse(e.data);
-                addActivityEntry('tool', payload.message || e.data, 'orchestrator');
+                if (payload.level === 'HARNESS_PROGRESS') {
+                    renderHarnessProgress(payload.message);
+                } else {
+                    addActivityEntry('tool', payload.message || e.data, 'orchestrator');
+                }
             } catch (err) {
                 addActivityEntry('tool', e.data, 'orchestrator');
             }

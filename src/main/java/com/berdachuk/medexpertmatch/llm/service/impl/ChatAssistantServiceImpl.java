@@ -332,7 +332,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                     + "). Do NOT delegate via Task — call the appropriate tool directly.\n\n";
         }
         return chatUserMessageTemplate.render(Map.of(
-                "caseToolHints", chatCasePromptSupport.buildCaseToolHints(content),
+                "caseToolHints", chatCasePromptSupport.buildCaseToolHints(content, goal),
                 "routingHint", goalHint + routingHint,
                 "userMessage", content));
     }
@@ -358,6 +358,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         try {
             logStreamService.sendLog(sessionId, "INFO", "HARNESS_GOAL",
                     "Goal identified: " + goal.goalType() + " — routing to workflow engine");
+            sendHarnessProgress(sessionId, goal.goalType().name(), "PLANNING", "Starting workflow for case " + caseId);
 
             MedicalAgentService.AgentResponse engineResponse = switch (goal.goalType()) {
                 case MATCH_DOCTORS -> medicalAgentService.matchDoctors(caseId, Map.of("sessionId", sessionId));
@@ -366,6 +367,23 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                         "Goal " + goal.goalType() + " is not supported by harness engines yet.",
                         Map.of("goalType", goal.goalType().name()));
             };
+
+            if (harnessProperties.zeroResultFallbackEnabled() && isZeroResult(goal.goalType(), engineResponse)) {
+                log.info("Engine returned zero results for case {}; falling back to LLM chat", caseId);
+                sendHarnessProgress(sessionId, "LLM_FALLBACK", "PLANNING",
+                        "GraphRAG found no exact matches — consulting LLM");
+                ChatMessage fallbackMessage = fallbackToLlmChat(chatId, userId, content, goal, sessionId);
+                OrchestrationContextHolder.clear();
+                logStreamService.clearCurrentSessionId();
+                return Map.of("userMessage", userMessage, "assistantMessage", fallbackMessage);
+            }
+
+            String engineName = goal.goalType() == GoalType.MATCH_DOCTORS ? "DoctorMatch" : "Routing";
+            Object matchCount = engineResponse.metadata() != null
+                    ? engineResponse.metadata().getOrDefault("doctorMatchCount",
+                    engineResponse.metadata().getOrDefault("facilityMatchCount", 0))
+                    : 0;
+            sendHarnessProgress(sessionId, engineName, "DONE", "Completed — " + matchCount + " matches found");
 
             ChatMessage assistantMessage = chatService.appendAssistantMessage(
                     chatId, userId, engineResponse.response());
@@ -378,6 +396,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             return Map.of("userMessage", userMessage, "assistantMessage", assistantMessage);
         } catch (Exception e) {
             log.warn("Harness engine failed for chat {} goal {}: {}", chatId, goal.goalType(), e.getMessage());
+            sendHarnessProgress(userId + "-" + chatId, goal.goalType().name(), "FAILED", "Error: " + e.getMessage());
             ChatMessage assistantMessage = chatService.appendAssistantMessage(
                     chatId, userId, "Sorry, the specialist matching engine encountered an error. Please try again.");
             return Map.of("userMessage", userMessage, "assistantMessage", assistantMessage);
@@ -385,6 +404,60 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
+    }
+
+    private boolean isZeroResult(GoalType goalType, MedicalAgentService.AgentResponse response) {
+        if (response.metadata() == null) return true;
+        String key = goalType == GoalType.MATCH_DOCTORS ? "doctorMatchCount" : "facilityMatchCount";
+        Object count = response.metadata().get(key);
+        if (count instanceof Number n) return n.intValue() == 0;
+        if (count instanceof String s) {
+            try { return Integer.parseInt(s) == 0; } catch (NumberFormatException ignored) {}
+        }
+        return count == null;
+    }
+
+    private ChatMessage fallbackToLlmChat(String chatId, String userId, String content,
+                                           GoalClassification goal, String prevSessionId) {
+        ChatAgentProfile autoProfile = ChatAgentProfile.AUTO;
+        Chat chat = chatService.requireOwnedChat(chatId, userId);
+        ChatAgentProfile profile = autoProfile;
+        String sessionId = userId + "-" + chatId + "-fallback";
+        logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
+        ChatToolContextHolder.setProfile(profile);
+
+        try {
+            String noMatchHint = "GraphRAG found no exact matches for this case. "
+                    + "Suggest alternative search criteria or broader specialties.";
+            String augmentedContent = noMatchHint + "\n\nOriginal request: " + content;
+            String userPrompt = chatUserMessageTemplate.render(Map.of(
+                    "caseToolHints", chatCasePromptSupport.buildCaseToolHints(content, goal),
+                    "routingHint", "Goal: " + goal.goalType().name() + " | No exact matches from GraphRAG.\n\n",
+                    "userMessage", augmentedContent));
+            String systemPrompt = buildSystemPrompt(profile);
+
+            String reply = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
+                    .system(systemPrompt)
+                    .user(userPrompt)
+                    .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, sessionId))
+                    .call()
+                    .content());
+
+            String finalReply = applyChatCritic(
+                    reply != null && !reply.isBlank() ? reply.trim() : "No alternative matches could be suggested.",
+                    Map.of("agentId", profile.agentId()));
+            return chatService.appendAssistantMessage(chatId, userId, finalReply);
+        } finally {
+            ChatToolContextHolder.clear();
+            OrchestrationContextHolder.clear();
+            logStreamService.clearCurrentSessionId();
+        }
+    }
+
+    private void sendHarnessProgress(String sessionId, String engine, String state, String detail) {
+        logStreamService.sendLog(sessionId, "INFO", "HARNESS_PROGRESS",
+                "{\"engine\": \"" + engine + "\", \"state\": \"" + state + "\", \"detail\": \"" + detail + "\"}");
     }
 
     private record TurnContext(

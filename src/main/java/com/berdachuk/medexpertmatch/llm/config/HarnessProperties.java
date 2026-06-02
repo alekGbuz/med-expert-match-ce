@@ -13,7 +13,8 @@ public record HarnessProperties(
         int routingMatchMinMatches,
         boolean humanCheckpointEnabled,
         boolean chainAnalysisToMatch,
-        boolean chainMatchToRecommend) {
+        boolean chainMatchToRecommend,
+        boolean zeroResultFallbackEnabled) {
 
     public HarnessProperties {
         if (maxIterations < 1) {
@@ -22,7 +23,7 @@ public record HarnessProperties(
     }
 
     public static HarnessProperties defaults() {
-        return new HarnessProperties(true, true, 2, true, 1, 0, false, false, false);
+        return new HarnessProperties(true, true, 2, true, 1, 0, false, false, false, false);
     }
 
     public HarnessIterationPolicy iterationPolicy() {

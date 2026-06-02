@@ -8,17 +8,25 @@ import org.springframework.stereotype.Component;
 public class HarnessMetrics {
 
     private final Counter verifyFailureCounter;
+    private final Counter verifyAttemptsCounter;
     private final Counter criticFailureCounter;
     private final MeterRegistry meterRegistry;
 
     public HarnessMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
-        this.verifyFailureCounter = Counter.builder("harness.verify.failure")
+        this.verifyFailureCounter = Counter.builder("harness.verify.failures.total")
                 .description("Harness verify step failures")
+                .register(meterRegistry);
+        this.verifyAttemptsCounter = Counter.builder("harness.verify.attempts.total")
+                .description("Harness verify step attempts")
                 .register(meterRegistry);
         this.criticFailureCounter = Counter.builder("harness.critic.failure")
                 .description("Harness critic step failures")
                 .register(meterRegistry);
+    }
+
+    public void recordVerifyAttempt() {
+        verifyAttemptsCounter.increment();
     }
 
     public void recordVerifyFailure(String reason) {
