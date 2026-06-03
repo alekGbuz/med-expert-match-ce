@@ -18,6 +18,7 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -32,6 +33,11 @@ import java.util.Map;
  * Hardens function-calling tool resolution for local models that emit non-canonical tool names.
  */
 @Configuration
+@ConditionalOnProperty(
+        name = "medexpertmatch.skills.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class AgentToolCallingConfiguration {
 
     @Bean
