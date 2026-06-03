@@ -828,7 +828,7 @@ Results flow back -> Agent formats response -> REST API returns JSON
 - **Broswer Auto-Launch**: `LocalHomeBrowserLauncher` auto-opens browser on `local` profile startup
 - **Vector Embeddings**: Automatic embedding generation for medical cases using Spring AI EmbeddingModel
 - **PgVector Integration**: PostgreSQL pgvector extension with HNSW indexing for fast similarity search
-- **FHIR Compatibility**: Supports healthcare interoperability standards (FHIR R4)
+- **FHIR Compatibility**: Supports healthcare interoperability standards (FHIR R5)
 - **UI Layer**: Thymeleaf-based server-side rendering with 8 main pages and wireframe mockups
 - **Use Cases**: Supports 6 core use cases covering inpatient, outpatient, telehealth, analytics, decision support, and
   regional routing
