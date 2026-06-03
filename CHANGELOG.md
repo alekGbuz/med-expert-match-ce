@@ -28,7 +28,7 @@
 - MockMvc web controller tests, Testcontainers PostgreSQL + PgVector + AGE
 
 ### Architecture
-- Spring Boot 4.0.2, Spring AI 2.0.0-M6, Spring Modulith 2.0.2
+- Spring Boot 4.0.2, Spring AI 2.0.0-M8, Spring Modulith 2.0.2
 - Java 21, PostgreSQL 17, PgVector, Apache AGE
 - 13 domain modules, interface-based design, external SQL files
 

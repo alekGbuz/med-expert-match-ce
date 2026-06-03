@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
@@ -27,6 +28,7 @@ import java.util.Optional;
 public class RerankingServiceImpl implements RerankingService {
 
     private final ChatClient rerankingChatClient;
+    private final PromptTemplate rerankingDoctorsPromptTemplate;
     private final MedicalCaseRepository medicalCaseRepository;
     private final DoctorRepository doctorRepository;
     private final ObjectMapper objectMapper;
@@ -34,11 +36,13 @@ public class RerankingServiceImpl implements RerankingService {
 
     public RerankingServiceImpl(
             @Nullable @Qualifier("rerankingChatModel") ChatModel rerankingChatModel,
+            @Qualifier("rerankingDoctorsPromptTemplate") PromptTemplate rerankingDoctorsPromptTemplate,
             MedicalCaseRepository medicalCaseRepository,
             DoctorRepository doctorRepository,
             ObjectMapper objectMapper,
             @Value("${medexpertmatch.retrieval.reranking.enabled:false}") boolean enabled) {
         this.rerankingChatClient = rerankingChatModel != null ? ChatClient.builder(rerankingChatModel).build() : null;
+        this.rerankingDoctorsPromptTemplate = rerankingDoctorsPromptTemplate;
         this.medicalCaseRepository = medicalCaseRepository;
         this.doctorRepository = doctorRepository;
         this.objectMapper = objectMapper;
@@ -76,32 +80,15 @@ public class RerankingServiceImpl implements RerankingService {
                         doctor.specialties() != null ? String.join(", ", doctor.specialties()) : "N/A"));
             }
 
-            String promptText = String.format(
-                    """
-                    You are a medical expert ranking system. Re-rank the following doctors based on their suitability for this case.
-
-                    Case details:
-                    - Chief complaint: %s
-                    - Symptoms: %s
-                    - Diagnosis: %s
-                    - ICD-10 Codes: %s
-                    - Required specialty: %s
-                    - Urgency: %s
-
-                    Current top candidates (re-rank these, return indices in order of best fit):
-
-                    %s
-
-                    Return a JSON array of indices (0-based) representing the new ranking order. Example: [3, 0, 5, 1, 2, 4]
-                    Return ONLY the JSON array, no other text.
-                    """,
-                    nullToEmpty(medicalCase.chiefComplaint()),
-                    nullToEmpty(medicalCase.symptoms()),
-                    nullToEmpty(medicalCase.currentDiagnosis()),
-                    medicalCase.icd10Codes() != null ? String.join(", ", medicalCase.icd10Codes()) : "N/A",
-                    nullToEmpty(medicalCase.requiredSpecialty()),
-                    medicalCase.urgencyLevel() != null ? medicalCase.urgencyLevel().name() : "N/A",
-                    candidateList.toString());
+            String promptText = rerankingDoctorsPromptTemplate.render(Map.of(
+                    "chiefComplaint", nullToEmpty(medicalCase.chiefComplaint()),
+                    "symptoms", nullToEmpty(medicalCase.symptoms()),
+                    "diagnosis", nullToEmpty(medicalCase.currentDiagnosis()),
+                    "icd10Codes", medicalCase.icd10Codes() != null ? String.join(", ", medicalCase.icd10Codes()) : "N/A",
+                    "requiredSpecialty", nullToEmpty(medicalCase.requiredSpecialty()),
+                    "urgency", medicalCase.urgencyLevel() != null ? medicalCase.urgencyLevel().name() : "N/A",
+                    "candidates", candidateList.toString()
+            ));
 
             String response = rerankingChatClient.prompt().user(promptText).call().content();
             if (response == null || response.isBlank()) {

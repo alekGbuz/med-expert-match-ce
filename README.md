@@ -81,7 +81,7 @@ src/main/java/.../medexpertmatch/
 |-----------|---------|
 | Java | 21 |
 | Spring Boot | 4.0.2 |
-| Spring AI | 2.0.0-M6 |
+| Spring AI | 2.0.0-M8 |
 | Spring Modulith | 2.0.2 |
 | PostgreSQL | 17 |
 | PgVector | 0.1.4 |

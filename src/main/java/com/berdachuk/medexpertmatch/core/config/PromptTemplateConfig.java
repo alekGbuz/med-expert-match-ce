@@ -92,6 +92,8 @@ public class PromptTemplateConfig {
     private Resource agentMatchingOrchestrationResource;
     @Value("classpath:/prompts/goal-classification.st")
     private Resource goalClassificationResource;
+    @Value("classpath:/prompts/reranking-doctors.st")
+    private Resource rerankingDoctorsResource;
 
     @Bean
     public StTemplateRenderer stTemplateRenderer() {
@@ -438,6 +440,12 @@ public class PromptTemplateConfig {
     @org.springframework.beans.factory.annotation.Qualifier("goalClassificationPromptTemplate")
     public PromptTemplate goalClassificationPromptTemplate(StTemplateRenderer renderer) {
         return promptTemplate(renderer, goalClassificationResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("rerankingDoctorsPromptTemplate")
+    public PromptTemplate rerankingDoctorsPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, rerankingDoctorsResource);
     }
 
     private static PromptTemplate promptTemplate(StTemplateRenderer renderer, Resource resource) {
