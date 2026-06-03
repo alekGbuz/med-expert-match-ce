@@ -58,7 +58,7 @@ The project requires Docker containers for:
 1. Create Maven project structure
 2. Configure `pom.xml` with dependencies:
     - Spring Boot 4.0.2
-    - Spring AI 2.0.0-M6
+    - Spring AI 2.0.0-M8
     - PostgreSQL Driver
     - Testcontainers
     - Lombok
