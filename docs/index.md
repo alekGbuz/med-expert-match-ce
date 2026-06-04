@@ -53,7 +53,6 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 - [List Formatting Guide](LIST_FORMATTING_GUIDE.md) - Markdown list formatting examples and fixes
 - [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface flows and form mockups in PlantUML
 - [Repository Methods Update](REPOSITORY_METHODS_UPDATE.md) - Recent repository method additions (findAll)
-- [Synthetic Data Generator](SYNTHETIC_DATA_GENERATOR.md) - Comprehensive feature description
 - [Demo Guide](DEMO_GUIDE.md) - How to prepare and run the MedExpertMatch demo
 
 ### Configuration

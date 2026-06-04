@@ -92,11 +92,11 @@
                        th:if="${isAdmin and currentPage != 'graph-visualization'}" th:text="#{nav.graph}">Graph</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${isAdmin and currentPage == 'graph-visualization'}" th:text="#{nav.graph}">Graph</span>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.documents}" th:href="@{/documents}" th:if="${currentPage == 'index'}" th:text="#{nav.documents}">Documents</a>
+                    <a class="text-white text-decoration-none" th:aria-label="#{nav.documents}" th:href="@{/documents}" th:if="${isAdmin and currentPage == 'index'}" th:text="#{nav.documents}">Documents</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
-                          th:if="${currentPage == 'documents'}" th:text="#{nav.documents}">Documents</span>
+                          th:if="${isAdmin and currentPage == 'documents'}" th:text="#{nav.documents}">Documents</span>
                     <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'documents'}" th:text="#{nav.documents}">Documents</span>
+                          th:if="${isAdmin and currentPage != 'index' and currentPage != 'documents'}" th:text="#{nav.documents}">Documents</span>
                     <a class="btn btn-outline-light btn-sm" href="/docs"
                        rel="noopener noreferrer"
                        target="_blank" th:aria-label="#{nav.docs}" th:title="#{nav.docs}">
