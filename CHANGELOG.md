@@ -23,7 +23,7 @@
 - **Database**: Flyway V2 schema (session tokens, audit log), HNSW vector indexes, evaluation table indexes
 
 ### Testing
-- **189 tests** (unit + integration), zero failures
+- **534 tests** (unit + integration), zero failures
 - E2E acceptance tests for all 6 use cases
 - MockMvc web controller tests, Testcontainers PostgreSQL + PgVector + AGE
 
@@ -55,3 +55,5 @@
 | M49 | Spring AI M8 API migration + test context fix | 495 |
 | M50 | Fix all 19 remaining integration test failures | 495 |
 | M51 | Production hardening with health indicators, test coverage improvements, and graceful shutdown | 510 |
+| M52 | WireMock external service mocking in integration tests | 517 |
+| M53 | Ingestion module test coverage (24% → 71%), FHIR adapter unit tests | 534 |
