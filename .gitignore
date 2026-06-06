@@ -16,6 +16,10 @@ dist/
 # Compiled Java class files
 *.class
 
+# Accidental unpack of Maven JARs at repo root (not project source)
+/META-INF/
+/org/
+
 # Compiled Python bytecode
 *.py[cod]
 
