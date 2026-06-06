@@ -50,7 +50,7 @@ organized by Google Research on Kaggle.
 - **Working Solutions**: Full-featured prototypes, not just demos
 - **HAI-DEF Models**: Using MedGemma and other Health AI Developer Foundations models
 
-**Submission Deadline**: February 24, 2026 (~6 weeks development timeline)
+**Challenge Submission**: Completed February 24, 2026 (6-week development timeline)
 
 ## 2. Core Value Propositions
 
@@ -512,7 +512,7 @@ MedExpertMatch uses a modular, domain-driven architecture with clear separation 
 
 - **Backend**: Spring Boot 4.0.2, Java 21
 - **Database**: PostgreSQL 17, PgVector 0.1.4 (client), Apache AGE 1.6.0
-- **AI Framework**: Spring AI 2.0.0-M2
+- **AI Framework**: Spring AI 2.0.0-M8
 - **Medical AI**: MedGemma 1.5 4B, MedGemma 27B (via OpenAI-compatible providers)
 - **Testing**: JUnit 5, Testcontainers 2.0.3
 - **UI**: Thymeleaf (server-side rendering)
@@ -1272,7 +1272,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 - `POST /api/v1/agent/recommendations/{matchId}` - Expert recommendations (doctor-matcher)
 - `POST /api/v1/agent/route-case/{caseId}` - Regional routing (case-analyzer, routing-planner)
 
-### 7.2 Test Data API Endpoints
+### 8.2 Test Data API Endpoints
 
 - `POST /api/v1/test-data/generate?size={size}&clear={clear}` - Generate test data
     - Parameters:
@@ -1308,11 +1308,11 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 
 ## 9. Implementation Phases
 
-### 9.1 Phase 1: MVP (Weeks 1-6)
+### 9.1 Phase 1: MVP (Weeks 1-6) ✅ Complete
 
-**Goal**: Complete MVP for MedGemma Impact Challenge submission
+**Goal**: Completed MVP for MedGemma Impact Challenge submission
 
-**Deliverables**:
+**Deliverables** ✅:
 
 - Core matching functionality
 - Basic agent skills (case-analyzer, doctor-matcher)
@@ -1321,14 +1321,14 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 - Test data generator for demo
 - MedGemma Impact Challenge submission
 
-**Timeline**:
+**Timeline** ✅:
 
 - **Week 1-2**: Foundation (domain models, database schema, repositories)
 - **Week 3**: Core services (MedGemma integration, case analysis)
 - **Week 4**: Agent Skills implementation (7 skills)
 - **Week 5-6**: Integration, testing, documentation, demo
 
-### 9.2 Phase 2: Production Readiness (Months 2-4)
+### 9.2 Phase 2: Production Readiness (Months 2-4) ⏳ In Progress
 
 **Goal**: Production-ready system with complete features
 
@@ -1390,7 +1390,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 
 - **MedGemma Models**: MedGemma 1.5 4B, MedGemma 27B (via OpenAI-compatible providers)
 - **PostgreSQL**: PostgreSQL 17 with PgVector and Apache AGE 1.6.0 extensions
-- **Spring AI**: Spring AI 2.0.0-M2 framework
+- **Spring AI**: Spring AI 2.0.0-M6 framework
 - **Datafaker**: Library for synthetic test data generation
 
 ### 11.2 Internal Dependencies

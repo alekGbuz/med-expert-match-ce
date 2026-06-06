@@ -1,2 +1,2 @@
-<caseToolHints><routingHint>User message:
+<historyBlock><caseToolHints><routingHint>User message:
 <userMessage>

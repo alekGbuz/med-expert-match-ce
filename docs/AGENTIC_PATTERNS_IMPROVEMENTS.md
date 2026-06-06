@@ -1,6 +1,6 @@
 # Agentic Patterns Improvement Proposal — MedExpertMatch
 
-> Roadmap for evolving **MedExpertMatch** (Spring Boot 4.0 + Spring Modulith 2.0 + Spring AI **2.0.0-M6** + GraphRAG) into a fully agentic medical-expert recommendation platform, based on the **Spring AI Agentic Patterns** series (Parts 1–7).
+> Roadmap for evolving **MedExpertMatch** (Spring Boot 4.0 + Spring Modulith 2.0 + Spring AI **2.0.0-M8** + GraphRAG) into a fully agentic medical-expert recommendation platform, based on the **Spring AI Agentic Patterns** series (Parts 1–7).
 
 **Status date:** 2026-05-30
 **Target module:** primarily `llm/`, with touch points in `retrieval/`, `web/`, and `core/`

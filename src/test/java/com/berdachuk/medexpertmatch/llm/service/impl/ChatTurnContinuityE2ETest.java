@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.Optional;
@@ -52,7 +53,8 @@ class ChatTurnContinuityE2ETest {
         org.springframework.ai.chat.prompt.PromptTemplate promptTemplate =
                 org.mockito.Mockito.mock(org.springframework.ai.chat.prompt.PromptTemplate.class);
         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        goalClassifier = new GoalClassifier(chatModel, promptTemplate, objectMapper, llmCallLimiter);
+        goalClassifier = new GoalClassifier(chatModel, promptTemplate, objectMapper, llmCallLimiter,
+                org.mockito.Mockito.mock(ApplicationEventPublisher.class));
     }
 
     @AfterEach
@@ -100,7 +102,7 @@ class ChatTurnContinuityE2ETest {
         ConversationGoalContext.set(turn1Goal.goalType(), CASE_ID, SESSION_ID);
         ConversationGoalContext.clear(SESSION_ID);
 
-        verify(goalContextRepository, times(1)).deleteBySessionId(SESSION_ID);
+        verify(goalContextRepository, times(2)).deleteBySessionId(SESSION_ID);
 
         GoalClassification turn2Goal = goalClassifier.classify("yes");
 

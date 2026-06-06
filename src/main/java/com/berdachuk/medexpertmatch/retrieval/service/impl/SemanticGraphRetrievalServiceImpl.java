@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.retrieval.service.impl;
 import com.berdachuk.medexpertmatch.clinicalexperience.domain.ClinicalExperience;
 import com.berdachuk.medexpertmatch.clinicalexperience.repository.ClinicalExperienceRepository;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.core.util.GeoDistance;
 import com.berdachuk.medexpertmatch.doctor.domain.Doctor;
 import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
@@ -21,7 +22,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +36,6 @@ import java.util.Map;
 public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrievalService {
 
     private static final int AVAILABILITY_DOCTOR_LIMIT = 100;
-    private static final double EARTH_RADIUS_KM = 6371.0;
     private static final double GEOGRAPHIC_DECAY_DISTANCE_KM = 500.0;
     private static final double RRF_K = 60;
 
@@ -493,7 +492,7 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
      * Calculates geographic score from available facility location metadata.
      */
     private double calculateGeographicScore(MedicalCase medicalCase, Facility facility) {
-        Double distanceKm = calculateDistanceKm(
+        Double distanceKm = GeoDistance.calculateDistanceKm(
                 medicalCase.locationLatitude(),
                 medicalCase.locationLongitude(),
                 facility.locationLatitude(),
@@ -588,25 +587,4 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         return value != null && !value.isBlank();
     }
 
-    private Double calculateDistanceKm(
-            BigDecimal fromLatitude,
-            BigDecimal fromLongitude,
-            BigDecimal toLatitude,
-            BigDecimal toLongitude) {
-        if (fromLatitude == null || fromLongitude == null || toLatitude == null || toLongitude == null) {
-            return null;
-        }
-
-        double lat1 = Math.toRadians(fromLatitude.doubleValue());
-        double lon1 = Math.toRadians(fromLongitude.doubleValue());
-        double lat2 = Math.toRadians(toLatitude.doubleValue());
-        double lon2 = Math.toRadians(toLongitude.doubleValue());
-
-        double deltaLat = lat2 - lat1;
-        double deltaLon = lon2 - lon1;
-        double a = Math.pow(Math.sin(deltaLat / 2), 2)
-                + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(deltaLon / 2), 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return EARTH_RADIUS_KM * c;
-    }
 }

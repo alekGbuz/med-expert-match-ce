@@ -74,6 +74,9 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 | llm-prompts | `llm-prompts/SKILL.md` | Creating/modifying LLM prompt templates (.st files), Spring AI configuration |
 | graph-db | `graph-db/SKILL.md` | Cypher queries via GraphService, Apache AGE MERGE patterns, graph schema changes |
 | db-migrations | `db-migrations/SKILL.md` | Schema changes via Flyway V1 consolidation, SQL patterns, migration rules |
+| api-design | `api-design/SKILL.md` | Designing or changing REST/RPC/A2A endpoints, versioning, error contracts |
+| write-less-code | `write-less-code/SKILL.md` | Before non-trivial implementation and before commit — push back on bloat, prefer minimum diff and reuse |
+| security-check | `security-check/SKILL.md` | Before/after any work touching auth, APIs, DB, secrets, external input, infra, or new dependencies; review final diff for vulnerabilities |
 
 ## Global Boundaries
 
@@ -119,15 +122,18 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 - Flyway V1 consolidation (no V2/V3 until post-MVP)
 - OpenAI-compatible providers only (no Ollama)
 - All patient data must be anonymized; no PHI in logs/errors/tests
+- Mock all external HTTP APIs in integration tests: use WireMock (wiremock-standalone) with recorded fixture responses stored in `src/test/resources/{module}/`. Never make live HTTP calls to external services (PubMed, NCBI, etc.) from tests. Record real API responses once, store as fixtures, and stub them in all ITs. External services that accept an injectable base URL (e.g. `baseUrl` constructor param) enable easy WireMock wiring.
 
 ## TDD Workflow (mandatory)
 
 Always use TDD. Before implementing any functionality:
 
 1. **Write the test first** — before any implementation code.
-2. **Verify the test against the requirements** — use an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm the test truly encodes the requirement.
-3. **Implement** the functionality — only after the test is written and verified.
-4. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
+2. **Verify the test against the requirements** — use an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm it truly encodes the requirement.
+3. **Run security check before implementation** — load the `security-check` skill for any task touching auth, APIs, DB, secrets, external input, infrastructure, or new dependencies. Report risks before coding.
+4. **Implement** the functionality — only after the test is written, verified, and security pre-check is complete.
+5. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
+6. **Run security check again before commit** — review the final diff for secrets, missing auth, injection risks, vulnerable dependencies, or unsafe config.
 
 ## Layer Model
 

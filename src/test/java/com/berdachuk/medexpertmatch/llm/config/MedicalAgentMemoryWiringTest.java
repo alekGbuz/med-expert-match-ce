@@ -23,6 +23,7 @@ import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.core.io.DefaultResourceLoader;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
@@ -73,9 +74,14 @@ class MedicalAgentMemoryWiringTest {
         PromptTemplate autoMemorySystemPromptTemplate = mock(PromptTemplate.class);
         when(autoMemorySystemPromptTemplate.render(any())).thenReturn("automemory system prompt with phi guard");
 
+        ToolCallback mockSkillsTool = mock(ToolCallback.class);
+        when(mockSkillsTool.getToolDefinition()).thenReturn(ToolDefinition.builder()
+                .name("skillsTool").description("Skills tool")
+                .inputSchema("{}").build());
+
         ChatClient client = config.medicalAgentChatClient(
                 mock(ChatModel.class),
-                mock(ToolCallback.class),
+                mockSkillsTool,
                 taskTool,
                 mock(CaseAnalysisAgentTools.class),
                 mock(DoctorMatchingAgentTools.class),

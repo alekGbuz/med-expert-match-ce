@@ -6,41 +6,62 @@ import com.berdachuk.medexpertmatch.llm.event.PlanReadyEvent;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundle;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundleService;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
+import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
 @Slf4j
 @Component
+@Profile("event-driven")
 public class ContextBuilderAgent {
 
     private final ApplicationEventPublisher eventPublisher;
     private final CaseContextBundleService caseContextBundleService;
+    private final PipelineMetricsService pipelineMetrics;
+    private final PipelineProgressCollector pipelineProgressCollector;
 
-    public ContextBuilderAgent(ApplicationEventPublisher eventPublisher, CaseContextBundleService caseContextBundleService) {
+    public ContextBuilderAgent(ApplicationEventPublisher eventPublisher, CaseContextBundleService caseContextBundleService,
+                               PipelineMetricsService pipelineMetrics,
+                               PipelineProgressCollector pipelineProgressCollector) {
         this.eventPublisher = eventPublisher;
         this.caseContextBundleService = caseContextBundleService;
+        this.pipelineMetrics = pipelineMetrics;
+        this.pipelineProgressCollector = pipelineProgressCollector;
     }
 
     @EventListener
     public void onPlanReady(PlanReadyEvent event) {
+        long start = System.currentTimeMillis();
         log.info("ContextBuilderAgent: plan ready session={} steps={}", event.sessionId(), event.plan().steps().size());
+        pipelineProgressCollector.addStage(event.sessionId(), "CONTEXT_BUILD", "ContextBuilderAgent", "in_progress");
+        pipelineMetrics.recordStageInProgress(event.sessionId(), "ContextBuilderAgent");
+        pipelineMetrics.recordStageStarted(event.sessionId(), "ContextBuilderAgent");
 
-        String caseId = findCaseId(event.plan());
-        if (caseId == null) {
-            log.warn("ContextBuilderAgent: no caseId in plan, skipping context build session={}", event.sessionId());
-            return;
+        try {
+            String caseId = findCaseId(event.plan());
+            if (caseId == null) {
+                log.warn("ContextBuilderAgent: no caseId in plan, skipping context build session={}", event.sessionId());
+                pipelineMetrics.recordStageCompleted(event.sessionId(), "ContextBuilderAgent", System.currentTimeMillis() - start);
+                return;
+            }
+
+            CaseContextIntent intent = resolveIntent(event.plan());
+            CaseContextBundle bundle = caseContextBundleService.build(caseId, intent);
+            log.info("ContextBuilderAgent: built context session={} caseId={} intent={} sections={}",
+                    event.sessionId(), caseId, intent, bundle.coreSections().size());
+
+            eventPublisher.publishEvent(new ContextReadyEvent(event.sessionId(), bundle, Instant.now()));
+            pipelineMetrics.recordStageCompleted(event.sessionId(), "ContextBuilderAgent", System.currentTimeMillis() - start);
+        } catch (Exception e) {
+            pipelineMetrics.recordStageFailed(event.sessionId(), "ContextBuilderAgent", e.getMessage());
+            throw e;
         }
-
-        CaseContextIntent intent = resolveIntent(event.plan());
-        CaseContextBundle bundle = caseContextBundleService.build(caseId, intent);
-        log.info("ContextBuilderAgent: built context session={} caseId={} intent={} sections={}",
-                event.sessionId(), caseId, intent, bundle.coreSections().size());
-
-        eventPublisher.publishEvent(new ContextReadyEvent(event.sessionId(), bundle, Instant.now()));
     }
 
     private static String findCaseId(ExecutionPlan plan) {

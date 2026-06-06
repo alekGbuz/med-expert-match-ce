@@ -51,7 +51,7 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
 
         for (Chat chat : chats) {
             messagesSoftDeleted += chatMessageRepository.softDeleteByChatId(chat.id());
-            if (!chat.isDefault() && chatRepository.deleteChat(chat.id())) {
+            if (chatRepository.deleteChat(chat.id())) {
                 chatsRemoved++;
             }
         }

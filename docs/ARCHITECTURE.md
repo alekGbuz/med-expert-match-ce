@@ -507,7 +507,7 @@ The `MedicalAgentService` orchestrates skills:
 
 - **Backend**: Spring Boot 4.0.2, Java 21
 - **Database**: PostgreSQL 17, PgVector 0.1.4 (client), Apache AGE 1.6.0
-- **AI Framework**: Spring AI 2.0.0-M6
+- **AI Framework**: Spring AI 2.0.0-M8
 - **Session**: Spring AI Session JDBC 0.2.0 (conversation history compaction)
 - **Medical AI**: MedGemma 1.5 4B, MedGemma 27B
 - **Testing**: JUnit 5, Testcontainers 2.0.3
@@ -828,7 +828,7 @@ Results flow back -> Agent formats response -> REST API returns JSON
 - **Broswer Auto-Launch**: `LocalHomeBrowserLauncher` auto-opens browser on `local` profile startup
 - **Vector Embeddings**: Automatic embedding generation for medical cases using Spring AI EmbeddingModel
 - **PgVector Integration**: PostgreSQL pgvector extension with HNSW indexing for fast similarity search
-- **FHIR Compatibility**: Supports healthcare interoperability standards (FHIR R4)
+- **FHIR Compatibility**: Supports healthcare interoperability standards (FHIR R5)
 - **UI Layer**: Thymeleaf-based server-side rendering with 8 main pages and wireframe mockups
 - **Use Cases**: Supports 6 core use cases covering inpatient, outpatient, telehealth, analytics, decision support, and
   regional routing

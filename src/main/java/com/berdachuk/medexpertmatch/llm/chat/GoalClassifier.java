@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +13,10 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -39,20 +42,28 @@ public class GoalClassifier {
     private static final Pattern CASE_SWITCH_PATTERN = Pattern.compile(
             "\\b(different|other|another|separate)\\s+case\\b", Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern FOLLOW_UP_PHRASING = Pattern.compile(
+            "\\b(tell me more|more (?:details|info|information)|provide more|what about|" +
+            "how about|elaborate|expand|details? (?:about|on|for)|explain (?:more|further))\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private final ChatClient chatClient;
     private final PromptTemplate goalClassificationTemplate;
     private final ObjectMapper objectMapper;
     private final LlmCallLimiter llmCallLimiter;
+    private final ApplicationEventPublisher eventPublisher;
 
     public GoalClassifier(
             @Qualifier("primaryChatModel") ChatModel primaryChatModel,
             @Qualifier("goalClassificationPromptTemplate") PromptTemplate goalClassificationTemplate,
             ObjectMapper objectMapper,
-            LlmCallLimiter llmCallLimiter) {
+            LlmCallLimiter llmCallLimiter,
+            ApplicationEventPublisher eventPublisher) {
         this.chatClient = ChatClient.builder(primaryChatModel).build();
         this.goalClassificationTemplate = goalClassificationTemplate;
         this.objectMapper = objectMapper;
         this.llmCallLimiter = llmCallLimiter;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -68,16 +79,32 @@ public class GoalClassifier {
 
         GoalClassification keywordResult = classifyByKeywords(userMessage, extractedCaseId);
         if (keywordResult != null) {
+            publishIfRoutable(keywordResult);
             return keywordResult;
         }
 
         try {
-            return classifyByLlm(userMessage, extractedCaseId);
+            GoalClassification llmResult = classifyByLlm(userMessage, extractedCaseId);
+            publishIfRoutable(llmResult);
+            return llmResult;
         } catch (Exception e) {
             log.warn("LLM goal classification failed, falling back to general: {}", e.getMessage());
-            return extractedCaseId.isPresent()
+            GoalClassification fallback = extractedCaseId.isPresent()
                     ? GoalClassification.matchDoctors(extractedCaseId.get(), "keyword fallback with case ID")
                     : GoalClassification.general();
+            publishIfRoutable(fallback);
+            return fallback;
+        }
+    }
+
+    private void publishIfRoutable(GoalClassification goal) {
+        if (goal.isRoutableToEngine() && goal.hasCaseId()) {
+            String caseId = goal.caseId().orElse("");
+            String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+            eventPublisher.publishEvent(new GoalIdentifiedEvent(
+                    sessionId, goal, caseId, Instant.now()));
+            log.debug("Published GoalIdentifiedEvent: session={} goal={} caseId={}",
+                    sessionId, goal.goalType(), caseId);
         }
     }
 
@@ -97,6 +124,7 @@ public class GoalClassifier {
                 || lower.contains("recommend doctor") || lower.contains("expert match")
                 || lower.contains("find doctors") || lower.contains("rank doctors")
                 || lower.contains("best doctor") || lower.contains("find expert")) {
+            clearCurrentContext();
             return caseId.isPresent()
                     ? GoalClassification.matchDoctors(caseId.get(), "keyword: doctor matching with case ID")
                     : GoalClassification.matchDoctors("", "keyword: doctor matching from text");
@@ -105,23 +133,27 @@ public class GoalClassifier {
         if (lower.contains("analyze case") || lower.contains("analyze this case")
                 || lower.contains("icd") || lower.contains("diagnosis hint")
                 || lower.contains("clinical findings") || lower.contains("case summary")) {
+            clearCurrentContext();
             return caseId.map(id -> GoalClassification.analyzeCase(id, "keyword: case analysis"))
                     .orElse(null);
         }
 
         if (lower.contains("route") || lower.contains("facility")
                 || lower.contains("referral") || lower.contains("where to send")) {
+            clearCurrentContext();
             return caseId.map(id -> GoalClassification.routeCase(id, "keyword: facility routing"))
                     .orElse(null);
         }
 
         if (lower.contains("urgency") || lower.contains("triage")
                 || lower.contains("intake") || lower.contains("red flag")) {
+            clearCurrentContext();
             return GoalClassification.triageIntake("keyword: triage");
         }
 
         if (lower.contains("pubmed") || lower.contains("evidence")
                 || lower.contains("guideline") || lower.contains("literature")) {
+            clearCurrentContext();
             return GoalClassification.searchEvidence("keyword: evidence search");
         }
 
@@ -129,6 +161,10 @@ public class GoalClassifier {
     }
 
     GoalClassification detectFollowUp(String message, Optional<String> caseId) {
+        if (CASE_SWITCH_PATTERN.matcher(message).find()) {
+            clearCurrentContext();
+            return null;
+        }
         if (!isFollowUpSignal(message)) {
             return null;
         }
@@ -166,6 +202,9 @@ public class GoalClassifier {
         if (FOLLOW_UP_PREFIX.matcher(trimmed).matches()) {
             return true;
         }
+        if (FOLLOW_UP_PHRASING.matcher(trimmed).find()) {
+            return true;
+        }
         if (trimmed.length() <= 20
                 && !trimmed.matches(".*\\b(no|cancel|stop|quit|help|hello|hi|what|why|how|who|when|where)\\b.*")
                 && !containsDomainKeyword(trimmed)) {
@@ -180,6 +219,13 @@ public class GoalClassifier {
                 || lower.contains("facility") || lower.contains("route") || lower.contains("evidence")
                 || lower.contains("pubmed") || lower.contains("icd") || lower.contains("triage")
                 || lower.contains("urgency");
+    }
+
+    private static void clearCurrentContext() {
+        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+        if (sessionId != null) {
+            ConversationGoalContext.clear(sessionId);
+        }
     }
 
     /**

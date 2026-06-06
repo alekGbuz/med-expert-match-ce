@@ -23,12 +23,12 @@
 - **Database**: Flyway V2 schema (session tokens, audit log), HNSW vector indexes, evaluation table indexes
 
 ### Testing
-- **189 tests** (unit + integration), zero failures
+- **1163 tests** (unit + integration), zero failures
 - E2E acceptance tests for all 6 use cases
 - MockMvc web controller tests, Testcontainers PostgreSQL + PgVector + AGE
 
 ### Architecture
-- Spring Boot 4.0.2, Spring AI 2.0.0-M6, Spring Modulith 2.0.2
+- Spring Boot 4.0.2, Spring AI 2.0.0-M8, Spring Modulith 2.0.2
 - Java 21, PostgreSQL 17, PgVector, Apache AGE
 - 13 domain modules, interface-based design, external SQL files
 
@@ -52,3 +52,9 @@
 | M10 | Auth + caching + load testing | 180 |
 | M11 | E2E tests + feature flags + i18n | 189 |
 | M12 | API v2 + faceted search + release prep | 189 |
+| M49 | Spring AI M8 API migration + test context fix | 495 |
+| M50 | Fix all 19 remaining integration test failures | 495 |
+| M51 | Production hardening with health indicators, test coverage improvements, and graceful shutdown | 510 |
+| M52 | WireMock external service mocking in integration tests | 517 |
+| M53 | Ingestion module test coverage (24% → 71%), FHIR adapter unit tests | 534 |
+| M54 | System health, monitoring, and shutdown test coverage (system.health 30% → 91%, core.monitoring 0% → 47%) | 1163 |

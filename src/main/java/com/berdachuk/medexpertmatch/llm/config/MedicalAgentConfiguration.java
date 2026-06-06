@@ -369,13 +369,8 @@ public class MedicalAgentConfiguration {
                 .defaultTools(askUserQuestionTool)
                 .defaultAdvisors(agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
-        // Only add SkillsTool if it's properly configured
-        try {
-            builder.defaultToolCallbacks(skillsTool, taskTool);
-            log.info("SkillsTool and TaskTool registered successfully");
-        } catch (Exception e) {
-            log.warn("Failed to register SkillsTool/TaskTool, continuing without them: {}", e.getMessage());
-        }
+        builder.defaultToolCallbacks(skillsTool, taskTool);
+        log.info("SkillsTool and TaskTool registered successfully");
 
         return builder.build();
     }
