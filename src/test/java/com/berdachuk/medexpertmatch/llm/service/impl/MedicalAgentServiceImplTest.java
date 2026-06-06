@@ -368,7 +368,7 @@ class MedicalAgentServiceImplTest {
                 """;
         String result = LlmResponseSanitizer.formatForChatDisplay(input);
         assertTrue(result.contains("class=\"llm-thinking\""));
-        assertTrue(result.contains("<summary>Model reasoning</summary>"));
+        assertTrue(result.contains("<summary>Model reasoning (click to expand)</summary>"));
         assertTrue(result.contains("A 30-year-old patient presents with peripheral vascular disease."));
         int detailsEnd = result.indexOf("</details>");
         assertTrue(detailsEnd > 0);

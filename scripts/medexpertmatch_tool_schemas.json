@@ -1,0 +1,121 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "analyze_case",
+      "description": "Analyze a medical case by ID and extract key clinical information including chief complaint, symptoms, diagnosis, urgency level, and required specialty.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Medical case ID - MUST be the exact 24-character hex string from the prompt, not a placeholder."
+          }
+        },
+        "required": ["caseId"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "analyze_case_text",
+      "description": "Analyze unstructured medical case text when NO case ID is available.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "caseText": {
+            "type": "string",
+            "description": "Unstructured anonymized case description text."
+          }
+        },
+        "required": ["caseText"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "match_doctors_to_case",
+      "description": "Match doctors to a medical case by case ID using GraphRAG when a 24-character case ID is in the prompt.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Medical case ID - 24-character hex string."
+          }
+        },
+        "required": ["caseId"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "match_doctors_from_text",
+      "description": "Match doctors from anonymized case text when NO existing case ID is available.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "caseText": {
+            "type": "string",
+            "description": "Full anonymized clinical case description."
+          }
+        },
+        "required": ["caseText"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "match_facilities_for_case",
+      "description": "Match facilities for routing a medical case by case ID.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Medical case ID - 24-character hex string."
+          }
+        },
+        "required": ["caseId"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_clinical_guidelines",
+      "description": "Search clinical practice guidelines for a medical condition.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string",
+            "description": "Medical condition or diagnosis."
+          }
+        },
+        "required": ["condition"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "query_pubmed",
+      "description": "Query PubMed for clinical literature and research articles.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "PubMed search query."
+          }
+        },
+        "required": ["query"]
+      }
+    }
+  }
+]

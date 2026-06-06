@@ -105,6 +105,17 @@ public final class GoalIntentPatterns {
         return message != null && EVIDENCE_KEYWORDS.matcher(message).find();
     }
 
+    public static boolean looksLikePubmedIntent(String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        String lower = message.trim().toLowerCase();
+        return lower.contains("pubmed")
+                || lower.contains("literature")
+                || lower.contains("research paper")
+                || lower.contains("systematic review");
+    }
+
     public static boolean matchesRussianFollowUp(String message) {
         return message != null && RUSSIAN_FOLLOW_UP.matcher(message.trim()).find();
     }

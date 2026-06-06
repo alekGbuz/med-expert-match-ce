@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.llm.config;
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
 import com.berdachuk.medexpertmatch.llm.harness.ToolScopeEnforcingResolver;
 import com.berdachuk.medexpertmatch.llm.tool.NormalizingToolCallbackResolver;
+import com.berdachuk.medexpertmatch.llm.tool.ToolSelectionGuardingResolver;
 import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.ContextBuilderAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
@@ -80,6 +81,7 @@ public class AgentToolCallingConfiguration {
         List<ToolCallback> uniqueCallbacks = List.copyOf(uniqueByName.values());
         ToolCallbackResolver delegate = new StaticToolCallbackResolver(uniqueCallbacks);
         ToolCallbackResolver normalizing = new NormalizingToolCallbackResolver(delegate, uniqueCallbacks);
-        return new ToolScopeEnforcingResolver(normalizing);
+        ToolCallbackResolver guarded = new ToolSelectionGuardingResolver(normalizing);
+        return new ToolScopeEnforcingResolver(guarded);
     }
 }

@@ -1,8 +1,17 @@
 # M58: FunctionGemma Tool-Calling Fine-Tune (Optional)
 
-**Status:** Planned (optional, after M57) — overview in `docs/FUNCTIONGEMMA.md`  
+**Status:** Phase 1 complete (policy eval + server-side guard); Phase 2–4 pending live baseline / fine-tune  
 **Created:** 2026-05-31  
 **Depends on:** M57 (goal-classifier-hybrid-session-routing) — complete session routing before measuring tool-selection gaps.
+
+## Phase progress
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 1 | Policy eval JSONL, `ToolSelectionEvalTest`, `ToolSelectionGuardingResolver`, training data script | **Done** (2026-06-07) |
+| 2 | Live golden eval + before/after compare (`tool-selection-golden.jsonl`, `ToolSelectionLiveEvalIT`, scripts) | **Done** (2026-06-07) — run manually against Ollama |
+| 3 | Fine-tune (Tuning Lab or TRL) | Pending |
+| 4 | Serve fine-tuned model + smoke | Pending |
 
 ## Problem Statement
 
@@ -188,9 +197,13 @@ Add health check: `ComprehensiveHealthIndicator` reports fine-tuned model name.
 
 ### Acceptance criteria
 
-- [ ] Pair A accuracy ≥ 90%
-- [ ] Pair B accuracy ≥ 95%
-- [ ] No regression on `analyze_case_text` when **no** case ID in hints
+- [x] Policy eval JSONL + `ToolSelectionEvalTest` (53 cases, 100% pass)
+- [x] Server-side tool guard (`ToolSelectionGuardingResolver`)
+- [x] Synthetic training data script (`scripts/generate-functiongemma-training-data.py`)
+- [x] Golden live eval dataset (`tool-selection-golden.jsonl`) + `run-tool-selection-live-eval.sh` + compare script
+- [ ] Pair A live accuracy ≥ 90% (measure via live golden eval)
+- [ ] Pair B live accuracy ≥ 95%
+- [ ] No regression on `analyze_case_text` when **no** case ID in hints (live model)
 - [ ] `mvn verify` green with default (base) model in CI; fine-tuned model tested in optional profile `local-finetuned`
 
 ## Repository Artifacts (M58 deliverables)
@@ -198,7 +211,8 @@ Add health check: `ComprehensiveHealthIndicator` reports fine-tuned model name.
 | Artifact | Location |
 |----------|----------|
 | Dataset spec | `.agents/plans/M58-dataset-spec.md` (optional child doc) |
-| Synthetic data script | `scripts/generate-functiongemma-training-data.py` |
+| Synthetic data script | `scripts/generate-tool-selection-eval-dataset.py` (+ `tool_selection_dataset_lib.py`) |
+| Unsloth export | `scripts/export-unsloth-functiongemma-dataset.py` + `medexpertmatch_tool_schemas.json` |
 | Eval JSONL | `src/test/resources/eval/tool-selection-cases.jsonl` |
 | Eval test | `src/test/java/.../llm/eval/ToolSelectionEvalTest.java` |
 | Training notebook / Colab link | `docs/ai/functiongemma-finetune.md` |

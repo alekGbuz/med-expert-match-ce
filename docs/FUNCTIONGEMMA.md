@@ -225,8 +225,9 @@ Use **synthetic case IDs only** (24-char hex placeholders). Never copy real pati
 
 #### Step 4 — Generate synthetic examples
 
-**Primary source (recommended):** script that renders templates — planned artifact
-`scripts/generate-functiongemma-training-data.py`.
+**Primary source (recommended):** `scripts/generate-tool-selection-eval-dataset.py` — large balanced eval/training JSONL and CSV (see `--size`, `--split` in `docs/ai/functiongemma-finetune.md`).
+
+**Unsloth Colab export:** after generating JSONL, run `scripts/export-unsloth-functiongemma-dataset.py` to produce `messages` + `tools` rows for [Unsloth FunctionGemma (270M)](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/FunctionGemma_(270M).ipynb). Tool schemas: `scripts/medexpertmatch_tool_schemas.json`.
 
 Template inputs:
 
@@ -285,7 +286,12 @@ Ensure test set includes unseen phrasing combinations (not just held-out case ID
 {"system":"...","user":"IMPORTANT — medical case ID: 6a23f052...","expectedTool":"analyze_case","expectedArgs":{"caseId":"6a23f05200155d711484cf69"},"locale":"ru","scenario":"analyze_with_case_id_ru"}
 ```
 
-Planned eval file: `src/test/resources/eval/tool-selection-cases.jsonl`
+| Eval set | File | Test | Purpose |
+|----------|------|------|---------|
+| Policy regression | `tool-selection-cases.jsonl` (53) | `ToolSelectionEvalTest` | CI — deterministic policy |
+| Golden live benchmark | `tool-selection-golden.jsonl` (24) | `ToolSelectionLiveEvalIT` | Before/after fine-tune on real FunctionGemma |
+
+Live eval: `./scripts/run-tool-selection-live-eval.sh baseline` then `finetuned`; compare with `./scripts/compare-tool-selection-eval-reports.sh`.
 
 #### Step 9 — Pre-upload checklist
 
