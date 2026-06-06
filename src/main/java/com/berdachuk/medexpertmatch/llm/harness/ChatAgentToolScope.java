@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
+import com.berdachuk.medexpertmatch.llm.chat.ChatToolContextHolder;
+import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -52,6 +54,10 @@ public final class ChatAgentToolScope {
             "aggregate_metrics",
             "build_case_context_bundle");
 
+    private static final Set<String> ORCHESTRATOR_DELEGATION_TOOLS = Set.of(
+            "task",
+            "todo_write");
+
     private ChatAgentToolScope() {}
 
     public static boolean isAllowed(ChatAgentProfile profile, String toolName) {
@@ -59,7 +65,7 @@ public final class ChatAgentToolScope {
             return true;
         }
         if (profile.orchestrator()) {
-            return true;
+            return orchestratorAllowsTool(toolName);
         }
         Set<String> allowed = allowedTools(profile);
         if (allowed == null) {
@@ -79,6 +85,15 @@ public final class ChatAgentToolScope {
             case NETWORK_ANALYST -> NETWORK;
             case AUTO -> null;
         };
+    }
+
+    private static boolean orchestratorAllowsTool(String toolName) {
+        GoalType goal = ChatToolContextHolder.goalTypeOrNull();
+        if (goal == null || goal == GoalType.GENERAL_QUESTION) {
+            return true;
+        }
+        String normalized = toolName.trim().toLowerCase();
+        return !ORCHESTRATOR_DELEGATION_TOOLS.contains(normalized);
     }
 
     public static Set<String> allowedToolsForAgentCard(String agentId) {

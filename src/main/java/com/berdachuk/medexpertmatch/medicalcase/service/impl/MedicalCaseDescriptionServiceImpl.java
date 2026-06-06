@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.medicalcase.service.impl;
 
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.service.ChatCompletionTextClient;
+import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
 import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -79,9 +80,10 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
                     totalDuration, totalDuration / 1000.0, medicalCase.id());
 
             if (StringUtils.hasText(enhancedText)) {
+                String sanitized = EmbeddingDescriptionSanitizer.sanitize(enhancedText.trim());
                 log.debug("[Description Generation] Successfully generated LLM-enhanced description for case: {}, length: {}",
-                        medicalCase.id(), enhancedText.length());
-                return enhancedText.trim();
+                        medicalCase.id(), sanitized.length());
+                return sanitized;
             }
             log.warn("[Description Generation] LLM returned empty text for case: {} (ChatClient and JSON fallback)",
                     medicalCase.id());

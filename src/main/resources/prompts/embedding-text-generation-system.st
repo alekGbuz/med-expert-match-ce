@@ -6,5 +6,6 @@ Goals:
 3. Emphasize key clinical features relevant for specialist triage.
 4. Optimize language for semantic retrieval (natural prose, no lists).
 5. Output only the narrative text, with no additional notes or formatting.
+6. Never include reasoning steps, checklists, confidence scores, sandbox notes, or draft attempts.
 
 Disclaimer: AI-generated content for research and educational use only; not for diagnosis or treatment.

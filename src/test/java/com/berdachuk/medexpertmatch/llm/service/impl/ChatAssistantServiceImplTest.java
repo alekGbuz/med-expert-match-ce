@@ -25,12 +25,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.session.SessionService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -178,5 +180,50 @@ class ChatAssistantServiceImplTest {
         service.processMessage("c1", "user-a", "more", "auto");
 
         verify(chatService).getHistory("c1", "user-a", 6, 0);
+    }
+
+    @Test
+    @DisplayName("streamMessage routes MATCH_DOCTORS with case ID to harness engine")
+    void streamMessageRoutesMatchDoctorsToHarness() throws Exception {
+        String caseId = "6a23f05200155d711484cf64";
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "find specialist " + caseId, 1, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "Dr. Smith ranked first", 2, null, Instant.now());
+
+        when(goalClassifier.classify(any())).thenReturn(
+                GoalClassification.matchDoctors(caseId, "keyword: doctor matching with case ID"));
+        when(chatService.appendUserMessage(eq("c1"), eq("user-a"), any())).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage(eq("c1"), eq("user-a"), any())).thenReturn(assistantMsg);
+        when(medicalAgentService.matchDoctors(eq(caseId), any())).thenReturn(
+                new MedicalAgentService.AgentResponse("Dr. Smith ranked first", Map.of("doctorMatchCount", 3)));
+
+        SseEmitter emitter = service.streamMessage("c1", "user-a",
+                "Find Specialist Case Information Case ID: " + caseId, "auto", null);
+
+        assertNotNull(emitter);
+        TimeUnit.MILLISECONDS.sleep(300);
+        verify(medicalAgentService).matchDoctors(eq(caseId), any());
+        verify(chatClient, never()).prompt();
+    }
+
+    @Test
+    @DisplayName("processMessage routes MATCH_DOCTORS with case ID to harness engine")
+    void processMessageRoutesMatchDoctorsToHarness() {
+        String caseId = "6a23f05200155d711484cf64";
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "find specialist", 1, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "Dr. Smith ranked first", 2, null, Instant.now());
+
+        when(goalClassifier.classify(any())).thenReturn(
+                GoalClassification.matchDoctors(caseId, "keyword: doctor matching with case ID"));
+        when(chatService.appendUserMessage(eq("c1"), eq("user-a"), any())).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage(eq("c1"), eq("user-a"), any())).thenReturn(assistantMsg);
+        when(medicalAgentService.matchDoctors(eq(caseId), any())).thenReturn(
+                new MedicalAgentService.AgentResponse("Dr. Smith ranked first", Map.of("doctorMatchCount", 3)));
+
+        Map<String, ChatMessage> result = service.processMessage("c1", "user-a",
+                "Find Specialist Case Information Case ID: " + caseId, "auto");
+
+        assertEquals("Dr. Smith ranked first", result.get("assistantMessage").content());
+        verify(medicalAgentService).matchDoctors(eq(caseId), any());
+        verify(chatClient, never()).prompt();
     }
 }

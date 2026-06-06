@@ -8,6 +8,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
+import com.berdachuk.medexpertmatch.llm.chat.ChatUserContentSanitizer;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
@@ -112,14 +113,15 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         String sessionId = userId + "-" + chatId;
         OrchestrationContextHolder.setSessionId(sessionId);
         try {
-            GoalClassification goal = goalClassifier.classify(content);
+            String normalizedContent = ChatUserContentSanitizer.sanitize(content);
+            GoalClassification goal = goalClassifier.classify(normalizedContent);
             log.info("Goal classified: {} (caseId={})", goal.goalType(), goal.caseId().orElse("none"));
 
             if (goal.isRoutableToEngine() && goal.hasCaseId()) {
-                return processViaHarnessEngine(chatId, userId, content, goal);
+                return processViaHarnessEngine(chatId, userId, normalizedContent, goal);
             }
 
-            TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride, goal);
+            TurnContext ctx = prepareTurn(chatId, userId, normalizedContent, agentIdOverride, goal);
             try {
                 String reply = invokeSync(ctx);
                 ChatMessage assistantMessage = chatService.appendAssistantMessage(chatId, userId, reply);
@@ -146,16 +148,22 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     @Override
     public SseEmitter streamMessage(String chatId, String userId, String content, String agentIdOverride,
                                       RateLimitTier tier) {
+        String normalizedContent = ChatUserContentSanitizer.sanitize(content);
         String sessionId = userId + "-" + chatId;
         OrchestrationContextHolder.setSessionId(sessionId);
         GoalClassification goal;
         try {
-            goal = goalClassifier.classify(content);
+            goal = goalClassifier.classify(normalizedContent);
         } finally {
             OrchestrationContextHolder.clear();
         }
         log.info("Goal classified: {} (caseId={})", goal.goalType(), goal.caseId().orElse("none"));
-        TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride, goal);
+
+        if (goal.isRoutableToEngine() && goal.hasCaseId()) {
+            return streamViaHarnessEngine(chatId, userId, normalizedContent, goal, tier);
+        }
+
+        TurnContext ctx = prepareTurn(chatId, userId, normalizedContent, agentIdOverride, goal);
         SseEmitter emitter = new SseEmitter(120_000L);
         RateLimitTier metricsTier = tier != null ? tier : RateLimitTier.DEFAULT;
         CompletableFuture.runAsync(() -> {
@@ -235,6 +243,50 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         return emitter;
     }
 
+    private SseEmitter streamViaHarnessEngine(
+            String chatId, String userId, String content, GoalClassification goal, RateLimitTier tier) {
+        SseEmitter emitter = new SseEmitter(300_000L);
+        String sessionId = userId + "-" + chatId;
+        RateLimitTier metricsTier = tier != null ? tier : RateLimitTier.DEFAULT;
+        CompletableFuture.runAsync(() -> {
+            Timer.Sample turnSample = chatTurnMetrics.startTurn(metricsTier);
+            chatStreamActivityPublisher.register(sessionId, emitter);
+            try {
+                sendAgentEvent(emitter, Map.of(
+                        "type", "agent_start",
+                        "agentId", "doctor-match-harness",
+                        "orchestrator", false));
+                chatStreamActivityPublisher.publishReasoning(sessionId, "Running GraphRAG specialist matching…");
+
+                Map<String, ChatMessage> result = processViaHarnessEngine(chatId, userId, content, goal);
+                ChatMessage assistant = result.get("assistantMessage");
+                String reply = assistant.content();
+
+                emitter.send(SseEmitter.event().name("token").data(Map.of("t", reply)));
+                sendPipelineStageEvents(emitter, sessionId);
+                sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", "doctor-match-harness"));
+                emitter.send(SseEmitter.event().name("done").data(Map.of(
+                        "id", assistant.id(),
+                        "content", reply)));
+                chatTurnMetrics.recordTurnSuccess(turnSample, metricsTier);
+                emitter.complete();
+            } catch (Exception e) {
+                log.warn("Harness stream failed for chat {}: {}", chatId, e.getMessage());
+                chatTurnMetrics.recordStreamError();
+                try {
+                    chatService.appendAssistantMessage(chatId, userId,
+                            "Sorry, the specialist matching engine encountered an error. Please try again.");
+                } catch (Exception ignored) {
+                    // best effort
+                }
+                emitter.completeWithError(e);
+            } finally {
+                chatStreamActivityPublisher.unregister(sessionId);
+            }
+        });
+        return emitter;
+    }
+
     private String invokeSync(TurnContext ctx) {
         log.info("Chat LLM turn — agent: {}, session: {}, model: {}",
                 ctx.profile().agentId(), ctx.sessionId(), functionGemmaModelName);
@@ -303,6 +355,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         logStreamService.setCurrentSessionId(sessionId);
         OrchestrationContextHolder.setSessionId(sessionId);
         ChatToolContextHolder.setProfile(profile);
+        ChatToolContextHolder.setGoalType(goal.goalType());
 
         String systemPrompt = buildSystemPrompt(profile);
         String userPrompt = buildUserPrompt(profile, content, goal, chatId, userId);
@@ -483,6 +536,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         logStreamService.setCurrentSessionId(sessionId);
         OrchestrationContextHolder.setSessionId(sessionId);
         ChatToolContextHolder.setProfile(profile);
+        ChatToolContextHolder.setGoalType(goal.goalType());
 
         try {
             String noMatchHint = "GraphRAG found no exact matches for this case. "

@@ -2,7 +2,7 @@
 
 ## Active
 
-None. All 58 milestones completed and archived.
+None. All 59 milestones completed and archived.
 
 ## Archive
 
@@ -66,6 +66,7 @@ None. All 58 milestones completed and archived.
 | M53 | [`M53-ingestion-coverage.md`](archive/M53-ingestion-coverage.md) | Ingestion coverage |
 | M54 | [`M54-system-health-monitoring-coverage.md`](archive/M54-system-health-monitoring-coverage.md) | System health monitoring coverage |
 | M55 | [`M55-rest-controller-config-coverage.md`](archive/M55-rest-controller-config-coverage.md) | REST controller config coverage |
+| M56 | [`M56-chat-auto-find-specialist-fix.md`](archive/M56-chat-auto-find-specialist-fix.md) | Chat Auto Find Specialist harness routing and CoT sanitization |
 
 ## Creating a New Plan
 
