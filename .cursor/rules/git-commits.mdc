@@ -1,0 +1,22 @@
+---
+description: Git commit message conventions for this repository
+alwaysApply: true
+---
+
+# Git Commits
+
+When creating commits for this project:
+
+- **Never** add `Co-authored-by:` trailers (including `Co-authored-by: Cursor <cursoragent@cursor.com>` or similar).
+- Use a concise subject line and optional body — author attribution only via normal git author metadata.
+- Do not append bot, agent, or IDE co-author lines unless a human explicitly requests them.
+
+```text
+# Good
+Fix local dev docs routing and PubMed health probe.
+
+# Bad
+Fix local dev docs routing.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+```
