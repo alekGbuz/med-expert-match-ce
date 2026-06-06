@@ -53,11 +53,14 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public boolean deleteChat(String chatId, String userId) {
-        Chat chat = requireOwnedChat(chatId, userId);
-        if (chat.isDefault()) {
+        requireOwnedChat(chatId, userId);
+        if (!chatRepository.deleteChat(chatId)) {
             return false;
         }
-        return chatRepository.deleteChat(chatId);
+        if (chatRepository.findAllByUserId(userId).isEmpty()) {
+            getOrCreateDefaultChat(userId);
+        }
+        return true;
     }
 
     @Override

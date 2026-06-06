@@ -47,4 +47,28 @@ class ChatMarkdownRendererTest {
         String html = renderer.renderSafe("<script>alert(1)</script>");
         assertFalse(html.contains("<script>"));
     }
+
+    @Test
+    @DisplayName("Wraps leaked model planning and renders only clinical response section")
+    void wrapsModelPlanningBeforeCaseSummary() {
+        String input = """
+                The user wants me to generate a response based on the provided case analysis.
+                Summarize the Case: Chief Complaint: Peripheral vascular disease unspecified.
+                Mental Sandbox:
+                Key Learnings: Stick strictly to the provided case analysis.
+                Strategizing complete. I will now proceed with generating the response based on these points.Case Summary:
+                The patient is a 30-year-old individual presenting to an Emergency Department.
+                Matching Rationale Explanation:
+                Dr. Stasia Wunsch was matched based on specialty alignment.
+                """;
+        String html = renderer.renderSafe(input);
+        assertTrue(html.contains("details"));
+        assertTrue(html.contains("llm-thinking"));
+        int detailsEnd = html.indexOf("</details>");
+        assertTrue(detailsEnd > 0);
+        String visible = html.substring(detailsEnd);
+        assertTrue(visible.contains("The patient is a 30-year-old individual"));
+        assertFalse(visible.contains("Mental Sandbox"));
+        assertFalse(visible.contains("The user wants me to generate"));
+    }
 }

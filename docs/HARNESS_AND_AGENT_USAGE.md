@@ -86,8 +86,8 @@ minimal**: prefer pointers to code and commands over duplicated prose that drift
 
 ## 6. Related documentation
 
-- [Harness Architecture](HARNESS.md) — detailed harness design: `GoalClassifier`, workflow engines, config, SSE events (M57).
-- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool-calling model role, configuration, and optional fine-tuning (M58).
+- [Harness Architecture](HARNESS.md) — detailed harness design: `GoalClassifier`, workflow engines, config, SSE events.
+- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool-calling model role, configuration, and optional fine-tuning.
 - [AGENTS.md](../AGENTS.md) (repository root) Development guide for builds, tests, and conventions.
 - [ARCHITECTURE.md](ARCHITECTURE.md) System architecture.
 - [Find Specialist Flow](FIND_SPECIALIST_FLOW.md) End-to-end specialist matching UX and API.

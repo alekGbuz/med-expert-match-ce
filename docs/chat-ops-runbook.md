@@ -1,4 +1,4 @@
-# Chat & A2A Operator Runbook (M25)
+# Chat & A2A Operator Runbook
 
 Operational guide for chat SSE, A2A federation, exports, retention, and audit. All identifiers in logs and audit APIs are hashed — never raw user or chat ids.
 
@@ -45,7 +45,7 @@ Access with `?user=admin` (sets `medexpertmatch-user-id=admin` cookie).
 
 Audit API: `GET /api/v1/admin/audit/chat-exports?action=CHAT_EXPORT_BUNDLE` (optional filter).
 
-## LLM harness metrics (M29/M30)
+## LLM harness metrics
 
 Canonical harness documentation: [HARNESS.md](HARNESS.md). Tool-calling model: [FUNCTIONGEMMA.md](FUNCTIONGEMMA.md).
 

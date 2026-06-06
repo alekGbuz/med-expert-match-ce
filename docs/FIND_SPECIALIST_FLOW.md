@@ -2,7 +2,7 @@
 
 ## See also
 
-- [Harness Architecture](HARNESS.md) — goal routing, workflow engines, M57 classifier, SSE events
+- [Harness Architecture](HARNESS.md) — goal routing, workflow engines, hybrid classifier, SSE events
 - [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — Auto chat tool model configuration
 
 ## Overview

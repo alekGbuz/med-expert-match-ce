@@ -62,6 +62,11 @@ public final class GoalIntentPatterns {
             "(?:ещё|еще|подробнее|расскажи|что\\s+ещё|что\\s+еще|продолжай|дальше)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
+    private static final Pattern ELABORATION_FOLLOW_UP = Pattern.compile(
+            "\\b(tell me more|more (?:details|info|information)|provide more|what about|"
+                    + "how about|elaborate|expand|details? (?:about|on|for)|explain (?:more|further))\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private GoalIntentPatterns() {
     }
 
@@ -102,5 +107,29 @@ public final class GoalIntentPatterns {
 
     public static boolean matchesRussianFollowUp(String message) {
         return message != null && RUSSIAN_FOLLOW_UP.matcher(message.trim()).find();
+    }
+
+    /**
+     * True when the user asks to elaborate on the prior turn (not to find more doctors).
+     * Examples: "provide more details", "?", "tell me more".
+     */
+    public static boolean looksLikeElaborationFollowUp(String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        if (GoalClassifier.requestsMoreDoctors(message)) {
+            return false;
+        }
+        String trimmed = message.trim();
+        if (looksLikeCaseDetailRequest(trimmed)) {
+            return true;
+        }
+        if (ELABORATION_FOLLOW_UP.matcher(trimmed).find()) {
+            return true;
+        }
+        if (matchesRussianFollowUp(trimmed)) {
+            return true;
+        }
+        return trimmed.length() <= 20 && trimmed.matches("^[?.!…]+$");
     }
 }

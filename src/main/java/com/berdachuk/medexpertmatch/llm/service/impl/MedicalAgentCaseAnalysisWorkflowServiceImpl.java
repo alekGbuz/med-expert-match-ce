@@ -112,8 +112,10 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
                     caseId, guidelines.size(), pubmedArticleCount);
 
             Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
+            String userFocus = (String) request.getOrDefault("userFocus", "");
             logStreamService.sendLog(sessionId, "INFO", "LLM result interpretation", "Interpreting analysis results");
-            String response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(toolResults, caseAnalysis, patientAge);
+            String response = medicalAgentLlmSupportService.interpretCaseAnalysisWithMedGemma(
+                    toolResults, caseAnalysis, patientAge, userFocus);
 
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("caseId", caseId);

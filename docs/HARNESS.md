@@ -35,7 +35,7 @@ flowchart TD
     I --> J[Localize reply if needed]
 ```
 
-## Goal classification (M57 hybrid)
+## Goal classification
 
 `GoalClassifier` (`llm/chat/GoalClassifier.java`) runs **before** tool-calling or workflow engines.
 
@@ -110,7 +110,7 @@ Routes `ANALYZE_CASE` + case ID directly to the case analysis workflow instead o
 | Harness analyze | `goal.isAnalyzableViaHarness()` | `case-analysis-harness` |
 | LLM chat | All other goals | `auto` (+ FunctionGemma) |
 
-**Multilingual support (M57):** non-English user text is translated to English for classification and processing;
+**Multilingual support:** non-English user text is translated to English for classification and processing;
 assistant replies are translated back via `ChatLanguageService` (`medgemma1.5:4b`). Original user text is stored in chat
 history.
 
@@ -226,12 +226,4 @@ steps with the harness metaphor image. View via `mkdocs serve` → **Presentatio
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) — `@Tool` method reference
 - [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) — `CHAT_*` vs `TOOL_CALLING_*`
 - [chat-ops-runbook](chat-ops-runbook.md) — operations and metrics
-- Plan: `.agents/plans/M57-goal-classifier-hybrid-session-routing.md`
-
-## Further reading (plans)
-
-| Plan | Topic |
-|------|-------|
-| M57 | Hybrid goal classifier + multilingual chat |
-| M58 | Optional FunctionGemma fine-tuning for tool disambiguation |
-| M29–M34 (archive) | Harness engineering, eval, production readiness |
+- Archived plan: `.agents/plans/archive/M57-goal-classifier-hybrid-session-routing.md`

@@ -277,6 +277,28 @@ class MedicalAgentServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should strip MedGemma constraint checklist before Case Summary")
+    void testStripLlmReasoning_ConstraintChecklistBeforeCaseSummary() {
+        String input = """
+                Recommendations: YES (clear next steps)
+                5. Clear/Well-structured: YES
+                6. Medical Terminology: YES
+                Confidence Score: 5/5 - I am confident I can meet all constraints.
+                Mental Sandbox Simulation:
+                Scenario 1: If the tool results were empty, I would provide a summary.
+                Strategizing complete. I will now proceed with generating the response.Case Summary:
+                The patient is a 30-year-old individual presenting with peripheral vascular disease.
+                Matched Doctors:
+                Dr. Example
+                """;
+        String result = stripLlmReasoningLogic(input);
+        assertTrue(result.startsWith("Case Summary:"));
+        assertFalse(result.contains("Mental Sandbox"));
+        assertFalse(result.contains("Confidence Score"));
+        assertFalse(result.contains("Recommendations: YES"));
+    }
+
+    @Test
     @DisplayName("Should strip MedGemma Mental Sandbox CoT before Case Summary")
     void testStripLlmReasoning_MentalSandboxBeforeCaseSummary() {
         String input = """
@@ -293,6 +315,131 @@ class MedicalAgentServiceImplTest {
         assertTrue(result.startsWith("Case Summary:"));
         assertFalse(result.contains("Mental Sandbox"));
         assertFalse(result.toLowerCase().startsWith("thought"));
+    }
+
+    @Test
+    @DisplayName("Should strip thought planning before Case Summary without Mental Sandbox")
+    void testStripLlmReasoning_ThoughtPlanningBeforeCaseSummary() {
+        String input = """
+                thought
+                The user wants me to generate a response based on the provided case analysis.
+                Summarize the Case: The case involves peripheral vascular disease.
+                Plan:
+                Write a case summary using only the provided information.
+                Case Summary:
+                A 30-year-old patient presents with peripheral vascular disease unspecified.
+                """;
+        String result = stripLlmReasoningLogic(input);
+        assertTrue(result.startsWith("Case Summary:"));
+        assertFalse(result.toLowerCase().contains("summarize the case"));
+        assertFalse(result.toLowerCase().startsWith("thought"));
+    }
+
+    @Test
+    @DisplayName("Should strip thought planning before Case Summary section without colon")
+    void testStripLlmReasoning_ThoughtBeforeCaseSummaryNoColon() {
+        String input = """
+                thought
+                Constraint Checklist & Confidence Score:
+                Confidence Score: 5/5
+                Mental Sandbox Simulation:
+                Scenario 1 (Age provided): summary uses age 30.
+                Strategizing complete. Proceeding with response generation. Case Summary
+                A 30-year-old patient presents with peripheral vascular disease unspecified.
+                Clinical Presentation
+                The patient complains of stiffness and wrist pain.
+                """;
+        String result = stripLlmReasoningLogic(input);
+        assertTrue(result.startsWith("Case Summary"));
+        assertFalse(result.contains("Mental Sandbox"));
+        assertFalse(result.contains("Confidence Score"));
+    }
+
+    @Test
+    @DisplayName("Should wrap reasoning in collapsible details for chat display")
+    void testFormatForChatDisplay_WrapsReasoning() {
+        String input = """
+                thought
+                The user wants a clinical case description with several constraints.
+                Mental Sandbox Simulation:
+                Scenario 1: use exact age.
+                Strategizing complete. Case Summary
+                A 30-year-old patient presents with peripheral vascular disease.
+                """;
+        String result = LlmResponseSanitizer.formatForChatDisplay(input);
+        assertTrue(result.contains("class=\"llm-thinking\""));
+        assertTrue(result.contains("<summary>Model reasoning</summary>"));
+        assertTrue(result.contains("A 30-year-old patient presents with peripheral vascular disease."));
+        int detailsEnd = result.indexOf("</details>");
+        assertTrue(detailsEnd > 0);
+        assertTrue(result.substring(detailsEnd).contains("A 30-year-old patient"));
+        assertFalse(result.substring(detailsEnd).contains("Mental Sandbox"));
+    }
+
+    @Test
+    @DisplayName("Should split numbered Case Summary after strategizing block")
+    void testStripLlmReasoning_NumberedCaseSummaryAfterStrategizing() {
+        String input = """
+                The user wants me to generate a response based on the provided case analysis.
+                Summarize the Case:
+                Patient is 30 years old.
+                Mental Sandbox Simulation:
+                Scenario 1: Vascular Surgeon match.
+                Strategizing complete. I will now generate the response following these steps.1. Case Summary
+                This 30-year-old patient presents with peripheral vascular disease unspecified.
+                2. Matching Rationale Explanation
+                The primary complaint points towards vascular evaluation.
+                """;
+        String result = stripLlmReasoningLogic(input);
+        assertTrue(result.startsWith("1. Case Summary") || result.startsWith("This 30-year-old"));
+        assertFalse(result.contains("Mental Sandbox"));
+        assertFalse(result.contains("The user wants me to generate"));
+    }
+
+    @Test
+    @DisplayName("Should ignore checklist Case Summary and use final clinical section")
+    void testStripLlmReasoning_SkipsChecklistCaseSummary() {
+        String input = """
+                The user wants me to generate a clinical case description.
+                Case Summary: Brief overview? YES
+                Clinical Presentation: Symptoms? YES
+                Constraint Checklist & Confidence Score:
+                Confidence Score: 5/5
+                Mental Sandbox Simulation:
+                Scenario 1: use exact age.
+                Strategizing complete: I will now proceed. Case Summary:
+                This 30-year-old patient presented with peripheral vascular disease unspecified.
+                Clinical Presentation:
+                The patient reports stiffness and wrist pain.
+                """;
+        String result = LlmResponseSanitizer.formatForChatDisplay(input);
+        int detailsEnd = result.indexOf("</details>");
+        String visible = detailsEnd > 0 ? result.substring(detailsEnd) : result;
+        assertTrue(visible.contains("This 30-year-old patient presented"));
+        assertFalse(visible.contains("Brief overview? YES"));
+        assertFalse(visible.contains("Mental Sandbox"));
+    }
+
+    @Test
+    @DisplayName("Should split doctor-match planning ending with glued Case Summary colon")
+    void testFormatForChatDisplay_DoctorMatchGluedCaseSummary() {
+        String input = """
+                The user wants me to generate a response based on the provided case analysis and tool execution results.
+                Summarize the Case: Based only on the case analysis, summarize the key points:
+                Chief Complaint: Peripheral vascular disease unspecified.
+                Mental Sandbox:
+                Strategizing complete. I will now proceed with generating the response based on these points.Case Summary:
+                The patient is a 30-year-old individual presenting to an Emergency Department.
+                Matching Rationale Explanation:
+                Dr. Stasia Wunsch was matched based on specialty alignment.
+                """;
+        String result = LlmResponseSanitizer.formatForChatDisplay(input);
+        assertTrue(result.contains("llm-thinking"));
+        assertTrue(result.contains("The patient is a 30-year-old individual"));
+        int detailsEnd = result.indexOf("</details>");
+        assertTrue(detailsEnd > 0);
+        assertFalse(result.substring(detailsEnd).contains("The user wants me to generate"));
+        assertFalse(result.substring(detailsEnd).contains("Mental Sandbox"));
     }
 
     @Test

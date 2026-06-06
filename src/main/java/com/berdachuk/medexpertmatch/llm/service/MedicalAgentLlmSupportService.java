@@ -24,6 +24,18 @@ public interface MedicalAgentLlmSupportService {
     String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase);
 
     /**
+     * Interprets case analysis and clinical evidence for a descriptive clinical response (not doctor matching).
+     *
+     * @param toolResults Clinical evidence tool results (guidelines, PubMed)
+     * @param caseAnalysis The case analysis context
+     * @param patientAgeFromCase Authoritative patient age from the case
+     * @param userFocus Optional user message to tailor emphasis
+     * @return Clinical case description response
+     */
+    String interpretCaseAnalysisWithMedGemma(
+            String toolResults, String caseAnalysis, Integer patientAgeFromCase, String userFocus);
+
+    /**
      * Summarizes routing results using the configured LLM.
      *
      * @param rawToolResults Raw routing tool results

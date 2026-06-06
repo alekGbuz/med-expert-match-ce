@@ -65,6 +65,44 @@
     font-size: 0.875rem;
 }
 
+.chat-markdown details.llm-thinking {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #adb5bd;
+    border-radius: 0.375rem;
+    background: #e9ecef;
+    font-size: 0.8125rem;
+    color: #495057;
+}
+
+.chat-markdown details.llm-thinking > summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #495057;
+    user-select: none;
+}
+
+.chat-markdown .llm-thinking-body {
+    margin-top: 0.5rem;
+    white-space: pre-wrap;
+    line-height: 1.45;
+    max-height: 14rem;
+    overflow-y: auto;
+}
+
+.chat-markdown .llm-answer-label {
+    margin: 0.75rem 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #198754;
+}
+
+.chat-markdown .llm-answer {
+    margin-top: 0.15rem;
+}
+
 .agent-panel-wrap .agent-panel-expanded {
     max-height: 200px;
 }
@@ -178,4 +216,63 @@
 .chat-streaming .chat-markdown {
     min-height: 1.5rem;
     white-space: pre-wrap;
+}
+
+.chat-sidebar-header h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.chat-sidebar-icon-btn {
+    color: #495057;
+    padding: 0.2rem 0.35rem;
+    line-height: 1;
+    border: none;
+    border-radius: 0.375rem;
+    background: transparent;
+}
+
+.chat-sidebar-icon-btn:hover,
+.chat-sidebar-icon-btn:focus-visible {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.chat-sidebar-icon-btn .bi {
+    font-size: 1.15rem;
+    vertical-align: -0.1em;
+}
+
+.dropdown-toggle-no-caret::after {
+    display: none;
+}
+
+.chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.chat-item {
+    padding: 0.45rem 0.25rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+}
+
+.chat-item:hover {
+    background: transparent;
+}
+
+.chat-item--active .chat-select-area {
+    color: #0d6efd;
+}
+
+.chat-item--active .chat-select-area .fw-bold {
+    font-weight: 700;
+}
+
+.chat-item .chat-select-area:hover {
+    color: #0d6efd;
 }

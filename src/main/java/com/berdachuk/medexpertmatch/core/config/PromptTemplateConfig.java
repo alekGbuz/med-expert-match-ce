@@ -40,6 +40,10 @@ public class PromptTemplateConfig {
     private Resource medgemmaResultInterpretationSystemResource;
     @Value("classpath:/prompts/medgemma-result-interpretation-user.st")
     private Resource medgemmaResultInterpretationUserResource;
+    @Value("classpath:/prompts/medgemma-case-analysis-interpretation-system.st")
+    private Resource medgemmaCaseAnalysisInterpretationSystemResource;
+    @Value("classpath:/prompts/medgemma-case-analysis-interpretation-user.st")
+    private Resource medgemmaCaseAnalysisInterpretationUserResource;
     @Value("classpath:/prompts/embedding-text-generation.st")
     private Resource embeddingTextGenerationResource;
     @Value("classpath:/prompts/embedding-text-generation-system.st")
@@ -262,6 +266,24 @@ public class PromptTemplateConfig {
         return PromptTemplate.builder()
                 .renderer(renderer)
                 .resource(medgemmaResultInterpretationUserResource)
+                .build();
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("medgemmaCaseAnalysisInterpretationSystemPromptTemplate")
+    public PromptTemplate medgemmaCaseAnalysisInterpretationSystemPromptTemplate(StTemplateRenderer renderer) {
+        return PromptTemplate.builder()
+                .renderer(renderer)
+                .resource(medgemmaCaseAnalysisInterpretationSystemResource)
+                .build();
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("medgemmaCaseAnalysisInterpretationUserPromptTemplate")
+    public PromptTemplate medgemmaCaseAnalysisInterpretationUserPromptTemplate(StTemplateRenderer renderer) {
+        return PromptTemplate.builder()
+                .renderer(renderer)
+                .resource(medgemmaCaseAnalysisInterpretationUserResource)
                 .build();
     }
 

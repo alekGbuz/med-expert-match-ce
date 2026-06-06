@@ -23,6 +23,7 @@ import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
@@ -268,6 +269,10 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
 
     private String localizeReply(ChatLanguageTurn languageTurn, String englishReply) {
         return chatLanguageService.localizeReply(languageTurn, englishReply);
+    }
+
+    private String formatHarnessReply(ChatLanguageTurn languageTurn, String engineReply) {
+        return LlmResponseSanitizer.formatForChatDisplay(localizeReply(languageTurn, engineReply));
     }
 
     private SseEmitter streamViaHarnessEngine(
@@ -554,7 +559,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                     : 0;
             sendHarnessProgress(sessionId, engineName, "DONE", "Completed — " + matchCount + " matches found");
 
-            String responseText = localizeReply(languageTurn, engineResponse.response());
+            String responseText = formatHarnessReply(languageTurn, engineResponse.response());
             ChatMessage assistantMessage = chatService.appendAssistantMessage(chatId, userId, responseText);
             ConversationGoalContext.set(goal.goalType(), caseId, sessionId);
             try {
@@ -653,11 +658,11 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             sendHarnessProgress(sessionId, "CaseAnalysis", "PLANNING", "Starting analysis for case " + caseId);
 
             MedicalAgentService.AgentResponse engineResponse = medicalAgentService.analyzeCase(
-                    caseId, Map.of("sessionId", sessionId));
+                    caseId, Map.of("sessionId", sessionId, "userFocus", languageTurn.originalText().trim()));
 
             sendHarnessProgress(sessionId, "CaseAnalysis", "DONE", "Case analysis completed");
 
-            String responseText = localizeReply(languageTurn, engineResponse.response());
+            String responseText = formatHarnessReply(languageTurn, engineResponse.response());
             ChatMessage assistantMessage = chatService.appendAssistantMessage(chatId, userId, responseText);
             ConversationGoalContext.set(goal.goalType(), caseId, sessionId);
             try {

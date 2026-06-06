@@ -3,15 +3,48 @@
 <body>
 <th:block th:fragment="chat-sidebar">
     <div class="p-3 border-end bg-light h-100">
-        <h5 class="mb-3" th:text="#{chat.sidebar.title}">Chats</h5>
-        <button class="btn btn-primary btn-sm mb-3 w-100" id="newChatBtn" type="button" th:text="#{chat.new}">New Chat</button>
-        <div class="d-grid gap-2 mb-3">
-            <button class="btn btn-outline-secondary btn-sm" id="exportBundleBtn" type="button">Export All (JSON)</button>
-            <button class="btn btn-outline-danger btn-sm" id="deleteAllDataBtn" type="button" data-bs-target="#deleteAllDataModal" data-bs-toggle="modal">Delete All Data</button>
+        <div class="chat-sidebar-header d-flex align-items-center justify-content-between mb-3">
+            <h5 class="mb-0" th:text="#{chat.sidebar.title}">Chats</h5>
+            <div class="chat-sidebar-actions d-flex align-items-center gap-1">
+                <button class="btn btn-sm chat-sidebar-icon-btn"
+                        id="newChatBtn"
+                        th:attr="aria-label=#{chat.new},title=#{chat.new}"
+                        type="button">
+                    <i aria-hidden="true" class="bi bi-plus-lg"></i>
+                </button>
+                <div class="dropdown">
+                    <button aria-expanded="false"
+                            class="btn btn-sm chat-sidebar-icon-btn dropdown-toggle-no-caret"
+                            data-bs-toggle="dropdown"
+                            id="chatSidebarMenuBtn"
+                            th:attr="aria-label=#{chat.sidebar.menu},title=#{chat.sidebar.menu}"
+                            type="button">
+                        <i aria-hidden="true" class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul aria-labelledby="chatSidebarMenuBtn" class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li>
+                            <button class="dropdown-item" id="exportBundleBtn" th:text="#{chat.export_all}" type="button">
+                                Export All (JSON)
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"/></li>
+                        <li>
+                            <button class="dropdown-item text-danger"
+                                    data-bs-target="#deleteAllDataModal"
+                                    data-bs-toggle="modal"
+                                    id="deleteAllDataBtn"
+                                    th:text="#{chat.delete_all}"
+                                    type="button">
+                                Delete All Data
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <ul class="list-group list-group-flush" id="chatList">
-            <li class="list-group-item list-group-item-action chat-item d-flex justify-content-between align-items-start"
-                th:classappend="${currentChat != null and currentChat.id() == chat.id()} ? 'active' : ''"
+        <ul class="chat-list list-unstyled mb-0" id="chatList">
+            <li class="chat-item d-flex justify-content-between align-items-start"
+                th:classappend="${currentChat != null and currentChat.id() == chat.id()} ? 'chat-item--active' : ''"
                 th:data-chat-id="${chat.id}"
                 th:each="chat : ${chats}">
                 <div class="flex-grow-1 chat-select-area" style="cursor: pointer;">
@@ -22,9 +55,8 @@
                     <small class="text-muted" th:text="${#temporals.format(chat.lastActivityAt(), 'yyyy-MM-dd HH:mm')}"></small>
                 </div>
                 <button class="btn btn-sm btn-outline-danger ms-2 chat-delete-btn"
+                        th:attr="aria-label=#{chat.delete},title=#{chat.delete}"
                         th:data-chat-id="${chat.id}"
-                        th:if="${!chat.isDefault()}"
-                        th:title="#{chat.delete}"
                         type="button">
                     <span aria-hidden="true">&times;</span>
                 </button>

@@ -30,6 +30,112 @@
         return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    var CONTENT_SECTION_PATTERN = /(?:^|[\n.]\s*)(Case Summary|Clinical Presentation|Matched Doctors|Matching Rationale(?: Explanation)?|Evidence Summary|Recommendations)\s*:?(?=\s*(?:\n|$))/gim;
+    var NUMBERED_SECTION_PATTERN = /\d+\.\s*(Case Summary|Clinical Presentation|Matched Doctors|Matching Rationale(?: Explanation)?|Evidence Summary|Recommendations)\b/gim;
+
+    function isChecklistSectionLine(line) {
+        if (!line) return false;
+        var lower = line.toLowerCase();
+        if (line.indexOf('?') >= 0 && (lower.indexOf('yes') >= 0 || lower.indexOf('no') >= 0)) return true;
+        return lower.indexOf('brief overview') >= 0 || lower.indexOf('only analysis') >= 0
+            || lower.indexOf('invent demographics') >= 0 || lower.indexOf('will monitor') >= 0;
+    }
+
+    function lineAtIndex(text, idx) {
+        var lineStart = idx;
+        while (lineStart > 0 && text.charAt(lineStart - 1) !== '\n') lineStart--;
+        var lineEnd = text.indexOf('\n', idx);
+        if (lineEnd < 0) lineEnd = text.length;
+        return text.substring(lineStart, lineEnd).trim();
+    }
+
+    function isValidSectionMatch(text, idx) {
+        return !isChecklistSectionLine(lineAtIndex(text, idx));
+    }
+
+    function findAllSectionStarts(text) {
+        var starts = [];
+        var m;
+        NUMBERED_SECTION_PATTERN.lastIndex = 0;
+        while ((m = NUMBERED_SECTION_PATTERN.exec(text)) !== null) {
+            if (isValidSectionMatch(text, m.index)) starts.push(m.index);
+        }
+        CONTENT_SECTION_PATTERN.lastIndex = 0;
+        while ((m = CONTENT_SECTION_PATTERN.exec(text)) !== null) {
+            if (isValidSectionMatch(text, m.index)) starts.push(m.index);
+        }
+        return starts;
+    }
+
+    function hasPlanningMarkers(lower) {
+        return lower.indexOf('mental sandbox') >= 0 || lower.indexOf('constraint checklist') >= 0
+            || lower.indexOf('confidence score') >= 0 || lower.indexOf('strategizing complete') >= 0
+            || lower.indexOf('the user wants') >= 0 || lower.indexOf('summarize the case:') >= 0
+            || lower.indexOf('explain matching rationale:') >= 0
+            || lower.indexOf('present matched doctors:') >= 0
+            || lower.indexOf('provide recommendations:') >= 0
+            || lower.indexOf('key learnings') >= 0;
+    }
+
+    function findBestContentStart(text) {
+        var lower = text.toLowerCase();
+        var stratIdx = lower.lastIndexOf('strategizing complete');
+        if (stratIdx >= 0) {
+            var tail = text.substring(stratIdx + 'strategizing complete'.length);
+            var tailStarts = findAllSectionStarts(tail);
+            if (tailStarts.length) {
+                return stratIdx + 'strategizing complete'.length + Math.min.apply(null, tailStarts);
+            }
+        }
+        var starts = findAllSectionStarts(text);
+        if (!starts.length) return -1;
+        if (hasPlanningMarkers(lower)) {
+            return Math.max.apply(null, starts);
+        }
+        return Math.min.apply(null, starts);
+    }
+
+    function splitReasoningFromText(text) {
+        if (!text) return { reasoning: null, content: text || '' };
+        if (text.indexOf('class="llm-thinking"') >= 0 || text.indexOf('llm-thinking') >= 0) {
+            return { reasoning: null, content: text };
+        }
+        var normalized = text.replace(/<unused\d+>/gi, '').trim();
+        var contentStart = findBestContentStart(normalized);
+        if (contentStart > 40) {
+            return {
+                reasoning: normalized.substring(0, contentStart).trim(),
+                content: normalized.substring(contentStart).trim()
+            };
+        }
+        if (contentStart > 0 && hasPlanningMarkers(normalized.toLowerCase())) {
+            return {
+                reasoning: normalized.substring(0, contentStart).trim(),
+                content: normalized.substring(contentStart).trim()
+            };
+        }
+        if (hasPlanningMarkers(normalized.toLowerCase())) {
+            var fallback = normalized.toLowerCase().lastIndexOf('case summary');
+            if (fallback > 40) {
+                return {
+                    reasoning: normalized.substring(0, fallback).trim(),
+                    content: normalized.substring(fallback).trim()
+                };
+            }
+        }
+        return { reasoning: null, content: normalized };
+    }
+
+    function sanitizeAssistantHtml(html) {
+        if (typeof DOMPurify === 'undefined') {
+            return html;
+        }
+        return DOMPurify.sanitize(html, {
+            ADD_TAGS: ['details', 'summary', 'div'],
+            ADD_ATTR: ['class', 'open']
+        });
+    }
+
     function renderMarkdown(text) {
         if (!text) return '';
         if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
@@ -39,10 +145,53 @@
         return DOMPurify.sanitize(raw);
     }
 
+    function unwrapAnswerMarkdown(remainder) {
+        return remainder
+            .replace(/<div class="llm-answer-label"[^>]*>\s*Response\s*<\/div>/gi, '')
+            .replace(/<\/?div[^>]*class="llm-answer"[^>]*>/gi, '')
+            .trim();
+    }
+
+    function renderPreformattedAssistant(text) {
+        var detailsEnd = text.indexOf('</details>');
+        if (detailsEnd > 0) {
+            var htmlPart = text.substring(0, detailsEnd + '</details>'.length);
+            var answerMd = unwrapAnswerMarkdown(text.substring(detailsEnd + '</details>'.length));
+            return sanitizeAssistantHtml(
+                htmlPart + '<div class="llm-answer-label">Response</div><div class="llm-answer">'
+                + renderMarkdown(answerMd) + '</div>'
+            );
+        }
+        return null;
+    }
+
+    function renderAssistantContent(text) {
+        if (!text) return '';
+        var preformatted = renderPreformattedAssistant(text);
+        if (preformatted) return preformatted;
+
+        var split = splitReasoningFromText(text);
+        var parts = [];
+        if (split.reasoning) {
+            parts.push(
+                '<details class="llm-thinking"><summary>Model reasoning (click to expand)</summary>' +
+                '<div class="llm-thinking-body">' + escapeHtml(split.reasoning) + '</div></details>' +
+                '<div class="llm-answer-label">Response</div>'
+            );
+        }
+        parts.push('<div class="llm-answer">' + renderMarkdown(split.content || text) + '</div>');
+        return sanitizeAssistantHtml(parts.join(''));
+    }
+
     function initHistoricalMarkdown() {
+        document.querySelectorAll('.assistant-raw-pending').forEach(function (el) {
+            var raw = el.textContent || '';
+            el.classList.remove('assistant-raw-pending');
+            el.innerHTML = renderAssistantContent(raw);
+        });
         document.querySelectorAll('[data-markdown]').forEach(function (el) {
             var md = el.getAttribute('data-markdown') || '';
-            el.innerHTML = renderMarkdown(md);
+            el.innerHTML = renderAssistantContent(md);
         });
     }
 
@@ -312,20 +461,16 @@
         panel.scrollTop = panel.scrollHeight;
     }
 
-    function updateAssistantBubble(live) {
+    function updateAssistantBubble() {
         if (!currentAssistantBubble) return;
-        if (live) {
-            currentAssistantBubble.textContent = currentMarkdownBuffer;
-        } else {
-            currentAssistantBubble.innerHTML = renderMarkdown(currentMarkdownBuffer);
-        }
+        currentAssistantBubble.innerHTML = renderAssistantContent(currentMarkdownBuffer);
         var panel = document.getElementById('messagePanel');
         panel.scrollTop = panel.scrollHeight;
     }
 
     function finalizeAssistantBubble() {
         if (currentAssistantBubble) {
-            updateAssistantBubble(false);
+            updateAssistantBubble();
             if (currentAssistantBubble.closest('.chat-streaming')) {
                 currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
             }
@@ -394,7 +539,7 @@
                         var evt = parseSseBlock(block);
                         if (evt.event === 'token') {
                             currentMarkdownBuffer += parseTokenChunk(evt.data);
-                            updateAssistantBubble(true);
+                            updateAssistantBubble();
                         } else if (evt.event === 'agent') {
                             try {
                                 var agentPayload = JSON.parse(evt.data);
@@ -472,7 +617,10 @@
             fetch('/api/v1/chats/' + encodeURIComponent(chatId), {
                 method: 'DELETE',
                 headers: apiHeaders()
-            }).then(function () { window.location.href = '/chat'; });
+            }).then(function (r) {
+                if (!r.ok) throw new Error('Delete failed');
+                window.location.href = '/chat';
+            }).catch(function (e) { console.error('Failed to delete chat', e); alert('Delete failed'); });
             return;
         }
         var row = e.target.closest('.chat-item');

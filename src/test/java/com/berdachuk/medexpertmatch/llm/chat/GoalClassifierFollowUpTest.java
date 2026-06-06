@@ -251,25 +251,26 @@ class GoalClassifierFollowUpTest {
     }
 
     @Test
-    @DisplayName("tell me more is a follow-up")
-    void tellMeMoreIsFollowUp() {
+    @DisplayName("tell me more after match routes to case analysis")
+    void tellMeMoreAfterMatchRoutesToAnalyzeCase() {
         ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
 
         GoalClassification result = goalClassifier.classifyByKeywords("tell me more", Optional.empty());
 
         assertNotNull(result);
-        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
     }
 
     @Test
-    @DisplayName("go on is a follow-up")
-    void goOnIsFollowUp() {
+    @DisplayName("go on after routing routes to case analysis")
+    void goOnAfterRoutingRoutesToAnalyzeCase() {
         ConversationGoalContext.set(GoalType.ROUTE_CASE, CASE_ID, SESSION_ID);
 
         GoalClassification result = goalClassifier.classifyByKeywords("go on", Optional.empty());
 
         assertNotNull(result);
-        assertEquals(GoalType.ROUTE_CASE, result.goalType());
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
     }
 
     @Test
@@ -284,17 +285,28 @@ class GoalClassifierFollowUpTest {
     }
 
     @Test
-    @DisplayName("provide more details about Dr. X detected as follow-up")
-    void shouldDetectFollowUpWithProvideMoreDetailsPhrasing() {
+    @DisplayName("provide more details after match routes to case analysis")
+    void provideMoreDetailsAfterMatchRoutesToAnalyzeCase() {
         ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
 
         GoalClassification result = goalClassifier.classifyByKeywords(
-                "provide more details about Dr. Young McGlynn", Optional.empty());
+                "provide more details", Optional.empty());
 
         assertNotNull(result);
-        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
-        assertTrue(result.caseId().isPresent());
-        assertEquals(CASE_ID, result.caseId().get());
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
+    }
+
+    @Test
+    @DisplayName("question mark after match routes to case analysis")
+    void questionMarkAfterMatchRoutesToAnalyzeCase() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("?", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
     }
 
     @Test
@@ -310,39 +322,39 @@ class GoalClassifierFollowUpTest {
     }
 
     @Test
-    @DisplayName("what about phrasing detected as follow-up")
-    void shouldDetectFollowUpWithWhatAboutPhrasing() {
+    @DisplayName("what about phrasing after match routes to case analysis")
+    void whatAboutAfterMatchRoutesToAnalyzeCase() {
         ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
 
         GoalClassification result = goalClassifier.classifyByKeywords(
                 "what about the specialist recommendation", Optional.empty());
 
         assertNotNull(result);
-        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
     }
 
     @Test
-    @DisplayName("elaborate detected as follow-up")
-    void shouldDetectFollowUpWithElaborate() {
+    @DisplayName("elaborate after routing routes to case analysis")
+    void elaborateAfterRoutingRoutesToAnalyzeCase() {
         ConversationGoalContext.set(GoalType.ROUTE_CASE, CASE_ID, SESSION_ID);
 
         GoalClassification result = goalClassifier.classifyByKeywords(
                 "elaborate on the routing options", Optional.empty());
 
         assertNotNull(result);
-        assertEquals(GoalType.ROUTE_CASE, result.goalType());
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
     }
 
     @Test
-    @DisplayName("expand on detected as follow-up")
-    void shouldDetectFollowUpWithExpand() {
+    @DisplayName("expand on after match routes to case analysis")
+    void expandAfterMatchRoutesToAnalyzeCase() {
         ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
 
         GoalClassification result = goalClassifier.classifyByKeywords(
                 "expand on the doctor details", Optional.empty());
 
         assertNotNull(result);
-        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(GoalType.ANALYZE_CASE, result.goalType());
     }
 
     @Test

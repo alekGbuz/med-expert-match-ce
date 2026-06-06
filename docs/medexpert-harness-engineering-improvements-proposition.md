@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-05-31  
 **Audience:** Engineering leads, LLM module owners, platform/ops  
-**Status:** Strategic proposition — M29/M30 ✅ archived; next: [M31](../.agents/plans/M31-harness-human-checkpoint-and-events.md)
+**Status:** Strategic proposition — harness orchestration milestones archived; next: [human checkpoint and events plan](../.agents/plans/M31-harness-human-checkpoint-and-events.md)
 
 ---
 
@@ -10,7 +10,7 @@
 
 A reliable medical AI product is not “a better model” alone. It is **LLM + harness**: the infrastructure, loops, validation, tooling, memory, and orchestration that turn probabilistic outputs into repeatable clinical-adjacent workflows.
 
-MedExpertMatch already has substantial harness investment (workflow services, specialized chat agents, GraphRAG tools, A2A/chat governance milestones M08–M28). This document translates **harness engineering** patterns into a concrete improvement backlog for MedExpertMatch—distinct from **context engineering** (prompts, RAG, skills content).
+MedExpertMatch already has substantial harness investment (workflow services, specialized chat agents, GraphRAG tools, A2A/chat governance milestones). This document translates **harness engineering** patterns into a concrete improvement backlog for MedExpertMatch—distinct from **context engineering** (prompts, RAG, skills content).
 
 **Core thesis:** Most production value and most lines of code should live in the harness. When the model fails, treat the trace as a **harness backlog item**, not as “the model was dumb.”
 
@@ -75,7 +75,7 @@ What happens around **one** user chat turn or **one** workflow invocation:
 ### Layer 3 — Orchestration layer (multi-session / multi-agent)
 
 - Multiple specialized agents, event-driven handoffs, sagas/state machines.
-- MedExpertMatch: `MedicalAgentService` facade + per-domain workflow services; `ChatAgentProfile` (M14) for chat routing; A2A milestones for federation and governance.
+- MedExpertMatch: `MedicalAgentService` facade + per-domain workflow services; `ChatAgentProfile` for chat routing; A2A milestones for federation and governance.
 
 **Gap:** Orchestration is largely **scripted pipelines** (see `docs/improvements-plan-agentic-patterns.md`) rather than dynamic state machines with explicit events (`PLAN_READY`, `TESTS_FAILED`, etc.).
 
@@ -91,7 +91,7 @@ When traces show recurring failures, convert them into harness work:
 | `caseId` confusion or hallucinated IDs | Validation + extraction | `CaseIdExtractor`, `ChatCasePromptSupport`, `AgentToolCaseIdValidator` |
 | Match calls with bad graph parameters | Pre-flight sanitization | `MatchToolParameterSanitizer` |
 | Answers not grounded in retrieval | Verification loop | Mandatory tool-before-answer step in workflow; eval scorer |
-| PHI in logs | Policy hook | `LlmResponseSanitizer`, audit patterns from M20–M27 |
+| PHI in logs | Policy hook | `LlmResponseSanitizer`, chat governance audit patterns |
 | “Forgot” clinical disclaimer | Critic checklist | Post-generation compliance pass on medical prompts |
 
 Maintain a **harness improvement backlog** alongside the product backlog—classified by failure type, not by “model version.”
@@ -157,12 +157,12 @@ Steps:
 - **Scope:** Only allowed modules/files/tools for this task (e.g. intake may call `matchFromText`, not arbitrary graph admin).
 - **Format:** Structured diffs or tool args, not free-form refactors.
 - **Validation:** Dry-run, diff policy (no Flyway without human), secret/config deny lists.
-- **Rollback:** Branch/PR per agent step; correlate with chat export bundles (M27+).
+- **Rollback:** Branch/PR per agent step; correlate with chat export bundles.
 
 **MedExpertMatch application**
 
 - Extend tool-level validators to **workflow-level scopes** (which `@Tool` methods each `ChatAgentProfile` may invoke).
-- A2A: agent card declares allowed skills/tools; server rejects out-of-scope calls (builds on M20/M28 trust work).
+- A2A: agent card declares allowed skills/tools; server rejects out-of-scope calls (builds on earlier trust work).
 
 ### 4.5 Error as training signal for harness
 
@@ -176,7 +176,7 @@ For frequent classes, add harness elements (new critic rule, planner prerequisit
 **MedExpertMatch application**
 
 - Structured workflow telemetry (no PHI): `MatchJobStatus` / analyse job enums + reason codes.
-- Wire chat admin observability (M21–M27) to **harness failure taxonomy**, not only HTTP 5xx.
+- Wire chat admin observability to **harness failure taxonomy**, not only HTTP 5xx.
 
 ### 4.6 Multi-agent workflow (orchestration layer)
 
@@ -233,7 +233,7 @@ Policies: auto-continue for low-risk read-only queries; require approval for mat
 | No explicit Planner/Critic artefacts in chat/workflows | Hard to debug “why this answer” | This proposition §4.2 |
 | Ralph Loop not formalized for agents | Errors require manual retry | §4.1 |
 | Context bundling not a first-class agent step | Prompt bloat, inconsistent grounding | §4.3 |
-| Harness failure taxonomy not unified | Ops sees errors, not improvement signals | M21–M27 observability |
+| Harness failure taxonomy not unified | Ops sees errors, not improvement signals | Chat admin observability |
 
 ---
 
@@ -348,12 +348,12 @@ flowchart TB
 
 ## 10. Recommended next steps
 
-**Implementation plan:** M29–M33 complete. Next: [M34: Harness Production Readiness](../.agents/plans/M34-harness-production-readiness.md).
+**Implementation plan:** Harness engineering milestones through eval and chain UI are complete. Next: [Harness Production Readiness](../.agents/plans/M34-harness-production-readiness.md).
 
-1. **Review Phase A** (M29 Steps 1–5) with LLM module owners.  
-2. **Wire eval CI** (M29 Step 6) — builds on existing `llm/evaluation/`.  
-3. **Doctor-match state machine pilot** (M29 Step 9) after verify/critic/bundle land.  
-4. **Track harness backlog** using `.agents/templates/harness-backlog-item.md` (M29 Step 12).
+1. **Review Phase A** with LLM module owners.  
+2. **Wire eval CI** — builds on existing `llm/evaluation/`.  
+3. **Doctor-match state machine pilot** after verify/policy gate/bundle land.  
+4. **Track harness backlog** using `.agents/templates/harness-backlog-item.md`.
 
 ---
 

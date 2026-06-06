@@ -84,7 +84,7 @@ Note: Contrast with “prompt only” agents that hope the model picks the right
 
 </div>
 
-Note: Walk through steps 3–5 slowly; that is where M57 fixed «детализируй случай» routing.
+Note: Walk through steps 3–5 slowly; that is where the hybrid classifier fixed «детализируй случай» routing.
 
 ---
 
@@ -96,7 +96,7 @@ Note: Walk through steps 3–5 slowly; that is where M57 fixed «детализ�
 
 **Receive** — `ChatAssistantServiceImpl` is the AI Chat entry point.
 
-**Translate (M57)** — Russian and other non-English text is converted to English **before** classification and processing.
+**Translate** — Russian and other non-English text is converted to English **before** classification and processing.
 Original user text stays in chat history and the UI.
 
 **Why?** One consistent pipeline for goal rules, keywords, and MedGemma prompts.
@@ -279,7 +279,6 @@ Note: See [Harness & Agent Patterns](../HARNESS_AND_AGENT_USAGE.md) for shared t
 - [FunctionGemma Tool Calling](../FUNCTIONGEMMA.md) — Auto path and fine-tuning
 - [Find Specialist Flow](../FIND_SPECIALIST_FLOW.md) — end-to-end UX
 - [chat-ops-runbook](../chat-ops-runbook.md) — operations and metrics
-- Plan **M57** — hybrid classifier + multilingual chat
 
 </div>
 

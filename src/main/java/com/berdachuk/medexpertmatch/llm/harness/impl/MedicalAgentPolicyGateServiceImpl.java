@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.harness.impl;
 
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessFailureReason;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessMetrics;
@@ -40,9 +41,10 @@ public class MedicalAgentPolicyGateServiceImpl implements MedicalAgentPolicyGate
             harnessMetrics.recordPolicyGateFailure(HarnessFailureReason.POLICY_VIOLATION.name());
             return new PolicyGateResult(false, SAFE_FALLBACK, HarnessFailureReason.POLICY_VIOLATION, "phi pattern");
         }
-        String finalText = responseText;
-        if (!containsDisclaimer(lower)) {
-            finalText = responseText + "\n\n"
+        String finalText = LlmResponseSanitizer.formatForChatDisplay(responseText);
+        String finalLower = finalText.toLowerCase(Locale.ROOT);
+        if (!containsDisclaimer(finalLower)) {
+            finalText = finalText + "\n\n"
                     + "This output is for research and educational purposes only and is not a substitute "
                     + "for professional medical advice, diagnosis, or treatment.";
         }

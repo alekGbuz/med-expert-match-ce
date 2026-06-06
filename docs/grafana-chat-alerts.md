@@ -1,4 +1,4 @@
-# Grafana Chat Alert Hints (M21)
+# Grafana Chat Alert Hints
 
 Suggested Prometheus alert rules for chat operations. Tune thresholds per environment.
 

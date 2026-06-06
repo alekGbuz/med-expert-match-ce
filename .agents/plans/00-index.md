@@ -70,6 +70,7 @@
 | M55 | [`M55-rest-controller-config-coverage.md`](archive/M55-rest-controller-config-coverage.md) | REST controller config coverage |
 | M56 | [`M56-chat-auto-find-specialist-fix.md`](archive/M56-chat-auto-find-specialist-fix.md) | Chat Auto Find Specialist harness routing and CoT sanitization |
 | M57 | [`M57-goal-classifier-hybrid-session-routing.md`](archive/M57-goal-classifier-hybrid-session-routing.md) | Hybrid GoalClassifier: session rules + LLM context + chat continuity + PolicyGate rename |
+| M59 | [`M59-chat-collapsible-reasoning-and-follow-up.md`](archive/M59-chat-collapsible-reasoning-and-follow-up.md) | Collapsible CoT in chat, follow-up routing, case-analysis interpretation, chat UI |
 
 ## Creating a New Plan
 

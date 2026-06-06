@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.web.service.impl;
 
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.web.service.ChatMarkdownRenderer;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
 @Service("chatMarkdownRenderer")
 public class ChatMarkdownRendererImpl implements ChatMarkdownRenderer {
 
+    private static final String DETAILS_CLOSE = "</details>";
     private static final Pattern FENCED_CODE = Pattern.compile("```(?:\\w+)?\\n([\\s\\S]*?)```");
     private static final Pattern INLINE_CODE = Pattern.compile("`([^`]+)`");
     private static final Pattern BOLD = Pattern.compile("\\*\\*([^*]+)\\*\\*");
@@ -22,16 +24,37 @@ public class ChatMarkdownRendererImpl implements ChatMarkdownRenderer {
     private static final Pattern LINK = Pattern.compile("\\[([^\\]]+)]\\(((?:[^()]|\\([^()]*\\))*)\\)");
     private static final Pattern TAG = Pattern.compile("<(/?)([a-zA-Z0-9]+)(\\s[^>]*)?>");
     private static final Pattern HREF = Pattern.compile("href\\s*=\\s*\"([^\"]+)\"", Pattern.CASE_INSENSITIVE);
+    private static final Pattern LLM_ANSWER_WRAPPER = Pattern.compile(
+            "<div\\s+class=\"llm-answer-label\"[^>]*>\\s*Response\\s*</div>|<div\\s+class=\"llm-answer\"[^>]*>|</div>",
+            Pattern.CASE_INSENSITIVE);
 
     private static final List<String> ALLOWED_TAGS = List.of(
-            "p", "strong", "em", "code", "pre", "ul", "ol", "li", "a", "br");
+            "p", "strong", "em", "code", "pre", "ul", "ol", "li", "a", "br",
+            "details", "summary", "div");
 
     @Override
     public String renderSafe(String markdown) {
         if (markdown == null || markdown.isBlank()) {
             return "";
         }
-        return sanitizeHtml(convertMarkdown(markdown.trim()));
+        String prepared = markdown.contains("llm-thinking")
+                ? markdown.trim()
+                : LlmResponseSanitizer.formatForChatDisplay(markdown.trim());
+        return renderPreparedAssistant(prepared);
+    }
+
+    private String renderPreparedAssistant(String prepared) {
+        int detailsEnd = prepared.indexOf(DETAILS_CLOSE);
+        if (detailsEnd > 0) {
+            String detailsHtml = prepared.substring(0, detailsEnd + DETAILS_CLOSE.length());
+            String answerMarkdown = unwrapAnswerMarkdown(prepared.substring(detailsEnd + DETAILS_CLOSE.length()));
+            return sanitizeHtml(detailsHtml + "<div class=\"llm-answer\">" + convertMarkdown(answerMarkdown) + "</div>");
+        }
+        return sanitizeHtml(convertMarkdown(LlmResponseSanitizer.stripLlmReasoning(prepared)));
+    }
+
+    private static String unwrapAnswerMarkdown(String remainder) {
+        return LLM_ANSWER_WRAPPER.matcher(remainder.trim()).replaceAll("").trim();
     }
 
     private String convertMarkdown(String text) {
@@ -99,6 +122,12 @@ public class ChatMarkdownRendererImpl implements ChatMarkdownRenderer {
                     out.append(buildSafeAnchor(attrs));
                 } else if ("a".equals(tag)) {
                     out.append("</a>");
+                } else if ("details".equals(tag) || "summary".equals(tag) || "div".equals(tag)) {
+                    if (slash.isEmpty()) {
+                        out.append(buildSafeContainerOpen(tag, attrs));
+                    } else {
+                        out.append("</").append(tag).append('>');
+                    }
                 } else if (slash.isEmpty()) {
                     out.append('<').append(tag).append('>');
                 } else {
@@ -109,6 +138,25 @@ public class ChatMarkdownRendererImpl implements ChatMarkdownRenderer {
         }
         out.append(html.substring(last));
         return out.toString();
+    }
+
+    private String buildSafeContainerOpen(String tag, String attrs) {
+        if ("div".equals(tag) && attrs != null) {
+            String lower = attrs.toLowerCase(Locale.ROOT);
+            if (lower.contains("llm-thinking")
+                    || lower.contains("llm-answer")
+                    || lower.contains("llm-answer-label")) {
+                return "<" + tag + attrs + ">";
+            }
+            return "<div>";
+        }
+        if ("details".equals(tag)) {
+            return "<details class=\"llm-thinking\">";
+        }
+        if ("summary".equals(tag)) {
+            return "<summary>";
+        }
+        return "<" + tag + ">";
     }
 
     private String buildSafeAnchor(String attrs) {

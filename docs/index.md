@@ -73,7 +73,7 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 
 - [Harness Architecture](HARNESS.md) - Goal routing, workflow engines, configuration, and observability
 - [Harness presentation](presentations/medexpertmatch-harness.md) - Reveal.js deck: high-level steps and harness metaphor
-- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) - Tool-calling model setup, tool pairs, and fine-tuning (M58)
+- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) - Tool-calling model setup, tool pairs, and fine-tuning
 - [Harness & Agent Patterns](HARNESS_AND_AGENT_USAGE.md) - Model vs harness terminology and repository conventions
 
 ## Project Status

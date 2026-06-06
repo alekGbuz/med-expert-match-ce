@@ -100,7 +100,7 @@ Base FunctionGemma may choose the wrong tool or reply with text instead of calli
 | Match specialists (case ID in hints) | `match_doctors_from_text` | `match_doctors_to_case(caseId)` |
 | General question | unnecessary tool call | natural language only |
 
-**Mitigation in production (M57):**
+**Mitigation in production:**
 
 1. **Harness routing** — match, route, and analyze-with-case-ID bypass FunctionGemma tool choice
 2. **GoalClassifier + session context** — correct goal before chat path runs
@@ -120,10 +120,10 @@ consistency.
 - Periodic check: `MedGemmaToolCallingMonitor` (misnamed historically — checks primary/tool models)
 - Chat logs: `Chat LLM turn — agent: auto, model: functiongemma:270m`
 
-## Fine-tuning FunctionGemma (optional — M58)
+## Fine-tuning FunctionGemma (optional)
 
 Fine-tuning teaches FunctionGemma **your** tool schemas and disambiguation rules. It does **not** replace the harness
-([Harness Architecture](HARNESS.md)): M57 goal routing and workflow engines should land first. Pursue M58 only when
+([Harness Architecture](HARNESS.md)): hybrid goal routing and workflow engines should land first. Pursue fine-tuning only when
 residual tool-selection errors remain on the Auto chat path.
 
 **Implementation plan:** [.agents/plans/M58-functiongemma-tool-calling-finetune.md](../.agents/plans/M58-functiongemma-tool-calling-finetune.md)
@@ -149,7 +149,7 @@ residual tool-selection errors remain on the Auto chat path.
 
 ### What fine-tuning does **not** improve
 
-- Goal classification (`MATCH_DOCTORS` vs `ANALYZE_CASE`) — use MedGemma + M57 `GoalClassifier`
+- Goal classification (`MATCH_DOCTORS` vs `ANALYZE_CASE`) — use MedGemma + hybrid `GoalClassifier`
 - GraphRAG match quality, routing scores, or case analysis content
 - Case ID extraction from chat history — harness / `ChatCasePromptSupport`
 - Harness verify logic, retries, or critic review
@@ -158,20 +158,20 @@ residual tool-selection errors remain on the Auto chat path.
 
 | Pros | Cons |
 |------|------|
-| Fixes **tool disambiguation** where prompts already contain case ID hints | Does not fix wrong **goal** routing — M57 is mandatory first |
+| Fixes **tool disambiguation** where prompts already contain case ID hints | Does not fix wrong **goal** routing — harness goal routing is mandatory first |
 | Small model (270M) — cheap inference, runs on modest GPU or Ollama | **Maintenance**: re-train when tool schemas or orchestrator prompts change |
 | One-time training; no per-request cost increase | Risk of **over-calling** tools if dataset lacks negative (no-tool) examples |
 | Reproducible eval loop (JSONL + `ToolSelectionEvalTest`) | Risk of **overfitting** to «always use caseId tool» without balanced no-ID examples |
 | RU+EN coverage in one adapter | Ollama / local serve naming and weight versioning must be documented |
-| Complements harness: catches edge cases that still reach FunctionGemma | **4.5–5.5 days** effort for dataset, train, integrate, smoke (see M58 plan) |
+| Complements harness: catches edge cases that still reach FunctionGemma | **4.5–5.5 days** effort for dataset, train, integrate, smoke (see implementation plan) |
 | Google Tuning Lab or TRL path — no `pom.xml` changes | Training data must stay **synthetic / anonymized** — no PHI in datasets |
 
 **When to fine-tune vs defer**
 
 | Condition | Recommendation |
 |-----------|----------------|
-| M57 harness routes analyze/match with caseId reliably | **Defer M58** — monitor 2 weeks |
-| Residual wrong-tool rate **> 10%** after M57 on eval set | **Proceed** with Option A (Tuning Lab) |
+| Harness routes analyze/match with caseId reliably | **Defer fine-tuning** — monitor 2 weeks |
+| Residual wrong-tool rate **> 10%** after goal routing on eval set | **Proceed** with Option A (Tuning Lab) |
 | Need reproducible CI-friendly pipeline | **Option B** (TRL `SFTTrainer`) |
 | Tool schemas change frequently | Prefer harness guards + prompt updates over repeated fine-tunes |
 
@@ -183,10 +183,10 @@ assistant **function call** (not free text).
 
 #### Step 1 — Gate and baseline
 
-1. Confirm M57 is deployed (harness analyze, session continuation, multilingual EN pipeline).
+1. Confirm hybrid goal classifier is deployed (harness analyze, session continuation, multilingual EN pipeline).
 2. Run a **baseline eval** on stock `functiongemma:270m` (target: 100 scripted prompts).
 3. Record metrics before generating training data — e.g. `docs/eval/functiongemma-baseline-{date}.md`.
-4. Proceed only if wrong-tool or text-only rates exceed M58 thresholds (see plan).
+4. Proceed only if wrong-tool or text-only rates exceed documented thresholds (see plan).
 
 #### Step 2 — Define scenarios and tool pairs
 
@@ -236,7 +236,7 @@ Template inputs:
 
 **Secondary sources:**
 
-- **Failure replay** — rows from M57 / tool-selection eval JSONL where base model chose wrong tool (re-label correct answer)
+- **Failure replay** — rows from goal-classifier / tool-selection eval JSONL where base model chose wrong tool (re-label correct answer)
 - **Log mining** — only after anonymization review; prefer synthetic generation for HIPAA safety
 
 #### Step 5 — Add negative (no-tool) examples
@@ -323,7 +323,7 @@ Keep base `functiongemma:270m` as rollback via env var. Do **not** commit model 
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| «Provide case description» despite case ID in chat | Tool path without harness; FG chose `analyze_case_text` | Confirm M57 deployed; check `Goal classified: ANALYZE_CASE`; enable analyze harness |
+| «Provide case description» despite case ID in chat | Tool path without harness; FG chose `analyze_case_text` | Confirm hybrid goal classifier deployed; check `Goal classified: ANALYZE_CASE`; enable analyze harness |
 | No tool calls, only text | Model not tool-capable or wrong `TOOL_CALLING_MODEL` | Use `functiongemma:270m`; verify Ollama model list |
 | Wrong doctor match tool | Missing case ID in `GoalClassification` | Check `ConversationGoalContext` + `GoalClassifier` logs |
 | Timeouts | `tool-calling.max-concurrent-calls: 1` | Increase pool or reduce parallel chat load |

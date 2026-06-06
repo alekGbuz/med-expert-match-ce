@@ -77,7 +77,7 @@ public class ChatController {
         return chatService.getHistory(chatId, userContext.currentUserId(), limit, offset);
     }
 
-    @Operation(summary = "Delete a chat (not the default chat)")
+    @Operation(summary = "Delete a chat; recreates default chat when history becomes empty")
     @DeleteMapping("/{chatId}")
     public ResponseEntity<Map<String, String>> deleteChat(@PathVariable String chatId) {
         boolean deleted = chatService.deleteChat(chatId, userContext.currentUserId());

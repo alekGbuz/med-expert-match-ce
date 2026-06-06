@@ -6,31 +6,31 @@ Nice-to-have features and UX improvements not yet scheduled in an active milesto
 
 ---
 
-## W-01: Real-time agent activity panel (Cursor-style) — ✅ Delivered (M17)
+## W-01: Real-time agent activity panel (Cursor-style) — ✅ Delivered
 
 **Priority:** High (chat UX)  
-**Status:** ✅ Delivered in **M17**  
+**Status:** ✅ Delivered  
 **Related:** `static/js/chat.js`, `static/css/chat.css`, `templates/chat.html`
 
 ---
 
-## W-02: Markdown rendering in AI chat responses — ✅ Delivered (M17 + M18)
+## W-02: Markdown rendering in AI chat responses — ✅ Delivered
 
 **Priority:** High (chat UX)  
-**Status:** ✅ Delivered in **M17** (client streaming) + **M18** (SSR allowlist)  
+**Status:** ✅ Delivered (client streaming + SSR allowlist)  
 **Related:** `web/service/ChatMarkdownRenderer.java`, `static/js/chat.js`, `templates/chat.html`
 
 ---
 
-## W-03: Playwright chat browser verification — ✅ Delivered (M19 + M20)
+## W-03: Playwright chat browser verification — ✅ Delivered
 
 **Priority:** Medium (CI confidence)  
-**Status:** MockMvc smoke in M18; Playwright profile in **M19**; full navigation in **M20** (`ChatPlaywrightSmokeTest`)  
+**Status:** MockMvc smoke, Playwright profile, and full navigation (`ChatPlaywrightSmokeTest`)  
 **Related:** `.agents/plans/archive/M20-chat-governance-and-a2a-contracts.md`, `ChatPlaywrightSmokeTest`
 
 ---
 
-## W-04: Chat transcript export — ✅ Delivered (M19)
+## W-04: Chat transcript export — ✅ Delivered
 
 **Priority:** Medium (compliance / portability)  
 **Status:** ✅ `GET /api/v1/chats/{id}/export` with PHI redaction  

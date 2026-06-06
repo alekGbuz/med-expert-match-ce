@@ -141,6 +141,11 @@ public class GoalClassifier {
                     "session: case detail with inherited case");
         }
 
+        if (GoalIntentPatterns.looksLikeElaborationFollowUp(message)) {
+            return GoalClassification.analyzeCase(inheritedCaseId,
+                    "session: elaboration follow-up with inherited case");
+        }
+
         return detectFollowUp(message, caseId);
     }
 
@@ -289,12 +294,33 @@ public class GoalClassifier {
         }
         String inheritedCaseId = caseId.filter(id -> !id.isBlank())
                 .orElse(ctx.lastCaseId() != null ? ctx.lastCaseId() : "");
+        GoalType followUpGoal = resolveFollowUpGoal(message, ctx.lastGoal());
         return new GoalClassification(
-                ctx.lastGoal(),
+                followUpGoal,
                 inheritedCaseId.isBlank() ? Optional.empty() : Optional.of(inheritedCaseId),
                 Optional.empty(),
-                "follow-up: " + ctx.lastGoal().name()
+                "follow-up: " + followUpGoal.name()
         );
+    }
+
+    private static final Set<String> SAME_GOAL_AFFIRMATIVES = Set.of(
+            "yes", "yeah", "yep", "ok", "okay", "sure");
+
+    private GoalType resolveFollowUpGoal(String message, GoalType lastGoal) {
+        if (requestsMoreDoctors(message)) {
+            return GoalType.MATCH_DOCTORS;
+        }
+        if (lastGoal != GoalType.MATCH_DOCTORS && lastGoal != GoalType.ROUTE_CASE) {
+            return lastGoal;
+        }
+        if (GoalIntentPatterns.looksLikeElaborationFollowUp(message)) {
+            return GoalType.ANALYZE_CASE;
+        }
+        String lower = message.trim().toLowerCase();
+        if (FOLLOW_UP_AFFIRMATIVES.contains(lower) && !SAME_GOAL_AFFIRMATIVES.contains(lower)) {
+            return GoalType.ANALYZE_CASE;
+        }
+        return lastGoal;
     }
 
     private boolean isFollowUpSignal(String message) {

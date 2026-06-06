@@ -37,6 +37,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     private final PromptTemplate medgemmaCaseAnalysisUserPromptTemplate;
     private final PromptTemplate medgemmaResultInterpretationSystemPromptTemplate;
     private final PromptTemplate medgemmaResultInterpretationUserPromptTemplate;
+    private final PromptTemplate medgemmaCaseAnalysisInterpretationSystemPromptTemplate;
+    private final PromptTemplate medgemmaCaseAnalysisInterpretationUserPromptTemplate;
     private final PromptTemplate routingSummarizationPromptTemplate;
     private final PromptTemplate networkAnalyticsSummarizationPromptTemplate;
     private final LogStreamService logStreamService;
@@ -49,6 +51,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             @Qualifier("medgemmaCaseAnalysisUserPromptTemplate") PromptTemplate medgemmaCaseAnalysisUserPromptTemplate,
             @Qualifier("medgemmaResultInterpretationSystemPromptTemplate") PromptTemplate medgemmaResultInterpretationSystemPromptTemplate,
             @Qualifier("medgemmaResultInterpretationUserPromptTemplate") PromptTemplate medgemmaResultInterpretationUserPromptTemplate,
+            @Qualifier("medgemmaCaseAnalysisInterpretationSystemPromptTemplate") PromptTemplate medgemmaCaseAnalysisInterpretationSystemPromptTemplate,
+            @Qualifier("medgemmaCaseAnalysisInterpretationUserPromptTemplate") PromptTemplate medgemmaCaseAnalysisInterpretationUserPromptTemplate,
             @Qualifier("routingSummarizationPromptTemplate") PromptTemplate routingSummarizationPromptTemplate,
             @Qualifier("networkAnalyticsSummarizationPromptTemplate") PromptTemplate networkAnalyticsSummarizationPromptTemplate,
             @Value("${spring.ai.custom.chat.model:medgemma:1.5-4b}") String medGemmaModelName,
@@ -61,6 +65,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         this.medgemmaCaseAnalysisUserPromptTemplate = medgemmaCaseAnalysisUserPromptTemplate;
         this.medgemmaResultInterpretationSystemPromptTemplate = medgemmaResultInterpretationSystemPromptTemplate;
         this.medgemmaResultInterpretationUserPromptTemplate = medgemmaResultInterpretationUserPromptTemplate;
+        this.medgemmaCaseAnalysisInterpretationSystemPromptTemplate = medgemmaCaseAnalysisInterpretationSystemPromptTemplate;
+        this.medgemmaCaseAnalysisInterpretationUserPromptTemplate = medgemmaCaseAnalysisInterpretationUserPromptTemplate;
         this.routingSummarizationPromptTemplate = routingSummarizationPromptTemplate;
         this.networkAnalyticsSummarizationPromptTemplate = networkAnalyticsSummarizationPromptTemplate;
         this.logStreamService = logStreamService;
@@ -112,22 +118,58 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
     @Override
     @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
-            key = "'interpret:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase)")
+            key = "'interpret:match:v3:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase)")
     public String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase) {
-        log.info("Interpreting tool results with LLM");
+        return invokeInterpretation(
+                "doctor match result interpretation",
+                toolResults,
+                caseAnalysis,
+                patientAgeFromCase,
+                null,
+                medgemmaResultInterpretationSystemPromptTemplate,
+                medgemmaResultInterpretationUserPromptTemplate,
+                true);
+    }
+
+    @Override
+    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
+            key = "'interpret:case:v3:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase, #userFocus)")
+    public String interpretCaseAnalysisWithMedGemma(
+            String toolResults, String caseAnalysis, Integer patientAgeFromCase, String userFocus) {
+        return invokeInterpretation(
+                "case analysis interpretation",
+                toolResults,
+                caseAnalysis,
+                patientAgeFromCase,
+                userFocus,
+                medgemmaCaseAnalysisInterpretationSystemPromptTemplate,
+                medgemmaCaseAnalysisInterpretationUserPromptTemplate,
+                false);
+    }
+
+    private String invokeInterpretation(
+            String operationLabel,
+            String toolResults,
+            String caseAnalysis,
+            Integer patientAgeFromCase,
+            String userFocus,
+            PromptTemplate systemTemplate,
+            PromptTemplate userTemplate,
+            boolean allowEmptyToolResultsFallback) {
+        log.info("Interpreting with LLM: {}", operationLabel);
         String sessionId = logStreamService.getCurrentSessionId();
         logStreamService.sendLog(sessionId, "INFO", "LLM result interpretation", "Interpreting tool results");
 
         try {
-            if (toolResults == null || toolResults.trim().isEmpty()) {
+            if (allowEmptyToolResultsFallback && (toolResults == null || toolResults.trim().isEmpty())) {
                 log.warn("Empty tool results provided, returning case analysis only");
                 return "Based on LLM case analysis:\n\n" + caseAnalysis;
             }
 
-            String limitedToolResults = toolResults;
-            if (toolResults.length() > 3000) {
-                log.warn("Tool results too long ({} chars), truncating to 3000 chars", toolResults.length());
-                limitedToolResults = toolResults.substring(0, 3000) + "\n\n[Tool results truncated due to length]";
+            String limitedToolResults = toolResults != null ? toolResults : "";
+            if (limitedToolResults.length() > 3000) {
+                log.warn("Tool results too long ({} chars), truncating to 3000 chars", limitedToolResults.length());
+                limitedToolResults = limitedToolResults.substring(0, 3000) + "\n\n[Tool results truncated due to length]";
             }
 
             String limitedCaseAnalysis = caseAnalysis;
@@ -140,9 +182,10 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             variables.put("caseAnalysis", limitedCaseAnalysis != null ? limitedCaseAnalysis : "No case analysis available");
             variables.put("toolResults", limitedToolResults);
             variables.put("patientAgeFromCase", patientAgeFromCase != null ? patientAgeFromCase.toString() : "Not provided");
+            variables.put("userFocus", userFocus != null && !userFocus.isBlank() ? userFocus.trim() : "General case description");
 
-            String systemPrompt = medgemmaResultInterpretationSystemPromptTemplate.render(Collections.emptyMap());
-            String userPrompt = medgemmaResultInterpretationUserPromptTemplate.render(variables);
+            String systemPrompt = systemTemplate.render(Collections.emptyMap());
+            String userPrompt = userTemplate.render(variables);
 
             int totalPromptLength = systemPrompt.length() + userPrompt.length();
             if (totalPromptLength > 8000) {
@@ -152,12 +195,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                         + "\n\n[Prompt truncated - please provide a concise response]";
             }
 
-            log.info("Sending prompt to LLM for result interpretation (model: {}, total prompt length: {})",
-                    medGemmaModelName, systemPrompt.length() + userPrompt.length());
-            log.debug("System prompt: {}", systemPrompt);
-            log.debug("User prompt: {}", userPrompt);
-            log.info("Calling LLM model: {} for result interpretation (prompt length: {})",
-                    medGemmaModelName, systemPrompt.length() + userPrompt.length());
+            log.info("Sending prompt to LLM for {} (model: {}, total prompt length: {})",
+                    operationLabel, medGemmaModelName, systemPrompt.length() + userPrompt.length());
             logStreamService.sendLog(sessionId, "INFO", "LLM Call",
                     String.format("Calling model: %s for result interpretation", medGemmaModelName));
 
@@ -172,33 +211,48 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                 return formatInterpretationFallback(limitedToolResults, limitedCaseAnalysis);
             }
 
-            if (interpretation != null && interpretation.length() > 10000) {
-                log.warn("LLM response very long ({} chars), checking for repetition", interpretation.length());
-                String firstPart = interpretation.substring(0, Math.min(1000, interpretation.length()));
-                int occurrences = (interpretation.length() - interpretation.replace(firstPart, "").length()) / firstPart.length();
-                if (occurrences > 3) {
-                    log.warn("Detected repetitive response pattern, truncating to first occurrence");
-                    interpretation = firstPart + "\n\n[Response truncated - repetitive content detected]";
-                } else if (interpretation.length() > 15000) {
-                    interpretation = interpretation.substring(0, 15000) + "\n\n[Response truncated due to excessive length]";
-                }
-            }
+            interpretation = trimRepetitiveInterpretation(interpretation);
 
-            log.info("LLM model: {} completed result interpretation, response length: {}",
-                    medGemmaModelName, interpretation != null ? interpretation.length() : 0);
+            log.info("LLM model: {} completed {}, response length: {}",
+                    medGemmaModelName, operationLabel, interpretation != null ? interpretation.length() : 0);
             logStreamService.sendLog(sessionId, "INFO", "LLM result interpretation",
                     String.format("Interpretation completed successfully using model: %s, length: %d",
                             medGemmaModelName, interpretation != null ? interpretation.length() : 0));
-            log.debug("LLM interpretation result (first 500 chars): {}",
-                    interpretation != null && interpretation.length() > 500 ? interpretation.substring(0, 500) + "..." : interpretation);
+
             String readable = LlmResponseSanitizer.toHumanReadable(
                     interpretation != null ? interpretation : "Error: Empty response from LLM");
-            return LlmResponseSanitizer.stripLlmReasoning(readable);
+            String formatted = LlmResponseSanitizer.formatForChatDisplay(readable);
+            return enforceAuthoritativePatientAge(formatted, patientAgeFromCase);
         } catch (Exception e) {
-            log.error("Error interpreting results with LLM", e);
+            log.error("Error during {}", operationLabel, e);
             logStreamService.logError(sessionId, "LLM result interpretation failed", e.getMessage());
             throw new AgentExecutionException(buildLlmErrorMessage("result interpretation", e), e);
         }
+    }
+
+    private static String trimRepetitiveInterpretation(String interpretation) {
+        if (interpretation == null || interpretation.length() <= 10000) {
+            return interpretation;
+        }
+        log.warn("LLM response very long ({} chars), checking for repetition", interpretation.length());
+        String firstPart = interpretation.substring(0, Math.min(1000, interpretation.length()));
+        int occurrences = (interpretation.length() - interpretation.replace(firstPart, "").length()) / firstPart.length();
+        if (occurrences > 3) {
+            log.warn("Detected repetitive response pattern, truncating to first occurrence");
+            return firstPart + "\n\n[Response truncated - repetitive content detected]";
+        }
+        if (interpretation.length() > 15000) {
+            return interpretation.substring(0, 15000) + "\n\n[Response truncated due to excessive length]";
+        }
+        return interpretation;
+    }
+
+    private static String enforceAuthoritativePatientAge(String response, Integer patientAgeFromCase) {
+        if (response == null || patientAgeFromCase == null || response.isBlank()) {
+            return response;
+        }
+        String authoritative = patientAgeFromCase + "-year-old";
+        return response.replaceAll("(?i)\\b\\d{1,3}-year-old\\b", authoritative);
     }
 
     private String invokeMedGemma(String systemPrompt, String userPrompt) {

@@ -102,6 +102,10 @@ public class TestAIConfig {
             // These prompts ask to interpret tool results and case analysis
             // The prompt template contains "Based on the original case analysis and the tool execution results"
             // Also check for "You are a medical LLM" which is the start of the interpretation prompt template
+            boolean isCaseAnalysisInterpretationPrompt = promptText.contains("clinical case description")
+                    || promptText.contains("do not include a \"matched doctors\" section")
+                    || promptText.contains("clinical evidence tool results");
+
             boolean isInterpretationPrompt = (originalPrompt.contains("You are a medical LLM") || promptText.contains("you are a medical llm")) ||
                     (promptText.contains("original case analysis") && promptText.contains("tool execution results")) ||
                     (promptText.contains("tool execution results") && (promptText.contains("matched doctors") ||
@@ -156,7 +160,24 @@ public class TestAIConfig {
                         (promptText.contains("queue") && promptText.contains("priority")) ||
                         (promptText.contains("tool execution results") && promptText.contains("prioritization"));
 
-                if (isPrioritizationInterpretation) {
+                if (isCaseAnalysisInterpretationPrompt) {
+                    responseText = """
+                            Case Summary:
+                            The patient is a 30-year-old individual presenting with peripheral vascular disease.
+
+                            Clinical Presentation:
+                            Chief complaint includes stiffness and wrist pain with low blood pressure noted.
+
+                            Clinical Analysis:
+                            Vascular surgery or cardiology referral may be appropriate for further evaluation.
+
+                            Evidence Summary:
+                            Clinical guidelines and PubMed literature support structured vascular assessment.
+
+                            Recommendations:
+                            Urgent specialist evaluation for peripheral vascular disease is recommended.
+                            """;
+                } else if (isPrioritizationInterpretation) {
                     // Prioritization interpretation
                     responseText = "Based on urgency and complexity analysis, I recommend prioritizing this case. " +
                             "The case has been assigned high priority due to critical symptoms. " +

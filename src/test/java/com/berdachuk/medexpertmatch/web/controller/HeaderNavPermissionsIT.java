@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Contract: the top navigation (header fragment) must show the admin-only items
- * (Synthetic Data, Graph, Documents) only to admin sessions. Regular users see
+ * (Synthetic Data, Graph) only to admin sessions. Regular users see
  * only the public items (Home, Find Specialist, Case Analysis, Queue, Analytics,
  * Routing, AI Chat).
  */
@@ -31,7 +31,7 @@ class HeaderNavPermissionsIT extends BaseIntegrationTest {
             "Find Specialist", "Case Analysis", "Queue", "Analytics", "Routing", "AI Chat"
     };
     private static final String[] ADMIN_LABELS = {
-            "Synthetic Data", "Graph", "Documents"
+            "Synthetic Data", "Graph"
     };
 
     @Test
@@ -52,6 +52,6 @@ class HeaderNavPermissionsIT extends BaseIntegrationTest {
                 .andExpect(content().string(containsString("AI Chat")))
                 .andExpect(content().string(containsString("Synthetic Data")))
                 .andExpect(content().string(containsString("Graph")))
-                .andExpect(content().string(containsString("Documents")));
+                .andExpect(content().string(not(containsString("Documents"))));
     }
 }

@@ -1,8 +1,28 @@
 package com.berdachuk.medexpertmatch.core.util;
 
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public final class LlmResponseSanitizer {
 
+    private static final String STRATEGIZING_MARKER = "strategizing complete";
+
+    private static final Pattern CONTENT_SECTION_PATTERN = Pattern.compile(
+            "(?i)(?:^|[\\n.]\\s*)(Case Summary|Clinical Presentation|Matched Doctors|"
+                    + "Matching Rationale(?: Explanation)?|Evidence Summary|Recommendations)\\s*:?(?=\\s*(?:\\n|$))",
+            Pattern.MULTILINE);
+
+    private static final Pattern NUMBERED_SECTION_PATTERN = Pattern.compile(
+            "(?i)\\d+\\.\\s*(Case Summary|Clinical Presentation|Matched Doctors|"
+                    + "Matching Rationale(?: Explanation)?|Evidence Summary|Recommendations)\\b");
+
+    private static final int MIN_REASONING_CHARS = 40;
+
     private LlmResponseSanitizer() {
+    }
+
+    public record ReasoningSplit(String reasoning, String content) {
     }
 
     public static String extractJson(String llmOutput) {
@@ -39,9 +59,235 @@ public final class LlmResponseSanitizer {
         if (response == null || response.isBlank()) {
             return response;
         }
-        String cleaned = response.trim();
-        cleaned = cleaned.replaceAll("<unused\\d+>", "");
+        ReasoningSplit split = splitReasoningFromResponse(response);
+        String content = split.content() != null && !split.content().isBlank() ? split.content() : response;
+        return stripCodeFences(stripLeadingReasoningHeaders(normalizeModelTokens(content)));
+    }
 
+    /**
+     * Splits MedGemma chain-of-thought from the user-facing clinical content.
+     */
+    public static ReasoningSplit splitReasoningFromResponse(String response) {
+        if (response == null || response.isBlank()) {
+            return new ReasoningSplit("", response);
+        }
+        if (response.contains("class=\"llm-thinking\"")) {
+            return new ReasoningSplit("", response);
+        }
+
+        String cleaned = normalizeModelTokens(response);
+        int contentStart = findBestContentStart(cleaned);
+        if (contentStart > MIN_REASONING_CHARS) {
+            String reasoning = cleaned.substring(0, contentStart).trim();
+            String content = cleaned.substring(contentStart).trim();
+            return new ReasoningSplit(trimReasoningLabel(reasoning), content);
+        }
+
+        if (hasPlanningMarkers(cleaned.toLowerCase(Locale.ROOT)) && contentStart > 0) {
+            String reasoning = cleaned.substring(0, contentStart).trim();
+            String content = cleaned.substring(contentStart).trim();
+            return new ReasoningSplit(trimReasoningLabel(reasoning), content);
+        }
+
+        return new ReasoningSplit("", cleaned);
+    }
+
+    /**
+     * Wraps detected model reasoning in a collapsible HTML block ahead of the clinical answer.
+     */
+    public static String formatForChatDisplay(String response) {
+        if (response == null || response.isBlank()) {
+            return response;
+        }
+        if (response.contains("class=\"llm-thinking\"")) {
+            return response;
+        }
+
+        ReasoningSplit split = splitReasoningFromResponse(response);
+        String content = stripLlmReasoning(
+                split.content() != null && !split.content().isBlank() ? split.content() : response);
+
+        if (split.reasoning() == null || split.reasoning().length() < MIN_REASONING_CHARS) {
+            return content;
+        }
+
+        return buildCollapsibleReasoning(split.reasoning())
+                + "<div class=\"llm-answer-label\">Response</div>\n"
+                + "<div class=\"llm-answer\">\n\n"
+                + content
+                + "\n\n</div>";
+    }
+
+    private static String buildCollapsibleReasoning(String reasoning) {
+        return "<details class=\"llm-thinking\"><summary>Model reasoning (click to expand)</summary>"
+                + "<div class=\"llm-thinking-body\">"
+                + escapeHtml(reasoning.trim())
+                + "</div></details>\n";
+    }
+
+    private static String escapeHtml(String text) {
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
+    }
+
+    private static String normalizeModelTokens(String response) {
+        return response.trim().replaceAll("<unused\\d+>", "").trim();
+    }
+
+    private static String trimReasoningLabel(String reasoning) {
+        if (reasoning == null || reasoning.isBlank()) {
+            return "";
+        }
+        String trimmed = reasoning.trim();
+        while (trimmed.toLowerCase().startsWith("thought")) {
+            int newlineIdx = trimmed.indexOf('\n');
+            if (newlineIdx > 0) {
+                trimmed = trimmed.substring(newlineIdx + 1).trim();
+            } else {
+                return "";
+            }
+        }
+        return trimmed;
+    }
+
+    private static int findBestContentStart(String response) {
+        int afterStrategizing = findContentStartAfterStrategizing(response);
+        if (afterStrategizing >= 0) {
+            return afterStrategizing;
+        }
+
+        String lower = response.toLowerCase(Locale.ROOT);
+        if (hasPlanningMarkers(lower)) {
+            int latest = findLatestValidSectionStart(response);
+            if (latest >= 0) {
+                return latest;
+            }
+        }
+
+        int numbered = findFirstNumberedSectionStart(response);
+        if (numbered >= 0) {
+            return numbered;
+        }
+
+        int fallback = findFallbackContentStart(response);
+        if (fallback >= 0) {
+            return fallback;
+        }
+
+        return findFirstValidSectionStart(response);
+    }
+
+    private static int findFallbackContentStart(String response) {
+        if (!hasPlanningMarkers(response.toLowerCase(Locale.ROOT))) {
+            return -1;
+        }
+        String lower = response.toLowerCase(Locale.ROOT);
+        String[] markers = {"case summary", "matching rationale explanation", "matching rationale", "clinical presentation"};
+        int best = -1;
+        for (String marker : markers) {
+            int idx = lower.lastIndexOf(marker);
+            if (idx > MIN_REASONING_CHARS && idx > best) {
+                best = idx;
+            }
+        }
+        return best;
+    }
+
+    private static int findContentStartAfterStrategizing(String response) {
+        String lower = response.toLowerCase(Locale.ROOT);
+        int markerIdx = lower.lastIndexOf(STRATEGIZING_MARKER);
+        if (markerIdx < 0) {
+            return -1;
+        }
+        int searchFrom = markerIdx + STRATEGIZING_MARKER.length();
+        String tail = response.substring(searchFrom);
+
+        int relNumbered = findFirstNumberedSectionStart(tail);
+        if (relNumbered >= 0) {
+            return searchFrom + relNumbered;
+        }
+
+        int relSection = findFirstValidSectionStart(tail);
+        if (relSection >= 0) {
+            return searchFrom + relSection;
+        }
+        return -1;
+    }
+
+    private static int findFirstNumberedSectionStart(String response) {
+        Matcher matcher = NUMBERED_SECTION_PATTERN.matcher(response);
+        while (matcher.find()) {
+            if (isValidSectionMatch(response, matcher.start())) {
+                return matcher.start();
+            }
+        }
+        return -1;
+    }
+
+    private static int findFirstValidSectionStart(String response) {
+        Matcher matcher = CONTENT_SECTION_PATTERN.matcher(response);
+        while (matcher.find()) {
+            int start = matcher.start(1);
+            if (isValidSectionMatch(response, start)) {
+                return start;
+            }
+        }
+        return -1;
+    }
+
+    private static int findLatestValidSectionStart(String response) {
+        int best = -1;
+        Matcher numbered = NUMBERED_SECTION_PATTERN.matcher(response);
+        while (numbered.find()) {
+            if (isValidSectionMatch(response, numbered.start())) {
+                best = numbered.start();
+            }
+        }
+        Matcher section = CONTENT_SECTION_PATTERN.matcher(response);
+        while (section.find()) {
+            int start = section.start(1);
+            if (isValidSectionMatch(response, start) && start > best) {
+                best = start;
+            }
+        }
+        return best;
+    }
+
+    private static boolean isValidSectionMatch(String response, int sectionStart) {
+        int lineStart = sectionStart;
+        while (lineStart > 0 && response.charAt(lineStart - 1) != '\n') {
+            lineStart--;
+        }
+        int lineEnd = response.indexOf('\n', sectionStart);
+        if (lineEnd < 0) {
+            lineEnd = response.length();
+        }
+        String line = response.substring(lineStart, lineEnd).trim();
+        String lowerLine = line.toLowerCase(Locale.ROOT);
+        if (line.contains("?") && (lowerLine.contains("yes") || lowerLine.contains("no"))) {
+            return false;
+        }
+        if (lowerLine.contains("brief overview")
+                || lowerLine.contains("only analysis")
+                || lowerLine.contains("invent demographics")
+                || lowerLine.contains("will monitor")) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean hasPlanningMarkers(String lower) {
+        return looksLikeMedGemmaPlanningPrefix(lower)
+                || lower.contains("the user wants")
+                || lower.contains("explain matching rationale:")
+                || lower.contains("presents matched doctors:")
+                || lower.contains("provide recommendations:")
+                || lower.contains("key learnings");
+    }
+
+    private static String stripLeadingReasoningHeaders(String cleaned) {
         String[] reasoningHeaders = {
                 "Understand the Goal:", "Analyze the", "Step 1:", "Step 2:", "Step 3:",
                 "Thought:", "Thinking:", "Reasoning:", "Analysis:", "Let me think",
@@ -52,37 +298,8 @@ public final class LlmResponseSanitizer {
             if (cleaned.toLowerCase().startsWith(header.toLowerCase())) {
                 int doubleNewlineIdx = cleaned.indexOf("\n\n");
                 if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
-                    String afterReasoning = cleaned.substring(doubleNewlineIdx + 2).trim();
-                    for (String nestedHeader : reasoningHeaders) {
-                        if (afterReasoning.toLowerCase().startsWith(nestedHeader.toLowerCase())) {
-                            int nextDoubleNewline = afterReasoning.indexOf("\n\n");
-                            if (nextDoubleNewline > 0) {
-                                afterReasoning = afterReasoning.substring(nextDoubleNewline + 2).trim();
-                            }
-                            break;
-                        }
-                    }
-                    cleaned = afterReasoning;
+                    cleaned = cleaned.substring(doubleNewlineIdx + 2).trim();
                     break;
-                }
-            }
-        }
-
-        if (cleaned.toLowerCase().startsWith("thought")) {
-            int doubleNewlineIdx = cleaned.indexOf("\n\n");
-            if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
-                cleaned = cleaned.substring(doubleNewlineIdx + 2).trim();
-            } else {
-                String[] patterns = {
-                        "Based on the routing", "The top", "According to", "In summary",
-                        "```json", "```", "{\"", "{\"requiredSpecialty"
-                };
-                for (String pattern : patterns) {
-                    int idx = cleaned.indexOf(pattern);
-                    if (idx > 0) {
-                        cleaned = cleaned.substring(idx).trim();
-                        break;
-                    }
                 }
             }
         }
@@ -95,16 +312,18 @@ public final class LlmResponseSanitizer {
                 break;
             }
         }
+        return cleaned;
+    }
 
-        cleaned = stripMedGemmaPlanningPrefix(cleaned);
-
+    private static String stripCodeFences(String cleaned) {
         if (cleaned.contains("```json")) {
             int jsonStart = cleaned.indexOf("```json");
             int jsonEnd = cleaned.lastIndexOf("```");
             if (jsonStart >= 0 && jsonEnd > jsonStart + 7) {
-                cleaned = cleaned.substring(jsonStart + 7, jsonEnd).trim();
+                return cleaned.substring(jsonStart + 7, jsonEnd).trim();
             }
-        } else if (cleaned.contains("```")) {
+        }
+        if (cleaned.contains("```")) {
             int codeStart = cleaned.indexOf("```");
             int codeEnd = cleaned.lastIndexOf("```");
             if (codeStart >= 0 && codeEnd > codeStart + 3) {
@@ -113,10 +332,9 @@ public final class LlmResponseSanitizer {
                 if (firstNewline > 0 && firstNewline < 20) {
                     content = content.substring(firstNewline + 1).trim();
                 }
-                cleaned = content;
+                return content;
             }
         }
-
         return cleaned;
     }
 
@@ -124,29 +342,26 @@ public final class LlmResponseSanitizer {
         if (response == null || response.isBlank()) {
             return response;
         }
-        String lower = response.toLowerCase();
-        if (!lower.contains("mental sandbox")
-                && !lower.contains("constraint checklist")
-                && !lower.startsWith("thought")) {
+        if (!hasPlanningMarkers(response.toLowerCase(Locale.ROOT))) {
             return response;
         }
-        String[] anchors = {
-                "Case Summary:",
-                "Matched Doctors:",
-                "Matching Rationale:",
-                "Recommendations:"
-        };
-        int bestIdx = -1;
-        for (String anchor : anchors) {
-            int idx = response.indexOf(anchor);
-            if (idx >= 0 && (bestIdx < 0 || idx < bestIdx)) {
-                bestIdx = idx;
-            }
-        }
-        if (bestIdx > 0) {
-            return response.substring(bestIdx).trim();
+        int contentStart = findBestContentStart(response);
+        if (contentStart > 0) {
+            return response.substring(contentStart).trim();
         }
         return response;
+    }
+
+    private static boolean looksLikeMedGemmaPlanningPrefix(String lower) {
+        return lower.contains("mental sandbox")
+                || lower.contains("constraint checklist")
+                || lower.contains("confidence score")
+                || lower.contains("strategizing complete")
+                || lower.startsWith("thought")
+                || lower.startsWith("recommendations: yes")
+                || lower.contains("summarize the case:")
+                || lower.contains("self-correction:")
+                || lower.startsWith("the user wants");
     }
 
     public static String toHumanReadable(String response) {
