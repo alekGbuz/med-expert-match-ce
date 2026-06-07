@@ -550,15 +550,17 @@ For more details, see [Coding Rules - Error Handling](CODING_RULES.md).
 
 ### Environment Variables
 
-Key environment variables for AI configuration:
+Key environment variables for AI configuration (M67 role split):
 
-- `CHAT_PROVIDER`, `CHAT_BASE_URL`, `CHAT_API_KEY`, `CHAT_MODEL`, `CHAT_TEMPERATURE`, `CHAT_MAX_TOKENS`
-- `EMBEDDING_PROVIDER`, `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSIONS`
-- `RERANKING_PROVIDER`, `RERANKING_BASE_URL`, `RERANKING_API_KEY`, `RERANKING_MODEL`, `RERANKING_TEMPERATURE`
-- `TOOL_CALLING_PROVIDER`, `TOOL_CALLING_BASE_URL`, `TOOL_CALLING_API_KEY`, `TOOL_CALLING_MODEL`,
-  `TOOL_CALLING_TEMPERATURE`, `TOOL_CALLING_MAX_TOKENS`
+- `CLINICAL_*` — harness / case analysis (`medgemma1.5:4b` default); falls back to `CHAT_*`
+- `UTILITY_*` — classify, translate, summarization (`qwen3.5:4b` default)
+- `CHAT_*` — legacy clinical fallback
+- `EMBEDDING_*` — vectors (`nomic-embed-text:v1.5`, 768 dims)
+- `RERANKING_*` — semantic rerank (`qwen3.5:4b` default; falls back to `UTILITY_*`)
+- `TOOL_CALLING_*` — agent tools (`functiongemma:270m` default)
 
-These are mapped to `spring.ai.custom.*` properties in `application.yml`.
+All roles may share one Ollama URL (`http://HOST:11434/v1`). Mapped to `spring.ai.custom.*` in `application.yml`.
+See [Model Selection Guide](MODEL_SELECTION_GUIDE.md) and [application-local.yml.sample](../src/main/resources/application-local.yml.sample).
 
 ### Application Profiles
 
@@ -571,6 +573,7 @@ These are mapped to `spring.ai.custom.*` properties in `application.yml`.
 
 - [Architecture](ARCHITECTURE.md) - System architecture
 - [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) - AI provider setup
+- [Model Selection Guide](MODEL_SELECTION_GUIDE.md) - Models per role (local vs cloud)
 - [MedGemma Configuration](MEDGEMMA_CONFIGURATION.md) - MedGemma model configuration
 - [MedGemma Setup](MEDGEMMA_SETUP.md) - Local MedGemma setup guide
 - [Testing](TESTING.md) - Testing guidelines

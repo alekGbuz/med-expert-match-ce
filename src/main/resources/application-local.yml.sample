@@ -1,41 +1,69 @@
-# Local profile sample (same structure as aist-expertmatch application-local.yml).
-# Copy to application-local.yml and adjust. docker-compose.dev.yml exposes Postgres on localhost:5434.
+# Local profile sample — single Ollama (OpenAI-compatible API).
+# Copy to application-local.yml (gitignored) and customize hosts, DB password, port.
 #
-# AI settings use top-level CHAT_*, EMBEDDING_*, RERANKING_*, TOOL_CALLING_* keys; they map to
-# spring.ai.custom.* in application.yml. M67: optional CLINICAL_* / UTILITY_* override harness vs auxiliary roles;
-# when unset, clinical and utility fall back to CHAT_* / RERANKING_* automatically.
-# Optional: medexpertmatch.embedding.multi-endpoint for an embedding pool.
+# One Ollama daemon — all roles share the same base URL; M67 picks different models per role.
+# Replace 127.0.0.1 with your Ollama host (e.g. http://192.168.0.73:11434/v1 on a LAN GPU box).
+#
+# Required Ollama tags (verify: curl http://HOST:11434/v1/models):
+#   medgemma1.5:4b, qwen3.5:4b, functiongemma:270m, nomic-embed-text:v1.5
+#
+#   ollama serve
+#   ollama pull medgemma1.5:4b qwen3.5:4b functiongemma:270m nomic-embed-text:v1.5
+#
+# Dual-GPU (2× 16 GB): default `ollama serve` uses both cards for layer split / VRAM pool.
+# LM Studio: set all *_BASE_URL to http://127.0.0.1:1234/v1 — see docs/MODEL_SELECTION_GUIDE.md.
 #
 # Run: --spring.profiles.active=local  or  SPRING_PROFILES_ACTIVE=local
 
-CHAT_PROVIDER: openai
-CHAT_BASE_URL: http://127.0.0.1:1234
-CHAT_API_KEY: llm-studio
-CHAT_MODEL: medgemma1.5:4b
-CHAT_TEMPERATURE: 0.7
-CHAT_MAX_TOKENS: 6000
+# Clinical harness (T3 / MedGemma)
+CLINICAL_PROVIDER: openai
+CLINICAL_BASE_URL: http://127.0.0.1:11434/v1
+CLINICAL_API_KEY: none
+CLINICAL_MODEL: medgemma1.5:4b
+CLINICAL_TEMPERATURE: 0.7
+CLINICAL_MAX_TOKENS: 6000
 
-EMBEDDING_PROVIDER: openai
-EMBEDDING_BASE_URL: http://127.0.0.1:1234
-EMBEDDING_MODEL: nomic-embed-text:v1.5
-EMBEDDING_API_KEY: llm-studio
-EMBEDDING_DIMENSIONS: 768
+# Utility — classify, translate, summarization (T2 / Qwen3.5)
+UTILITY_PROVIDER: openai
+UTILITY_BASE_URL: http://127.0.0.1:11434/v1
+UTILITY_API_KEY: none
+UTILITY_MODEL: qwen3.5:4b
+UTILITY_TEMPERATURE: 0.1
+UTILITY_MAX_TOKENS: 4096
 
-RERANKING_PROVIDER: openai
-RERANKING_BASE_URL: http://127.0.0.1:1234
-RERANKING_API_KEY: llm-studio
-RERANKING_MODEL: medgemma1.5:4b
-RERANKING_TEMPERATURE: 0.1
-
+# Tool calling (T1 / FunctionGemma)
 TOOL_CALLING_PROVIDER: openai
-TOOL_CALLING_BASE_URL: http://127.0.0.1:1234
-TOOL_CALLING_API_KEY: llm-studio
+TOOL_CALLING_BASE_URL: http://127.0.0.1:11434/v1
+TOOL_CALLING_API_KEY: none
 TOOL_CALLING_MODEL: functiongemma:270m
 TOOL_CALLING_TEMPERATURE: 0.7
 TOOL_CALLING_MAX_TOKENS: 4096
 
+# Embeddings — GraphRAG vectors (768 dims; use Ollama tag, not LM Studio name)
+EMBEDDING_PROVIDER: openai
+EMBEDDING_BASE_URL: http://127.0.0.1:11434/v1
+EMBEDDING_API_KEY: none
+EMBEDDING_MODEL: nomic-embed-text:v1.5
+EMBEDDING_DIMENSIONS: 768
+
+# Reranking — same URL and model as utility, low temperature
+RERANKING_PROVIDER: openai
+RERANKING_BASE_URL: http://127.0.0.1:11434/v1
+RERANKING_API_KEY: none
+RERANKING_MODEL: qwen3.5:4b
+RERANKING_TEMPERATURE: 0.1
+
+# Legacy CHAT_* fallback (clinical alias when CLINICAL_* set)
+CHAT_PROVIDER: openai
+CHAT_BASE_URL: http://127.0.0.1:11434/v1
+CHAT_API_KEY: none
+CHAT_MODEL: medgemma1.5:4b
+CHAT_TEMPERATURE: 0.7
+CHAT_MAX_TOKENS: 6000
+
 spring:
   datasource:
+    # docker-compose.dev.yml exposes Postgres on localhost:5434
     url: jdbc:postgresql://localhost:5434/medexpertmatch
     username: medexpertmatch
     password: <your password>
@@ -47,7 +75,7 @@ logging:
     com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
     com.berdachuk.medexpertmatch.embedding.config: INFO
     org.springframework.web.client.RestClient: DEBUG
-    org.springframework.ai.openai.api.OpenAiApi: DEBUG
+    org.springframework.ai.openai: DEBUG
     org.springframework.http.client: DEBUG
     org.springframework.ai.chat.client: DEBUG
     org.springframework.ai.chat.client.advisor: DEBUG
@@ -67,27 +95,29 @@ medexpertmatch:
     extra-directory: ""
   embedding:
     multi-endpoint:
-      # [] = single embedding backend only. Uncomment endpoints to enable pool (match EMBEDDING_MODEL per node).
+      # Default: primary EMBEDDING_* only. Uncomment for a second nomic endpoint (same model + dims).
       endpoints: []
       # endpoints:
-      #   - url: http://192.168.0.73:11434
+      #   - url: http://127.0.0.1:11434/v1
       #     model: nomic-embed-text:v1.5
       #     priority: 1
-      #   - url: http://192.168.0.87:11434
+      #   - url: http://192.168.0.73:11434/v1
       #     model: nomic-embed-text:v1.5
       #     priority: 2
-      #   - url: http://localhost:11434
-      #     model: nomic-embed-text:v1.5
-      #     priority: 3
+      # Do not mix qwen3-embedding:* here — different vector dimensions than nomic 768.
       skip-duration-min: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_SKIP_MIN:10}
       worker-per-endpoint: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_WORKERS:1}
       api-batch-size: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_API_BATCH_SIZE:50}
   llm:
-    chat:
+    clinical:
       max-concurrent-calls: 1
+    utility:
+      max-concurrent-calls: 2
     embedding:
       max-concurrent-calls: 1
     reranking:
       max-concurrent-calls: 1
     tool-calling:
+      max-concurrent-calls: 1
+    chat:
       max-concurrent-calls: 1

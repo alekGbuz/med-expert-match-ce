@@ -44,10 +44,11 @@ The project already had partial model separation:
 
 | Role | Bean / config | Typical model | Used for |
 |------|---------------|---------------|----------|
-| Medical reasoning | `primaryChatModel` | MedGemma 4b | Case analysis, interpretation, goal LLM fallback, translation |
-| Tool calling | `toolCallingChatModel` | FunctionGemma 270m | Auto chat orchestrator, `@Tool` selection |
-| Reranking | `rerankingChatModel` | MedGemma 4b (configurable) | Semantic rerank of retrieval candidates |
-| Embeddings | `primaryEmbeddingModel` | nomic-embed-text | Vector search |
+| Clinical (T3) | `clinicalChatModel` | MedGemma 4b | Harness analyze/interpret, case analysis |
+| Utility (T2) | `utilityChatModel` | Qwen3.5 4b | Goal classify fallback, translation, summarization |
+| Tool calling (T1) | `toolCallingChatModel` | FunctionGemma 270m | Auto chat orchestrator, `@Tool` selection |
+| Reranking | `rerankingChatModel` | Qwen3.5 4b (default) | Semantic rerank of retrieval candidates |
+| Embeddings | `primaryEmbeddingModel` | nomic-embed-text:v1.5 | Vector search |
 
 Additionally:
 
@@ -61,7 +62,7 @@ Gaps before M64:
 1. No explicit **cost tier** abstraction tied to `GoalType`.
 2. No **token budget** config per tier.
 3. No **Prometheus visibility** for routing decisions vs harness invocations vs LLM calls.
-4. MedGemma still used for **I/O-heavy auxiliary tasks** (translation, goal classify fallback, reranking).
+4. Before M67, MedGemma was also used for **I/O-heavy auxiliary tasks** (translation, goal classify fallback, reranking); utility/rerank now default to Qwen3.5.
 5. Full tool/GraphRAG payloads passed to MedGemma without **structured compression**.
 
 ### Lessons from token optimization elsewhere

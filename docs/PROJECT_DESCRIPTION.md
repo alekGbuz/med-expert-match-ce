@@ -56,7 +56,7 @@ For detailed workflows, see [Use Cases](USE_CASES.md).
 
 ## How It Works
 
-**MedGemma and HAI-DEF:** MedGemma is used for case analysis, entity extraction (ICD-10, symptoms, specialty), clinical reasoning, and semantic reranking of matches. Embeddings use an OpenAI-compatible model (e.g. Nomic). Because MedGemma does not support tool calling, the agent uses an OpenAI-compatible model (e.g. Qwen) for tool invocations while MedGemma handles chat and reranking.
+**MedGemma and HAI-DEF:** MedGemma (`clinicalChatModel`) handles harness case analysis, interpretation, and clinical reasoning. Qwen3.5 (`utilityChatModel`) handles auxiliary work (classify, translate, reranking). Embeddings use Nomic (`nomic-embed-text:v1.5`). FunctionGemma handles tool invocations because MedGemma does not support reliable `@Tool` calling.
 
 **Hybrid GraphRAG:** Match scoring and queue prioritization use vector similarity (PgVector: meaning-based search), graph relationships (Apache AGE: doctors, cases, conditions, and facilities modeled as a network), and keyword and historical performance signals.
 
@@ -73,7 +73,7 @@ The prototype uses synthetic data for demos. Planned evaluation, to strengthen c
 - **Human-centered:** The system targets real clinical workflows.
 - **Privacy-first:** Local deployment is supported. No PHI in logs; patient data is anonymized.
 - **Working solution:** Full web UI and REST API cover Find Specialist, Case Analysis, Queue, Analytics, Routing, Graph visualization, and Synthetic Data.
-- **HAI-DEF / MedGemma:** MedGemma is used for chat, reranking, and case analysis. The project uses only OpenAI-compatible providers as configured.
+- **HAI-DEF / MedGemma:** MedGemma is used for clinical harness paths; Qwen3.5 for utility/rerank; FunctionGemma for tools. OpenAI-compatible providers only.
 
 ## Limitations and Intended Use
 

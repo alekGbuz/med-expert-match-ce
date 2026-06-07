@@ -12,19 +12,20 @@
 
 ## AI Endpoints
 
-The system requires four OpenAI-compatible endpoints configured via environment variables:
+The system uses **M67 role-specific** OpenAI-compatible endpoints (all may share one `http://HOST:11434/v1` URL):
 
-| Endpoint | Env Variable Prefix | Default Model | Purpose |
-|----------|-------------------|---------------|---------|
-| Chat | `CHAT_*` | `medgemma1.5:4b` | Case analysis, reasoning, chat |
+| Role | Env prefix | Default model | Purpose |
+|------|------------|---------------|---------|
+| Clinical (T3) | `CLINICAL_*` (falls back `CHAT_*`) | `medgemma1.5:4b` | Harness, case analysis, interpretation |
+| Utility (T2) | `UTILITY_*` | `qwen3.5:4b` | Classify, translate, summarization |
+| Tool calling (T1) | `TOOL_CALLING_*` | `functiongemma:270m` | Auto chat orchestrator, `@Tool` selection |
+| Reranking | `RERANKING_*` (falls back `UTILITY_*`) | `qwen3.5:4b` | Semantic rerank of GraphRAG candidates |
 | Embedding | `EMBEDDING_*` | `nomic-embed-text:v1.5` | Vector embeddings (768 dims) |
-| Reranking | `RERANKING_*` | `medgemma1.5:4b` | Semantic reranking |
-| Tool Calling | `TOOL_CALLING_*` | `functiongemma:270m` | Agent tool invocations |
 
-Documentation: [Harness Architecture](HARNESS.md) (workflow routing), [FunctionGemma Tool Calling](FUNCTIONGEMMA.md)
-(tool model), [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) (env vars).
+Documentation: [Model Selection Guide](MODEL_SELECTION_GUIDE.md), [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md),
+[Harness Architecture](HARNESS.md), [FunctionGemma Tool Calling](FUNCTIONGEMMA.md).
 
-All endpoints use the same pattern: `{PREFIX}_BASE_URL`, `{PREFIX}_API_KEY`, `{PREFIX}_MODEL`.
+Each role: `{PREFIX}_BASE_URL`, `{PREFIX}_API_KEY`, `{PREFIX}_MODEL` (plus temperature / max-tokens where applicable).
 
 ## Database
 
@@ -69,7 +70,7 @@ Build the custom image: `./scripts/build-test-container.sh`
 
 | Service | Purpose |
 |---------|---------|
-| MedGemma endpoint | Semantic reranking (falls back to chat model) |
+| Remote Ollama host | LAN GPU box (e.g. `http://192.168.0.73:11434/v1`) — same URL for all roles |
 | Multi-endpoint embedding pool | Load-balanced embeddings for high-throughput ingestion |
 | Prometheus | Metrics scraping from `/actuator/prometheus` |
 | LM Studio | Local AI model hosting on port 1234 (profile: `local-lms`) |

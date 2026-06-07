@@ -1,151 +1,164 @@
 # AI Provider Configuration for MedExpertMatch
 
-**Last Updated:** 2026-06-07
+**Last Updated:** 2026-06-08
 
 ## Overview
 
 MedExpertMatch supports **OpenAI-compatible providers only**. The application does not rely on Spring AI's default
-OpenAI auto-configuration. Instead, it creates its own beans in `SpringAIConfig` and reads values from
+OpenAI auto-configuration. Instead, it creates role-specific beans in `SpringAIConfig` and reads values from
 `spring.ai.custom.*` properties mapped in [application.yml](../src/main/resources/application.yml).
 
-Configuration flow:
+Configuration flow (M67):
 
 ```text
-Environment variables and/or YAML (CLINICAL_*, UTILITY_*, CHAT_*, EMBEDDING_*, ...) -> application.yml placeholders -> SpringAIConfig -> role-specific ChatModel beans
+CLINICAL_* / UTILITY_* / TOOL_CALLING_* / EMBEDDING_* / RERANKING_* / CHAT_* (legacy)
+  → application.yml placeholders
+  → SpringAIConfig
+  → clinicalChatModel | utilityChatModel | toolCallingChatModel | rerankingChatModel | primaryEmbeddingModel
 ```
 
-The default [application.yml](../src/main/resources/application.yml) documents at the top of the file how
-`CLINICAL_*`, `UTILITY_*`, `CHAT_*` (legacy fallback), `EMBEDDING_*`, `RERANKING_*`, and `TOOL_CALLING_*` override
-nested `spring.ai.custom.*` values. Optional
-**embedding multi-endpoint pool** settings live under `medexpertmatch.embedding.multi-endpoint` (see below).
+**Single-host Ollama:** all roles may share one base URL (e.g. `http://192.168.0.73:11434/v1`). Role separation is by
+**model name**, not by port. See [Model Selection Guide](MODEL_SELECTION_GUIDE.md).
+
+## Default models (`application.yml`)
+
+| Role | Env prefix | Default model | Bean |
+|------|------------|---------------|------|
+| Clinical (T3) | `CLINICAL_*` → `CHAT_*` | `medgemma1.5:4b` | `clinicalChatModel` |
+| Utility (T2) | `UTILITY_*` | `qwen3.5:4b` | `utilityChatModel` |
+| Tool calling (T1) | `TOOL_CALLING_*` | `functiongemma:270m` | `toolCallingChatModel` |
+| Reranking | `RERANKING_*` → `UTILITY_*` | `qwen3.5:4b` | `rerankingChatModel` |
+| Embedding | `EMBEDDING_*` | `nomic-embed-text:v1.5` (768 dims) | `primaryEmbeddingModel` |
+
+Default concurrency: clinical `1`, utility `2`, others `1` — see `medexpertmatch.llm.*` in [application.yml](../src/main/resources/application.yml).
 
 ## Supported deployment patterns
 
-### Checked-in local profile
-
-The [application-local.yml](../src/main/resources/application-local.yml) layout matches **aist-expertmatch** style:
-top-level **`CHAT_*`**, **`EMBEDDING_*`**, **`RERANKING_*`**, and **`TOOL_CALLING_*`** keys (same names as environment
-variables) so Spring binds them to `spring.ai.custom.*` without duplicating nested YAML. It also configures:
-
-- PostgreSQL (typically `localhost:5434` with docker-compose.dev.yml)
-- Optional **embedding provider pool** under `medexpertmatch.embedding.multi-endpoint` (multiple OpenAI-compatible
-  URLs with priority; set `endpoints: []` to use a single `EmbeddingModel` only)
-- App port `8080` (optional commented server timeouts for LAN or long LLM calls, same pattern as aist)
+### Local profile (`application-local.yml`)
 
 Copy [application-local.yml.sample](../src/main/resources/application-local.yml.sample) to `application-local.yml`
-if you do not have a local file yet. The sample keeps the pool **off** (`endpoints: []`) until you add endpoints.
+(gitignored). The sample uses **one Ollama** at `http://127.0.0.1:11434/v1` with M67 role variables:
 
-Use this mode when you want to run the project with repository-tuned local defaults.
+- `CLINICAL_*` — harness / case analysis (`medgemma1.5:4b`)
+- `UTILITY_*` — classify, translate, summarization (`qwen3.5:4b`)
+- `TOOL_CALLING_*` — Auto chat orchestrator (`functiongemma:270m`)
+- `EMBEDDING_*` — GraphRAG vectors (`nomic-embed-text:v1.5`)
+- `RERANKING_*` — semantic rerank (`qwen3.5:4b`, same URL as utility)
+- `CHAT_*` — legacy fallback → clinical
+
+Also configures PostgreSQL (typically `localhost:5434` with docker-compose.dev.yml), optional
+**embedding multi-endpoint pool** (`endpoints: []` by default), and app port `8080`.
+
+For a **remote Ollama host** (e.g. dual-GPU workstation on the LAN), replace every `*_BASE_URL` with
+`http://<host>:11434/v1` and verify tags: `curl http://<host>:11434/v1/models`.
+
+See [Model Selection Guide](MODEL_SELECTION_GUIDE.md) Profile 1 / 1b.
 
 ### Self-hosted local AI
 
-Override the component-specific `*_BASE_URL`, `*_API_KEY`, and `*_MODEL` variables to your own OpenAI-compatible
-endpoint, such as:
+Override `*_BASE_URL`, `*_API_KEY`, and `*_MODEL` per role for any OpenAI-compatible endpoint:
 
+- Ollama (OpenAI API mode)
 - LM Studio
 - LiteLLM
 - vLLM
-- a compatible hosted gateway
-- a compatible Ollama endpoint only when it exposes the OpenAI API shape you need
+- compatible hosted gateways
 
 ### Full Docker Compose stack
 
-The repository `docker-compose.yml` runs:
+`docker-compose.yml` runs:
 
 - app on `http://localhost:8094`
 - docs on `http://localhost:8094/docs`
 - PostgreSQL on `localhost:5433`
-- AI calls against values defined directly in `docker-compose.yml`
+- AI values from compose environment (override `RERANKING_MODEL` / `UTILITY_MODEL` for qwen3.5:4b rerank if desired)
 
 ## Environment matrix
 
 | Mode | App | DB | AI |
 |------|-----|----|----|
-| `local` profile | `http://localhost:8080` | `localhost:5434` | values in `application-local.yml` (override by env) |
-| self-hosted local AI | `http://localhost:8080` | `localhost:5434` | your OpenAI-compatible endpoint |
-| Docker Compose | `http://localhost:8094` | `localhost:5433` | values from `docker-compose.yml` |
-| tests | no public app URL | Testcontainers | mocked/test beans |
-
-### Default profile (`application.yml` only)
-
-With **no** `spring.profiles.active`, [application.yml](../src/main/resources/application.yml) supplies baseline defaults
-via `${ENV:default}` for all `CHAT_*` / `EMBEDDING_*` variables. It includes:
-
-- Commented **server** timeouts and bind address (same optional knobs as local/aist)
-- **`medexpertmatch.embedding.multi-endpoint`** with `endpoints: []` and a commented three-endpoint example
-- **Logging** categories for `com.berdachuk.medexpertmatch.embedding*`, Spring AI HTTP clients, and Agent Utils
-  (`org.springaicommunity.agent.*`) at **INFO** by default (raise to DEBUG in `application-local.yml` when debugging)
+| `local` profile | `http://localhost:8080` (or custom, e.g. `8094`) | `localhost:5434` or `5433` | `application-local.yml` |
+| Default (no profile) | `http://localhost:8080` | `localhost:5433` | [application.yml](../src/main/resources/application.yml) defaults |
+| Docker Compose | `http://localhost:8094` | `localhost:5433` | `docker-compose.yml` |
+| tests | — | Testcontainers | mocked beans |
 
 ## Component-specific variables
 
-Each AI function is configured independently.
+### Clinical (T3 — `clinicalChatModel`)
 
-### Clinical (T3 harness — `clinicalChatModel`)
-
-MedGemma paths: harness analyze/interpret, case analysis, policy-sensitive text. Falls back to `CHAT_*` when unset.
+Harness analyze/interpret, case analysis, policy-sensitive text. Falls back to `CHAT_*` when `CLINICAL_*` unset.
 
 ```bash
 CLINICAL_PROVIDER=openai
-CLINICAL_BASE_URL=https://your-openai-compatible-endpoint
-CLINICAL_API_KEY=your-api-key
-CLINICAL_MODEL=medgemma-1.5-4b-it
+CLINICAL_BASE_URL=http://127.0.0.1:11434/v1
+CLINICAL_API_KEY=none
+CLINICAL_MODEL=medgemma1.5:4b
 CLINICAL_TEMPERATURE=0.7
 CLINICAL_MAX_TOKENS=6000
 ```
 
-Concurrency: `MEDEXPERTMATCH_LLM_CLINICAL_MAX_CONCURRENT_CALLS` (defaults to legacy chat limit).
+Concurrency: `MEDEXPERTMATCH_LLM_CLINICAL_MAX_CONCURRENT_CALLS` (default `1`).
 
-### Utility (T2 auxiliary — `utilityChatModel`)
+### Utility (T2 — `utilityChatModel`)
 
-Goal-classify fallback, translation, summarization, synthetic description generation. Fallback chain:
-`UTILITY_*` → `RERANKING_*` → `CHAT_*`.
+Goal-classify LLM fallback, translation, summarization, synthetic descriptions. Independent default model
+(`qwen3.5:4b`); URL falls back through `RERANKING_*` → `CHAT_*`.
 
 ```bash
 UTILITY_PROVIDER=openai
-UTILITY_BASE_URL=https://your-utility-endpoint
-UTILITY_API_KEY=your-api-key
-UTILITY_MODEL=qwen3:1.5b
+UTILITY_BASE_URL=http://127.0.0.1:11434/v1
+UTILITY_API_KEY=none
+UTILITY_MODEL=qwen3.5:4b
 UTILITY_TEMPERATURE=0.1
 UTILITY_MAX_TOKENS=4096
 ```
 
-Concurrency: `MEDEXPERTMATCH_LLM_UTILITY_MAX_CONCURRENT_CALLS`.
+Concurrency: `MEDEXPERTMATCH_LLM_UTILITY_MAX_CONCURRENT_CALLS` (default `2`).
 
 ### Chat (legacy fallback)
 
-Shared local-dev default when role-specific vars are unset. `primaryChatModel` is a deprecated alias to
-`clinicalChatModel` (M67).
+Deprecated alias path when role-specific vars are unset. `primaryChatModel` → `clinicalChatModel` (M67).
 
 ```bash
 CHAT_PROVIDER=openai
-CHAT_BASE_URL=https://your-openai-compatible-endpoint
-CHAT_API_KEY=your-api-key
-CHAT_MODEL=medgemma-1.5-4b-it
+CHAT_BASE_URL=http://127.0.0.1:11434/v1
+CHAT_API_KEY=none
+CHAT_MODEL=medgemma1.5:4b
 CHAT_TEMPERATURE=0.7
 CHAT_MAX_TOKENS=6000
 ```
 
 ### Embedding
 
-Used for vector generation and semantic similarity.
+GraphRAG vector generation. Use **Ollama model tags** (`nomic-embed-text:v1.5`), not LM Studio display names.
 
 ```bash
 EMBEDDING_PROVIDER=openai
-EMBEDDING_BASE_URL=https://your-openai-compatible-endpoint
-EMBEDDING_API_KEY=your-api-key
-EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
+EMBEDDING_BASE_URL=http://127.0.0.1:11434/v1
+EMBEDDING_API_KEY=none
+EMBEDDING_MODEL=nomic-embed-text:v1.5
 EMBEDDING_DIMENSIONS=768
 ```
 
 #### Multi-endpoint embedding pool (optional)
 
-For higher throughput or multiple OpenAI-compatible embedding backends, configure
-`medexpertmatch.embedding.multi-endpoint` in [application.yml](../src/main/resources/application.yml).
-The pool activates when the **first** endpoint URL is set (`endpoints[0].url`). Each entry can set `url`,
-`model`, `priority` (lower runs first), and optional `workers`. Shared API key and vector dimensions come
-from `spring.ai.custom.embedding.api-key` and `spring.ai.custom.embedding.dimensions`.
+Activates when `medexpertmatch.embedding.multi-endpoint.endpoints[0].url` is set. Every node must use the **same model
+and dimensions** (do not mix `qwen3-embedding:*` with nomic 768-dim vectors).
 
-Environment overrides for pool defaults:
+```yaml
+medexpertmatch:
+  embedding:
+    multi-endpoint:
+      endpoints:
+        - url: http://192.168.0.73:11434/v1
+          model: nomic-embed-text:v1.5
+          priority: 1
+        - url: http://localhost:11434/v1
+          model: nomic-embed-text:v1.5
+          priority: 2
+```
+
+Pool env overrides:
 
 ```bash
 MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_SKIP_MIN=10
@@ -153,32 +166,26 @@ MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_WORKERS=1
 MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_API_BATCH_SIZE=50
 ```
 
-When the pool is active, `EmbeddingService` delegates text embedding to the pool; the primary
-`EmbeddingModel` bean remains for health checks. When the pool is not configured, behavior matches a single
-`spring.ai.custom.embedding` endpoint.
-
 ### Reranking
 
-Used for semantic reranking and second-pass scoring.
+Semantic rerank of GraphRAG candidates. Defaults to **utility model** (`qwen3.5:4b`), not clinical MedGemma.
 
 ```bash
 RERANKING_PROVIDER=openai
-RERANKING_BASE_URL=https://your-openai-compatible-endpoint
-RERANKING_API_KEY=your-api-key
-RERANKING_MODEL=medgemma-1.5-4b-it
+RERANKING_BASE_URL=http://127.0.0.1:11434/v1
+RERANKING_API_KEY=none
+RERANKING_MODEL=qwen3.5:4b
 RERANKING_TEMPERATURE=0.1
 ```
 
 ### Tool calling
 
-Used for AI Chat **Auto orchestrator** tool invocation. Must be a **tool-capable** model distinct from MedGemma chat.
-MedExpertMatch defaults to **FunctionGemma 270M** (`functiongemma:270m`). See
-[FunctionGemma Tool Calling](FUNCTIONGEMMA.md) for architecture, tool pairs, and troubleshooting.
+Auto chat orchestrator — must be tool-capable. Default: **FunctionGemma 270M**. See [FUNCTIONGEMMA.md](FUNCTIONGEMMA.md).
 
 ```bash
 TOOL_CALLING_PROVIDER=openai
-TOOL_CALLING_BASE_URL=https://your-openai-compatible-endpoint
-TOOL_CALLING_API_KEY=your-api-key
+TOOL_CALLING_BASE_URL=http://127.0.0.1:11434/v1
+TOOL_CALLING_API_KEY=none
 TOOL_CALLING_MODEL=functiongemma:270m
 TOOL_CALLING_TEMPERATURE=0.7
 TOOL_CALLING_MAX_TOKENS=4096
@@ -186,69 +193,64 @@ TOOL_CALLING_MAX_TOKENS=4096
 
 ## Property mapping
 
-The main mappings are:
+| Env prefix | `spring.ai.custom.*` |
+|------------|----------------------|
+| `CLINICAL_*` | `clinical.*` |
+| `UTILITY_*` | `utility.*` |
+| `CHAT_*` | `chat.*` |
+| `EMBEDDING_*` | `embedding.*` |
+| `RERANKING_*` | `reranking.*` |
+| `TOOL_CALLING_*` | `tool-calling.*` |
 
-- `CHAT_*` -> `spring.ai.custom.chat.*`
-- `EMBEDDING_*` -> `spring.ai.custom.embedding.*`
-- `RERANKING_*` -> `spring.ai.custom.reranking.*`
-- `TOOL_CALLING_*` -> `spring.ai.custom.tool-calling.*`
-
-The application also keeps separate concurrency settings under `medexpertmatch.llm.*`.
+Concurrency: `medexpertmatch.llm.clinical|utility|embedding|reranking|tool-calling|chat.max-concurrent-calls`.
 
 ## Base URL rules
 
-For most OpenAI-compatible providers, do **not** include `/v1` in the base URL because Spring AI appends the API path.
+| Provider | Base URL example | Notes |
+|----------|------------------|-------|
+| **Ollama** | `http://HOST:11434/v1` | **Include `/v1`** — required for OpenAI-compatible Ollama API |
+| LM Studio | `http://127.0.0.1:1234` | Often works without `/v1` (Spring AI appends paths) |
+| OpenAI | `https://api.openai.com` | Standard Spring AI base URL |
+| Azure OpenAI | `https://{resource}.openai.azure.com` | Per deployment docs |
 
-Valid examples:
+Verify models: `curl http://HOST:11434/v1/models`.
 
-- `https://api.openai.com`
-- `https://your-resource.openai.azure.com`
-- `http://127.0.0.1:1234`
-- your deployed OpenAI-compatible gateway URL
-
-Vertex AI Model Garden is the main exception and may require `/v1` in the base URL.
-
-## Recommended local override example
+## Recommended Ollama override example
 
 ```bash
 export SPRING_PROFILES_ACTIVE=local
 
-export CHAT_PROVIDER=openai
-export CHAT_BASE_URL=http://127.0.0.1:1234
-export CHAT_API_KEY=local-key
-export CHAT_MODEL=medgemma-1.5-4b-it
+export CLINICAL_BASE_URL=http://192.168.0.73:11434/v1
+export CLINICAL_MODEL=medgemma1.5:4b
 
-export EMBEDDING_PROVIDER=openai
-export EMBEDDING_BASE_URL=http://127.0.0.1:1234
-export EMBEDDING_API_KEY=local-key
-export EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
+export UTILITY_BASE_URL=http://192.168.0.73:11434/v1
+export UTILITY_MODEL=qwen3.5:4b
+
+export EMBEDDING_BASE_URL=http://192.168.0.73:11434/v1
+export EMBEDDING_MODEL=nomic-embed-text:v1.5
 export EMBEDDING_DIMENSIONS=768
 
-export RERANKING_PROVIDER=openai
-export RERANKING_BASE_URL=http://127.0.0.1:1234
-export RERANKING_API_KEY=local-key
-export RERANKING_MODEL=medgemma-1.5-4b-it
+export RERANKING_MODEL=qwen3.5:4b
+export RERANKING_TEMPERATURE=0.1
 
-export TOOL_CALLING_PROVIDER=openai
-export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
-export TOOL_CALLING_API_KEY=local-key
+export TOOL_CALLING_BASE_URL=http://192.168.0.73:11434/v1
 export TOOL_CALLING_MODEL=functiongemma:270m
 ```
 
 ## Validation checklist
 
-- `CHAT_PROVIDER`, `EMBEDDING_PROVIDER`, `RERANKING_PROVIDER`, and `TOOL_CALLING_PROVIDER` are all `openai`
-- all base URLs point to OpenAI-compatible APIs
-- embedding dimensions match the configured vector column expectations
-- if `medexpertmatch.embedding.multi-endpoint.endpoints` is non-empty, per-endpoint `model` ids match what each server exposes
-- tool-calling model actually supports tool use
-- `application-local.yml`, `README.md`, and deployment docs agree on ports and endpoint sources
+- `curl http://<ollama-host>:11434/v1/models` lists all role model tags
+- Actuator health: `clinicalLlm` and `utilityLlm` UP (`/actuator/health`)
+- Embedding dimensions match DB column (768 for nomic)
+- Multi-endpoint pool: same model + dims on every node
+- Tool-calling model supports `@Tool` use (FunctionGemma recommended)
+- `application-local.yml` / compose env agree on URLs and model ids
 
 ## Related documentation
 
-- [Harness Architecture](HARNESS.md) — when chat bypasses tool-calling via workflow engines
-- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool model setup and fine-tuning plan
-- [README](../README.md)
+- [Model Selection Guide](MODEL_SELECTION_GUIDE.md) — local vs hybrid cloud stacks
+- [Harness Architecture](HARNESS.md) — when chat bypasses tool-calling
+- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool model setup
+- [M64 ADR](decisions/M64-cost-quality-tier-routing.md) — tier routing
 - [Development Guide](DEVELOPMENT_GUIDE.md)
 - [MedGemma Setup Guide](MEDGEMMA_SETUP.md)
-- [Architecture](ARCHITECTURE.md)

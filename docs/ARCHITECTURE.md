@@ -37,7 +37,7 @@ package "MedExpertMatch Service" <<Cloud>> {
         [Graph Traversal\nApache AGE] as Graph
         [Keyword Search\nFull-text] as Keyword
         [Result Fusion\nRRF] as Fusion
-        [Semantic Reranking\nMedGemma] as Rerank
+        [Semantic Reranking\nQwen3.5 utility] as Rerank
     }
     
     package "LLM Orchestration Layer" <<Cloud>> {

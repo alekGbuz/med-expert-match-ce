@@ -59,6 +59,7 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 ### Configuration
 
 - [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) - AI provider setup and configuration
+- [Model Selection Guide](MODEL_SELECTION_GUIDE.md) - Which models to use per role (local vs Ollama Cloud)
 - [MedGemma Configuration](MEDGEMMA_CONFIGURATION.md) - MedGemma model configuration
 - [MedGemma Setup Guide](MEDGEMMA_SETUP.md) - Step-by-step guide for local MedGemma via OpenAI-compatible APIs (e.g.
   LiteLLM)
@@ -75,6 +76,7 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 - [Harness Architecture](HARNESS.md) - Goal routing, workflow engines, configuration, and observability
 - [M64 Cost-Quality Tier Routing (ADR)](decisions/M64-cost-quality-tier-routing.md) - Multi-tier LLM cost routing architecture decision
 - [Harness presentation](presentations/medexpertmatch-harness.md) - Reveal.js deck: high-level steps and harness metaphor
+- [Model Selection Guide](MODEL_SELECTION_GUIDE.md) - Recommended models by role (local-only vs Ollama Cloud hybrid)
 - [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) - Tool-calling model setup, tool pairs, and fine-tuning
 - [Harness & Agent Patterns](HARNESS_AND_AGENT_USAGE.md) - Model vs harness terminology and repository conventions
 

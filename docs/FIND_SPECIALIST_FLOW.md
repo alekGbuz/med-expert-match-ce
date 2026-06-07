@@ -1618,12 +1618,11 @@ TOOL_CALLING_MODEL: functiongemma
 TOOL_CALLING_TEMPERATURE: 0.7
 TOOL_CALLING_MAX_TOKENS: 4096
 
-# Reranking Configuration - MedGemma
+# Reranking — utility model by default (M67); same URL as CLINICAL_/UTILITY_
 RERANKING_PROVIDER: openai
-RERANKING_BASE_URL: http://localhost:11434  # Ollama OpenAI-compatible endpoint
-RERANKING_API_KEY: ollama
-# Reranking uses MedGemma chat model for semantic reranking
-RERANKING_MODEL: hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
+RERANKING_BASE_URL: http://localhost:11434/v1
+RERANKING_API_KEY: none
+RERANKING_MODEL: qwen3.5:4b
 RERANKING_TEMPERATURE: 0.1
 ```
 

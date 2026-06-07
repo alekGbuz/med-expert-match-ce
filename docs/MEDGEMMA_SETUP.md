@@ -1,6 +1,6 @@
 # MedGemma Setup Guide for Local Development
 
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-06-08
 
 This guide describes a **self-hosted local AI** setup for MedExpertMatch using MedGemma behind an
 **OpenAI-compatible API**. The application itself only supports OpenAI-compatible providers.
@@ -20,14 +20,16 @@ variables if you use a different gateway.
 
 ## What MedExpertMatch needs
 
-You need four independently configurable components:
+You need five independently configurable roles (M67):
 
-- chat model for case analysis and reasoning
-- embedding model for vector generation
-- reranking model for semantic reranking
-- tool-calling model for agent tools
+- **clinical** (`CLINICAL_*`) — MedGemma for harness / case analysis
+- **utility** (`UTILITY_*`) — Qwen3.5 for classify, translate, summarization
+- **embedding** (`EMBEDDING_*`) — Nomic embed for vectors
+- **reranking** (`RERANKING_*`) — Qwen3.5 (same as utility by default), not MedGemma
+- **tool-calling** (`TOOL_CALLING_*`) — FunctionGemma for agent tools
 
-MedGemma is appropriate for chat and reranking. Tool calling usually needs a different model such as Qwen3.
+MedGemma is for **clinical** paths only. Utility, reranking, and tool calling use separate models.
+See [Model Selection Guide](MODEL_SELECTION_GUIDE.md) and [application-local.yml.sample](../src/main/resources/application-local.yml.sample).
 
 ## Local development ports
 
@@ -63,12 +65,13 @@ export EMBEDDING_DIMENSIONS=768
 export RERANKING_PROVIDER=openai
 export RERANKING_BASE_URL=http://127.0.0.1:1234
 export RERANKING_API_KEY=local-key
-export RERANKING_MODEL=medgemma-1.5-4b-it
+export UTILITY_MODEL=qwen3.5:4b
+export RERANKING_MODEL=qwen3.5:4b
 
 export TOOL_CALLING_PROVIDER=openai
 export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
 export TOOL_CALLING_API_KEY=local-key
-export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
+export TOOL_CALLING_MODEL=functiongemma:270m
 ```
 
 Then run:
