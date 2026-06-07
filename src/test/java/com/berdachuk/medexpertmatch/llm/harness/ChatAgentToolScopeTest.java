@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ChatAgentToolScopeTest {
 
@@ -33,6 +34,16 @@ class ChatAgentToolScopeTest {
     @DisplayName("auto orchestrator allows direct match tools")
     void autoAllowsDirectMatchTools() {
         assertTrue(ChatAgentToolScope.isAllowed(ChatAgentProfile.AUTO, "match_doctors_to_case"));
+    }
+
+    @Test
+    @DisplayName("agent card always lists get_current_date_time")
+    void agentCardIncludesDateTimeTool() {
+        assertTrue(ChatAgentToolScope.allowedToolsForAgentCard("specialist-matcher")
+                .contains("get_current_date_time"));
+        assertEquals(
+                java.util.Set.of("get_current_date_time"),
+                ChatAgentToolScope.allowedToolsForAgentCard("auto"));
     }
 
     @Test

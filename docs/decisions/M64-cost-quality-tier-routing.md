@@ -314,10 +314,10 @@ Expected: −20–40% output tokens with quality held by eval set.
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| **0** | Baseline metrics, cost model doc | Metrics partial; `docs/eval/cost-model.md` planned |
+| **0** | Baseline metrics, cost model doc | **Done** — `docs/eval/cost-model.md` |
 | **1** | `RoutingTier`, resolver, config, Prometheus | **Done** |
 | **2** | Utility + clinical endpoint beans; translate/classify/rerank migration; enforce `max-tokens` | **Done (M67)** |
-| **3** | ContextSummarizer (code-first, then LLM); harness payload shaping | Planned |
+| **3** | ContextSummarizer (code-first, then LLM); harness payload shaping | **Done (M68)** |
 | **4** | Draft-and-refine for long T3 outputs | Planned |
 | **5** | Cache key extension; M60 fine-tuned FunctionGemma on Light tier | Planned |
 | **6** | Retry-aware execution state in `OrchestrationContextHolder` | Planned |
@@ -357,4 +357,5 @@ TDD mandatory per project rules: test → verify requirement → implement → `
 | 2026-06-07 | ADR accepted; Phase 0–1 implemented (routing, config, metrics) |
 | 2026-06-07 | Phase 2 scoped as **M67** (clinical + utility endpoint separation); roadmap reprioritized |
 | 2026-06-07 | M67 complete — Phase 2 closed |
-| TBD | Phase 3–4 — context pipeline + draft-and-refine |
+| 2026-06-08 | M68 Phase 3 — HarnessContextSummarizer implemented and archived |
+| TBD | Phase 4 — draft-and-refine |

@@ -6,6 +6,7 @@ import com.berdachuk.medexpertmatch.llm.tool.NormalizingToolCallbackResolver;
 import com.berdachuk.medexpertmatch.llm.tool.ToolSelectionGuardingResolver;
 import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.ContextBuilderAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
@@ -53,6 +54,7 @@ public class AgentToolCallingConfiguration {
             GraphAnalyticsAgentTools graphAnalyticsAgentTools,
             RoutingAgentTools routingAgentTools,
             ContextBuilderAgentTools contextBuilderAgentTools,
+            DateTimeAgentTools dateTimeAgentTools,
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool) {
@@ -68,6 +70,7 @@ public class AgentToolCallingConfiguration {
                         graphAnalyticsAgentTools,
                         routingAgentTools,
                         contextBuilderAgentTools,
+                        dateTimeAgentTools,
                         autoMemoryTools,
                         todoWriteTool,
                         askUserQuestionTool)

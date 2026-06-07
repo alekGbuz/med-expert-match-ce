@@ -10,7 +10,6 @@ import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
@@ -63,13 +62,13 @@ public class GoalClassifier {
     private final ApplicationEventPublisher eventPublisher;
 
     public GoalClassifier(
-            @Qualifier("utilityChatModel") ChatModel utilityChatModel,
+            @Qualifier("utilityChatClient") ChatClient utilityChatClient,
             @Qualifier("goalClassificationPromptTemplate") PromptTemplate goalClassificationTemplate,
             @Qualifier("goalClassificationUserPromptTemplate") PromptTemplate goalClassificationUserTemplate,
             ObjectMapper objectMapper,
             LlmCallLimiter llmCallLimiter,
             ApplicationEventPublisher eventPublisher) {
-        this.chatClient = ChatClient.builder(utilityChatModel).build();
+        this.chatClient = utilityChatClient;
         this.goalClassificationTemplate = goalClassificationTemplate;
         this.goalClassificationUserTemplate = goalClassificationUserTemplate;
         this.objectMapper = objectMapper;

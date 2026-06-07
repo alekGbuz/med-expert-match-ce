@@ -43,7 +43,7 @@ Route requests by goal tier and enforce token budgets with Prometheus visibility
 - [x] Per-tier routing metrics visible in Prometheus (`llm.routing.decisions.total`, `llm.harness.invocations.total`)
 - [x] ADR and harness docs (`docs/decisions/M64-cost-quality-tier-routing.md`, `docs/HARNESS.md`)
 - [x] `mvn test` green on tier routing tests
-- [ ] Documented cost model in `docs/eval/` linking tier to estimated tokens (deferred)
+- [x] Documented cost model in `docs/eval/cost-model.md` linking tier to estimated tokens
 
 ## Artifacts
 

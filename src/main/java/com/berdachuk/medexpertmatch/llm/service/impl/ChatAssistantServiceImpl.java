@@ -23,7 +23,7 @@ import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
-import com.berdachuk.medexpertmatch.llm.config.LlmTierProperties;
+import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
@@ -277,7 +277,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         RoutingTier tier = RoutingTierResolver.fromClassification(goal);
         llmRoutingMetrics.recordRoutingDecision(tier, goal.goalType());
         log.info("Goal classified: {} (caseId={}, routingTier={}, maxTokens={})",
-                goal.goalType(), goal.caseId().orElse("none"), tier, llmTierProperties.maxTokensFor(tier));
+                goal.goalType(), goal.caseId().orElse("none"), tier,
+                RoutingTierResolver.maxTokensFor(tier, llmTierProperties));
     }
 
     private void recordHarnessRoute(GoalClassification goal) {
@@ -343,7 +344,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private String invokeSync(TurnContext ctx) {
         log.info("Chat LLM turn — agent: {}, session: {}, model: {}, tier: {}, tokenBudget: {}",
                 ctx.profile().agentId(), ctx.sessionId(), functionGemmaModelName,
-                ctx.routingTier(), llmTierProperties.maxTokensFor(ctx.routingTier()));
+                ctx.routingTier(), RoutingTierResolver.maxTokensFor(ctx.routingTier(), llmTierProperties));
         logStreamService.sendLog(ctx.sessionId(), "INFO", "Chat Agent",
                 "Invoking agent " + ctx.profile().agentId() + " via " + functionGemmaModelName
                         + " (tier=" + ctx.routingTier() + ")");

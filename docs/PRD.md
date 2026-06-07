@@ -350,6 +350,12 @@ consistent, and measurable.
 - **FR-7.4**: System shall score and rank multiple facilities for routing
 - **FR-7.5**: System shall recommend lead specialists for routed cases
 
+#### 4.1.8 AI Chat temporal context
+
+- **FR-18.1**: System shall expose a `get_current_date_time` agent tool returning the server clock in UTC
+- **FR-18.2**: Every LLM request (AI Chat, harness clinical/utility paths, case analysis, reranking, translation) shall include current date and time in prompt context
+- **FR-18.3**: AI Chat orchestrator and specialist agent profiles shall allow the datetime tool on all scoped profiles
+
 ### 4.2 Data Management
 
 #### 4.2.1 FHIR Integration

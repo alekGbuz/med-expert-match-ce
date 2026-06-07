@@ -1,6 +1,5 @@
-package com.berdachuk.medexpertmatch.llm.config;
+package com.berdachuk.medexpertmatch.core.config;
 
-import com.berdachuk.medexpertmatch.llm.routing.RoutingTier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -39,13 +38,5 @@ public record LlmTierProperties(
         static TierBudget fullDefault() {
             return new TierBudget(6000);
         }
-    }
-
-    public int maxTokensFor(RoutingTier tier) {
-        return switch (tier) {
-            case LIGHT -> light.maxTokens();
-            case STANDARD -> standard.maxTokens();
-            case FULL -> full.maxTokens();
-        };
     }
 }

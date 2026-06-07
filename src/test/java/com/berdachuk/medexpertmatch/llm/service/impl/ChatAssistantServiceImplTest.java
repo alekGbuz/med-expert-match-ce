@@ -16,7 +16,7 @@ import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
-import com.berdachuk.medexpertmatch.llm.config.LlmTierProperties;
+import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;

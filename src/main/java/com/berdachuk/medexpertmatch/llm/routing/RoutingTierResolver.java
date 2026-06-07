@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.routing;
 
+import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 
@@ -21,5 +22,13 @@ public final class RoutingTierResolver {
 
     public static RoutingTier fromClassification(GoalClassification classification) {
         return fromGoal(classification.goalType());
+    }
+
+    public static int maxTokensFor(RoutingTier tier, LlmTierProperties properties) {
+        return switch (tier) {
+            case LIGHT -> properties.light().maxTokens();
+            case STANDARD -> properties.standard().maxTokens();
+            case FULL -> properties.full().maxTokens();
+        };
     }
 }

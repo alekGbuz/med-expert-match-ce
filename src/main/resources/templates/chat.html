@@ -25,8 +25,8 @@
                          class="chat-message-bubble p-2 rounded bg-primary-subtle"
                          th:text="${msg.content()}">message</div>
                     <div th:if="${msg.role() != 'user'}"
-                         class="chat-message-bubble p-2 rounded bg-light border chat-markdown assistant-raw-pending"
-                         th:text="${msg.content()}"></div>
+                         class="chat-message-bubble p-2 rounded bg-light border chat-markdown"
+                         th:utext="${msg.renderedHtml() != null ? msg.renderedHtml() : msg.content()}"></div>
                 </div>
             </div>
             <div class="border-top p-3 bg-white">

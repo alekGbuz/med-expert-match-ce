@@ -45,7 +45,9 @@ class MedicalSubagentRoutingTest {
                 mock(GraphAnalyticsAgentTools.class),
                 mock(RoutingAgentTools.class),
                 mock(TodoWriteTool.class),
-                mock(AskUserQuestionTool.class));
+                mock(AskUserQuestionTool.class),
+                mock(com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools.class),
+                new com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor());
         assertNotNull(taskTool);
     }
 

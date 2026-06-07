@@ -1,6 +1,6 @@
 package com.berdachuk.medexpertmatch.core.config;
 
-import com.berdachuk.medexpertmatch.llm.config.LlmTierProperties;
+import com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
@@ -49,15 +49,39 @@ public class SpringAIConfig {
             havingValue = "false",
             matchIfMissing = false
     )
-    public ChatClient chatClient(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+    public ChatClient chatClient(
+            @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
+            DateTimeContextAdvisor dateTimeContextAdvisor) {
         log.info("Configuring ChatClient with clinical ChatModel: {}", clinicalChatModel.getClass().getSimpleName());
-        return ChatClient.builder(clinicalChatModel).build();
+        return chatClientBuilder(clinicalChatModel, dateTimeContextAdvisor).build();
     }
 
     @Bean("caseAnalysisChatClient")
-    public ChatClient caseAnalysisChatClient(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+    public ChatClient caseAnalysisChatClient(
+            @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
+            DateTimeContextAdvisor dateTimeContextAdvisor) {
         log.info("Creating caseAnalysisChatClient with clinical LLM: {}", clinicalChatModel.getClass().getSimpleName());
-        return ChatClient.builder(clinicalChatModel).build();
+        return chatClientBuilder(clinicalChatModel, dateTimeContextAdvisor).build();
+    }
+
+    @Bean("utilityChatClient")
+    public ChatClient utilityChatClient(
+            @Qualifier("utilityChatModel") ChatModel utilityChatModel,
+            DateTimeContextAdvisor dateTimeContextAdvisor) {
+        log.info("Creating utilityChatClient");
+        return chatClientBuilder(utilityChatModel, dateTimeContextAdvisor).build();
+    }
+
+    @Bean("rerankingChatClient")
+    @org.springframework.lang.Nullable
+    public ChatClient rerankingChatClient(
+            @Qualifier("rerankingChatModel") @org.springframework.lang.Nullable ChatModel rerankingChatModel,
+            DateTimeContextAdvisor dateTimeContextAdvisor) {
+        if (rerankingChatModel == null) {
+            return null;
+        }
+        log.info("Creating rerankingChatClient");
+        return chatClientBuilder(rerankingChatModel, dateTimeContextAdvisor).build();
     }
 
     @Bean("clinicalChatModel")
@@ -105,9 +129,14 @@ public class SpringAIConfig {
 
     @Bean("descriptionGenerationChatClient")
     public ChatClient descriptionGenerationChatClient(
-            @Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel) {
+            @Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel,
+            DateTimeContextAdvisor dateTimeContextAdvisor) {
         log.info("Creating descriptionGenerationChatClient");
-        return ChatClient.builder(descriptionGenerationChatModel).build();
+        return chatClientBuilder(descriptionGenerationChatModel, dateTimeContextAdvisor).build();
+    }
+
+    private static ChatClient.Builder chatClientBuilder(ChatModel model, DateTimeContextAdvisor dateTimeContextAdvisor) {
+        return ChatClient.builder(model).defaultAdvisors(dateTimeContextAdvisor);
     }
 
     @Bean

@@ -1,6 +1,5 @@
-package com.berdachuk.medexpertmatch.llm.config;
+package com.berdachuk.medexpertmatch.core.config;
 
-import com.berdachuk.medexpertmatch.llm.routing.RoutingTier;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Bindable;
@@ -17,9 +16,9 @@ class LlmTierPropertiesTest {
     void defaultsAreSensible() {
         LlmTierProperties props = new LlmTierProperties(null, null, null);
 
-        assertEquals(2048, props.maxTokensFor(RoutingTier.LIGHT));
-        assertEquals(4096, props.maxTokensFor(RoutingTier.STANDARD));
-        assertEquals(6000, props.maxTokensFor(RoutingTier.FULL));
+        assertEquals(2048, props.light().maxTokens());
+        assertEquals(4096, props.standard().maxTokens());
+        assertEquals(6000, props.full().maxTokens());
     }
 
     @Test
@@ -35,8 +34,8 @@ class LlmTierPropertiesTest {
                 .bind("medexpertmatch.llm.tier", Bindable.of(LlmTierProperties.class))
                 .get();
 
-        assertEquals(1024, props.maxTokensFor(RoutingTier.LIGHT));
-        assertEquals(3000, props.maxTokensFor(RoutingTier.STANDARD));
-        assertEquals(8000, props.maxTokensFor(RoutingTier.FULL));
+        assertEquals(1024, props.light().maxTokens());
+        assertEquals(3000, props.standard().maxTokens());
+        assertEquals(8000, props.full().maxTokens());
     }
 }

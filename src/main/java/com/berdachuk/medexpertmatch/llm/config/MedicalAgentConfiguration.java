@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
+import com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor;
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
 import com.berdachuk.medexpertmatch.llm.automemory.MemoryConsolidationTrigger;
 import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
@@ -8,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
@@ -262,17 +264,21 @@ public class MedicalAgentConfiguration {
             GraphAnalyticsAgentTools graphAnalyticsAgentTools,
             RoutingAgentTools routingAgentTools,
             TodoWriteTool todoWriteTool,
-            AskUserQuestionTool askUserQuestionTool) {
+            AskUserQuestionTool askUserQuestionTool,
+            DateTimeAgentTools dateTimeAgentTools,
+            DateTimeContextAdvisor dateTimeContextAdvisor) {
         log.info("Creating TaskTool with specialist subagents from classpath:agents");
         try {
             var subagentReferences = loadSubagentReferences(resourceLoader);
             ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel)
+                    .defaultAdvisors(dateTimeContextAdvisor)
                     .defaultTools(caseAnalysisAgentTools)
                     .defaultTools(doctorMatchingAgentTools)
                     .defaultTools(evidenceAgentTools)
                     .defaultTools(clinicalAdvisorAgentTools)
                     .defaultTools(graphAnalyticsAgentTools)
                     .defaultTools(routingAgentTools)
+                    .defaultTools(dateTimeAgentTools)
                     .defaultTools(todoWriteTool)
                     .defaultTools(askUserQuestionTool);
             return TaskTool.builder()
@@ -346,8 +352,10 @@ public class MedicalAgentConfiguration {
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool,
+            DateTimeAgentTools dateTimeAgentTools,
             ToolCallAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
+            DateTimeContextAdvisor dateTimeContextAdvisor,
             AgentMemoryProperties agentMemoryProperties,
             @Qualifier("autoMemorySystemPromptTemplate") PromptTemplate autoMemorySystemPromptTemplate
     ) {
@@ -365,9 +373,10 @@ public class MedicalAgentConfiguration {
                 .defaultTools(graphAnalyticsAgentTools)
                 .defaultTools(routingAgentTools)
                 .defaultTools(autoMemoryTools)
+                .defaultTools(dateTimeAgentTools)
                 .defaultTools(todoWriteTool)
                 .defaultTools(askUserQuestionTool)
-                .defaultAdvisors(agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
+                .defaultAdvisors(dateTimeContextAdvisor, agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         builder.defaultToolCallbacks(skillsTool, taskTool);
         log.info("SkillsTool and TaskTool registered successfully");

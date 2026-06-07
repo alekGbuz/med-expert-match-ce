@@ -26,7 +26,7 @@ class GoalClassifierMedicalEnglishTest {
     private static final String CASE_ID = "6a1db20e86d74aa336e98ff0";
 
     private final GoalClassifier goalClassifier = new GoalClassifier(
-            mock(ChatModel.class),
+            mock(org.springframework.ai.chat.client.ChatClient.class),
             mock(PromptTemplate.class),
             mock(PromptTemplate.class),
             new ObjectMapper(),

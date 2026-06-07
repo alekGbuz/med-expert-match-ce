@@ -32,12 +32,12 @@ class GoalClassifierTest {
 @Test
     @DisplayName("classify returns general for null or blank input")
     void classifyReturnsGeneralForNull() {
-        org.springframework.ai.chat.model.ChatModel chatModel =
-                org.mockito.Mockito.mock(org.springframework.ai.chat.model.ChatModel.class);
+        org.springframework.ai.chat.client.ChatClient chatClient =
+                org.mockito.Mockito.mock(org.springframework.ai.chat.client.ChatClient.class);
         org.springframework.ai.chat.prompt.PromptTemplate template =
                 org.mockito.Mockito.mock(org.springframework.ai.chat.prompt.PromptTemplate.class);
         GoalClassifier classifier = new GoalClassifier(
-                chatModel, template, template,
+                chatClient, template, template,
                 new com.fasterxml.jackson.databind.ObjectMapper(),
                 new com.berdachuk.medexpertmatch.core.util.LlmCallLimiter(1, 1, 1, 1),
                 mock(ApplicationEventPublisher.class));

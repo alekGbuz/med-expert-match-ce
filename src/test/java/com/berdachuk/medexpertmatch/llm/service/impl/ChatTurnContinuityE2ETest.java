@@ -48,12 +48,12 @@ class ChatTurnContinuityE2ETest {
 
         com.berdachuk.medexpertmatch.core.util.LlmCallLimiter llmCallLimiter =
                 new com.berdachuk.medexpertmatch.core.util.LlmCallLimiter(1, 1, 1, 1);
-        org.springframework.ai.chat.model.ChatModel chatModel =
-                org.mockito.Mockito.mock(org.springframework.ai.chat.model.ChatModel.class);
+        org.springframework.ai.chat.client.ChatClient chatClient =
+                org.mockito.Mockito.mock(org.springframework.ai.chat.client.ChatClient.class);
         org.springframework.ai.chat.prompt.PromptTemplate promptTemplate =
                 org.mockito.Mockito.mock(org.springframework.ai.chat.prompt.PromptTemplate.class);
         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        goalClassifier = new GoalClassifier(chatModel, promptTemplate, promptTemplate, objectMapper, llmCallLimiter,
+        goalClassifier = new GoalClassifier(chatClient, promptTemplate, promptTemplate, objectMapper, llmCallLimiter,
                 org.mockito.Mockito.mock(ApplicationEventPublisher.class));
     }
 

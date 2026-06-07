@@ -7,7 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -24,7 +24,7 @@ class GoalClassifierRussianTest {
     private static final String CASE_ID = "6a1db20e86d74aa336e98ff0";
 
     private final GoalClassifier goalClassifier = new GoalClassifier(
-            mock(ChatModel.class),
+            mock(ChatClient.class),
             mock(PromptTemplate.class),
             mock(PromptTemplate.class),
             new ObjectMapper(),

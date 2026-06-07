@@ -1,7 +1,7 @@
 # Medical Agent System: Skills, Tools, and Implementation
 
-**Last Updated:** 2026-05-19  
-**Status:** All tools implemented (18 MedicalAgentTools + 5 AutoMemoryTools)
+**Last Updated:** 2026-06-08  
+**Status:** All tools implemented (19 MedicalAgentTools + 5 AutoMemoryTools)
 
 ## Agent Skills Architecture
 
@@ -290,6 +290,14 @@ generate clinical recommendations.
 All tools have been fully implemented and tested. Integration tests are available in `MedicalAgentToolsIT.java`.
 
 ## Tool Categories
+
+### 0. Context Tools
+
+#### `get_current_date_time`
+
+- **Status**: Implemented (`DateTimeAgentTools`)
+- **Purpose**: Returns the current server date and time in UTC for scheduling, timelines, and time-sensitive reasoning
+- **Availability**: All AI Chat agent profiles and orchestrator modes; also injected automatically into every LLM system prompt via `DateTimeContextAdvisor`
 
 ### 1. Case Analyzer Tools
 

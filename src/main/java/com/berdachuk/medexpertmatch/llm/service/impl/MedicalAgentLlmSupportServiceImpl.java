@@ -6,12 +6,13 @@ import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
+import com.berdachuk.medexpertmatch.llm.harness.HarnessContextKind;
+import com.berdachuk.medexpertmatch.llm.harness.HarnessContextSummarizer;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,9 +44,10 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     private final PromptTemplate networkAnalyticsSummarizationPromptTemplate;
     private final LogStreamService logStreamService;
     private final LlmCallLimiter llmCallLimiter;
+    private final HarnessContextSummarizer harnessContextSummarizer;
 
     public MedicalAgentLlmSupportServiceImpl(
-            @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
+            @Qualifier("caseAnalysisChatClient") ChatClient medGemmaChatClient,
             MedicalCaseRepository medicalCaseRepository,
             @Qualifier("medgemmaCaseAnalysisSystemPromptTemplate") PromptTemplate medgemmaCaseAnalysisSystemPromptTemplate,
             @Qualifier("medgemmaCaseAnalysisUserPromptTemplate") PromptTemplate medgemmaCaseAnalysisUserPromptTemplate,
@@ -57,8 +59,9 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             @Qualifier("networkAnalyticsSummarizationPromptTemplate") PromptTemplate networkAnalyticsSummarizationPromptTemplate,
             @Value("${spring.ai.custom.chat.model:medgemma:1.5-4b}") String medGemmaModelName,
             LogStreamService logStreamService,
-            LlmCallLimiter llmCallLimiter) {
-        this.medGemmaChatClient = ChatClient.builder(clinicalChatModel).build();
+            LlmCallLimiter llmCallLimiter,
+            HarnessContextSummarizer harnessContextSummarizer) {
+        this.medGemmaChatClient = medGemmaChatClient;
         this.medGemmaModelName = medGemmaModelName;
         this.medicalCaseRepository = medicalCaseRepository;
         this.medgemmaCaseAnalysisSystemPromptTemplate = medgemmaCaseAnalysisSystemPromptTemplate;
@@ -71,6 +74,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         this.networkAnalyticsSummarizationPromptTemplate = networkAnalyticsSummarizationPromptTemplate;
         this.logStreamService = logStreamService;
         this.llmCallLimiter = llmCallLimiter;
+        this.harnessContextSummarizer = harnessContextSummarizer;
     }
 
     @Override
@@ -126,6 +130,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                 caseAnalysis,
                 patientAgeFromCase,
                 null,
+                HarnessContextKind.DOCTOR_MATCHES,
                 medgemmaResultInterpretationSystemPromptTemplate,
                 medgemmaResultInterpretationUserPromptTemplate,
                 true);
@@ -142,6 +147,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                 caseAnalysis,
                 patientAgeFromCase,
                 userFocus,
+                HarnessContextKind.EVIDENCE,
                 medgemmaCaseAnalysisInterpretationSystemPromptTemplate,
                 medgemmaCaseAnalysisInterpretationUserPromptTemplate,
                 false);
@@ -153,6 +159,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             String caseAnalysis,
             Integer patientAgeFromCase,
             String userFocus,
+            HarnessContextKind toolResultsKind,
             PromptTemplate systemTemplate,
             PromptTemplate userTemplate,
             boolean allowEmptyToolResultsFallback) {
@@ -166,10 +173,12 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                 return "Based on LLM case analysis:\n\n" + caseAnalysis;
             }
 
-            String limitedToolResults = toolResults != null ? toolResults : "";
+            String limitedToolResults = harnessContextSummarizer.summarizeToolResults(
+                    toolResults != null ? toolResults : "", toolResultsKind);
             if (limitedToolResults.length() > 3000) {
-                log.warn("Tool results too long ({} chars), truncating to 3000 chars", limitedToolResults.length());
-                limitedToolResults = limitedToolResults.substring(0, 3000) + "\n\n[Tool results truncated due to length]";
+                log.warn("Summarized tool results still long ({} chars), capping", limitedToolResults.length());
+                limitedToolResults = limitedToolResults.substring(0, 3000)
+                        + "\n\n[Tool results truncated due to length]";
             }
 
             String limitedCaseAnalysis = caseAnalysis;
@@ -334,9 +343,11 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
             key = "'routing:' + T(java.util.Objects).hash(#rawToolResults, #caseAnalysis)")
     public String summarizeRoutingResults(String rawToolResults, String caseAnalysis) {
+        String shapedResults = harnessContextSummarizer.summarizeToolResults(
+                rawToolResults != null ? rawToolResults : "", HarnessContextKind.ROUTING);
         String prompt = routingSummarizationPromptTemplate.render(Map.of(
                 "caseAnalysis", caseAnalysis != null ? caseAnalysis : "",
-                "rawToolResults", rawToolResults != null ? rawToolResults : ""));
+                "rawToolResults", shapedResults));
         try {
             String response = llmCallLimiter.execute(LlmClientType.CLINICAL,
                     () -> medGemmaChatClient.prompt().user(prompt).call().content());

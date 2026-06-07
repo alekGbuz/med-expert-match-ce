@@ -7,7 +7,6 @@ import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageService;
 import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageTurn;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -24,11 +23,11 @@ public class ChatLanguageServiceImpl implements ChatLanguageService {
     private final LlmCallLimiter llmCallLimiter;
 
     public ChatLanguageServiceImpl(
-            @Qualifier("utilityChatModel") ChatModel utilityChatModel,
+            @Qualifier("utilityChatClient") ChatClient utilityChatClient,
             @Qualifier("chatTranslateToEnglishPromptTemplate") PromptTemplate translateToEnglishTemplate,
             @Qualifier("chatTranslateFromEnglishPromptTemplate") PromptTemplate translateFromEnglishTemplate,
             LlmCallLimiter llmCallLimiter) {
-        this.chatClient = ChatClient.builder(utilityChatModel).build();
+        this.chatClient = utilityChatClient;
         this.translateToEnglishTemplate = translateToEnglishTemplate;
         this.translateFromEnglishTemplate = translateFromEnglishTemplate;
         this.llmCallLimiter = llmCallLimiter;

@@ -28,7 +28,7 @@ class GoalClassifierEvalTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final GoalClassifier goalClassifier = new GoalClassifier(
-            mock(ChatModel.class),
+            mock(org.springframework.ai.chat.client.ChatClient.class),
             mock(PromptTemplate.class),
             mock(PromptTemplate.class),
             objectMapper,

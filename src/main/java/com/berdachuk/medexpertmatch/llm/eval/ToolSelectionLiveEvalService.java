@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.eval;
 
+import com.berdachuk.medexpertmatch.core.util.LlmDateTimeContext;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -62,7 +63,7 @@ public class ToolSelectionLiveEvalService {
 
     public ToolSelectionLiveEvalReport evaluate(
             List<ToolSelectionGoldenCase> cases, String modelName, String label) {
-        String systemPrompt = loadOrchestratorInstructions();
+        String systemPrompt = LlmDateTimeContext.contextBlock() + "\n\n" + loadOrchestratorInstructions();
         List<ToolSelectionLiveEvalReport.CaseResult> results = new ArrayList<>();
         int passed = 0;
 

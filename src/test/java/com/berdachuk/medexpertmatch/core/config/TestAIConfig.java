@@ -898,6 +898,16 @@ public class TestAIConfig {
         return createMockChatModel();
     }
 
+    @Bean("utilityChatClient")
+    public ChatClient utilityChatClient(@Qualifier("utilityChatModel") ChatModel utilityChatModel) {
+        return ChatClient.builder(utilityChatModel).build();
+    }
+
+    @Bean("rerankingChatClient")
+    public ChatClient rerankingChatClient(@Qualifier("rerankingChatModel") ChatModel rerankingChatModel) {
+        return ChatClient.builder(rerankingChatModel).build();
+    }
+
     @Bean("primaryChatModel")
     @Primary
     @Deprecated
@@ -1159,9 +1169,50 @@ public class TestAIConfig {
 
     /**
      * Mock descriptionGenerationChatClient for tests (synthetic data description generation).
+     * Uses a focused responder so embedding description ITs receive case fields from the user prompt.
      */
     @Bean("descriptionGenerationChatClient")
-    public ChatClient testDescriptionGenerationChatClient(ChatModel chatModel) {
-        return ChatClient.builder(chatModel).build();
+    public ChatClient testDescriptionGenerationChatClient() {
+        ChatModel descriptionModel = mock(ChatModel.class);
+        when(descriptionModel.call(any(Prompt.class))).thenAnswer(invocation ->
+                descriptionResponse(invocation.getArgument(0)));
+        when(descriptionModel.stream(any(Prompt.class))).thenAnswer(invocation ->
+                Flux.just(descriptionResponse(invocation.getArgument(0))));
+        return ChatClient.builder(descriptionModel).build();
+    }
+
+    private ChatResponse descriptionResponse(Prompt prompt) {
+        String original = prompt.getContents();
+        String chiefComplaint = extractField(original, "Chief Complaint:");
+        if (chiefComplaint == null) {
+            chiefComplaint = extractField(original, "- Chief Complaint:");
+        }
+        String symptoms = extractField(original, "Symptoms:");
+        if (symptoms == null) {
+            symptoms = extractField(original, "- Symptoms:");
+        }
+        String diagnosis = extractField(original, "Diagnosis:");
+        if (diagnosis == null) {
+            diagnosis = extractField(original, "- Diagnosis:");
+        }
+        String icd10 = extractField(original, "ICD-10 Code(s):");
+        if (icd10 == null) {
+            icd10 = extractField(original, "- ICD-10 Code(s):");
+        }
+        StringBuilder description = new StringBuilder("Medical case presentation: ");
+        if (chiefComplaint != null && !chiefComplaint.equalsIgnoreCase("not specified")) {
+            description.append("Patient presents with ").append(chiefComplaint.trim()).append(". ");
+        }
+        if (symptoms != null && !symptoms.equalsIgnoreCase("not specified")) {
+            description.append("Clinical symptoms include ").append(symptoms.trim()).append(". ");
+        }
+        if (diagnosis != null && !diagnosis.equalsIgnoreCase("not specified")) {
+            description.append("Current diagnosis: ").append(diagnosis.trim()).append(". ");
+        }
+        if (icd10 != null && !icd10.equalsIgnoreCase("not specified")) {
+            description.append("ICD-10 codes: ").append(icd10.trim()).append(". ");
+        }
+        description.append("Specialist matching evaluation is recommended.");
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(description.toString()))));
     }
 }

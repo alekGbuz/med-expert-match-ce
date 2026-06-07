@@ -43,6 +43,7 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 
 - [Architecture Overview](ARCHITECTURE.md) - System architecture and design
 - [M64 Cost-Quality Tier Routing (ADR)](decisions/M64-cost-quality-tier-routing.md) - Multi-tier LLM routing decision and full design
+- [LLM Cost Model by Tier](eval/cost-model.md) - Tier → model → token budget reference (M64 / M68)
 
 ### Development
 

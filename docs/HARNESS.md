@@ -1,6 +1,6 @@
 # Harness Architecture
 
-**Last updated:** 2026-05-31  
+**Last updated:** 2026-06-08  
 **Audience:** Developers and operators working on AI Chat, GraphRAG matching, and LLM orchestration.
 
 ## What is the harness?
@@ -16,6 +16,11 @@ medical workflow:
 
 The **model proposes**; the **harness constrains and executes**. See also
 [Harness & Agent Patterns](HARNESS_AND_AGENT_USAGE.md) for terminology shared with coding-agent discussions.
+
+### Temporal context (FR-18)
+
+Every LLM call receives **current UTC date/time** in the system prompt via `DateTimeContextAdvisor`. AI Chat also
+registers the `get_current_date_time` tool (`DateTimeAgentTools`) on all agent profiles for explicit clock lookups.
 
 ## High-level flow
 
@@ -241,6 +246,25 @@ Prometheus counters (via `/actuator/prometheus`):
 Implementation: `RoutingTierResolver`, `LlmTierProperties`, `LlmRoutingMetrics` in `llm/routing/` and `llm/monitoring/`.
 
 Full architecture decision: [M64 Cost-Quality Tier Routing ADR](decisions/M64-cost-quality-tier-routing.md).
+
+Cost model by tier: [docs/eval/cost-model.md](eval/cost-model.md).
+
+## Context summarizer (M68)
+
+Before MedGemma clinical interpretation, `HarnessContextSummarizer` shapes harness tool output into compact JSON:
+
+| Kind | Input | Output |
+|------|-------|--------|
+| `DOCTOR_MATCHES` | Full `DoctorMatch` JSON array | `top_matches` (id, score, specialty) + `match_count` |
+| `EVIDENCE` | PubMed prose list | `evidence_count` + top 3 `PMID:` citations |
+| `ROUTING` | Facility routing lines | `facility_count` + `top_facilities` |
+| `GENERIC` | JSON object | Whitelist fields only |
+
+**Whitelist** (`HarnessContextWhitelist`): `case_id`, `verify_status`, `policy_gate_status`, `harness_state`,
+`checkpoint`, `harnessFailureReason`, `harnessFailureDetail` — never dropped.
+
+Wired in `MedicalAgentLlmSupportServiceImpl` for match/case interpretation and routing summarization.
+Regression eval: `src/test/resources/eval/context-summarizer-cases.jsonl`.
 
 ## Related documentation
 

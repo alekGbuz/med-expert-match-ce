@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,13 +34,13 @@ public class RerankingServiceImpl implements RerankingService {
     private final boolean enabled;
 
     public RerankingServiceImpl(
-            @Nullable @Qualifier("rerankingChatModel") ChatModel rerankingChatModel,
+            @Nullable @Qualifier("rerankingChatClient") ChatClient rerankingChatClient,
             @Qualifier("rerankingDoctorsPromptTemplate") PromptTemplate rerankingDoctorsPromptTemplate,
             MedicalCaseRepository medicalCaseRepository,
             DoctorRepository doctorRepository,
             ObjectMapper objectMapper,
             @Value("${medexpertmatch.retrieval.reranking.enabled:false}") boolean enabled) {
-        this.rerankingChatClient = rerankingChatModel != null ? ChatClient.builder(rerankingChatModel).build() : null;
+        this.rerankingChatClient = rerankingChatClient;
         this.rerankingDoctorsPromptTemplate = rerankingDoctorsPromptTemplate;
         this.medicalCaseRepository = medicalCaseRepository;
         this.doctorRepository = doctorRepository;

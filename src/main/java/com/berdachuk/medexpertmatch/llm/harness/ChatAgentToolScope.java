@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
+import com.berdachuk.medexpertmatch.core.util.LlmDateTimeContext;
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
 import com.berdachuk.medexpertmatch.llm.chat.ChatToolContextHolder;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
@@ -64,6 +65,9 @@ public final class ChatAgentToolScope {
         if (profile == null || toolName == null || toolName.isBlank()) {
             return true;
         }
+        if (LlmDateTimeContext.TOOL_NAME.equalsIgnoreCase(toolName.trim())) {
+            return true;
+        }
         if (profile.orchestrator()) {
             return orchestratorAllowsTool(toolName);
         }
@@ -97,9 +101,15 @@ public final class ChatAgentToolScope {
     }
 
     public static Set<String> allowedToolsForAgentCard(String agentId) {
-        return ChatAgentProfile.fromAgentId(agentId)
+        LinkedHashSet<String> tools = new LinkedHashSet<>();
+        tools.add(LlmDateTimeContext.TOOL_NAME);
+        ChatAgentProfile.fromAgentId(agentId)
                 .map(ChatAgentToolScope::allowedTools)
-                .map(scope -> scope == null ? Collections.<String>emptySet() : scope)
-                .orElseGet(() -> new LinkedHashSet<>());
+                .ifPresent(scope -> {
+                    if (scope != null) {
+                        tools.addAll(scope);
+                    }
+                });
+        return Collections.unmodifiableSet(tools);
     }
 }

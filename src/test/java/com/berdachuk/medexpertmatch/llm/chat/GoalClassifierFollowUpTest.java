@@ -7,7 +7,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -26,13 +26,13 @@ class GoalClassifierFollowUpTest {
     private static final String SESSION_ID = "user-a-chat1";
     private static final String CASE_ID = "6a1db20e86d74aa336e98ff0";
 
-    private final ChatModel chatModel = mock(ChatModel.class);
+    private final ChatClient chatClient = mock(ChatClient.class);
     private final PromptTemplate goalClassificationTemplate = mock(PromptTemplate.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
     private final PromptTemplate goalClassificationUserTemplate = mock(PromptTemplate.class);
     private final GoalClassifier goalClassifier = new GoalClassifier(
-            chatModel, goalClassificationTemplate, goalClassificationUserTemplate, objectMapper, llmCallLimiter,
+            chatClient, goalClassificationTemplate, goalClassificationUserTemplate, objectMapper, llmCallLimiter,
             mock(ApplicationEventPublisher.class));
 
     @BeforeEach
