@@ -584,17 +584,23 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                     ? engineResponse.metadata().getOrDefault("doctorMatchCount",
                     engineResponse.metadata().getOrDefault("facilityMatchCount", 0))
                     : 0;
+            boolean pendingHumanReview = engineResponse.metadata() != null
+                    && "NEEDS_HUMAN".equals(engineResponse.metadata().get("harnessState"));
             boolean requiresClinicianReview = engineResponse.metadata() != null
                     && Boolean.TRUE.equals(engineResponse.metadata().get("requiresClinicianReview"));
             boolean lowConfidenceClarify = engineResponse.metadata() != null
                     && "CLARIFY".equals(engineResponse.metadata().get("policyAction"))
                     && matchCount instanceof Number n && n.intValue() > 0;
-            String progressDetail = requiresClinicianReview
+            String progressDetail = pendingHumanReview
+                    ? "Pending clinician review — " + matchCount + " matches held"
+                    : requiresClinicianReview
                     ? "Clinician review required — " + matchCount + " matches found"
                     : lowConfidenceClarify
                     ? "Low confidence — " + matchCount + " matches shown"
                     : "Completed — " + matchCount + " matches found";
-            String progressState = requiresClinicianReview ? "ESCALATE" : lowConfidenceClarify ? "CLARIFY" : "DONE";
+            String progressState = pendingHumanReview || requiresClinicianReview
+                    ? "ESCALATE"
+                    : lowConfidenceClarify ? "CLARIFY" : "DONE";
             sendHarnessProgress(sessionId, engineName, progressState, progressDetail);
 
             String responseText = formatHarnessReply(languageTurn, engineResponse.response());

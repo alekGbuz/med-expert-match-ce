@@ -45,6 +45,7 @@ public class HarnessRunsWebController {
             @RequestParam String runId,
             @RequestParam String resumeToken,
             @RequestParam String decision,
+            @RequestParam(required = false) String comment,
             RedirectAttributes redirectAttributes) {
         if (!"admin".equals(request.getParameter("user"))) {
             return "redirect:/";
@@ -52,7 +53,10 @@ public class HarnessRunsWebController {
         try {
             HarnessWorkflowCheckpointService.CheckpointAction action =
                     HarnessWorkflowCheckpointService.CheckpointAction.valueOf(decision.toUpperCase());
-            checkpointService.checkpoint(runId, new HarnessWorkflowCheckpointService.CheckpointDecision(action, resumeToken));
+            checkpointService.checkpoint(
+                    runId,
+                    new HarnessWorkflowCheckpointService.CheckpointDecision(action, resumeToken, comment),
+                    "admin");
             redirectAttributes.addFlashAttribute("successMessage", "Checkpoint " + action.name() + " for run " + runId);
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

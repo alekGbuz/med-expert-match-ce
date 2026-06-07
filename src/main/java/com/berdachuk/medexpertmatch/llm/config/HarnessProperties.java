@@ -14,6 +14,7 @@ public record HarnessProperties(
         int doctorMatchMinMatches,
         int routingMatchMinMatches,
         boolean humanCheckpointEnabled,
+        boolean humanAdjudicationEnabled,
         boolean chainAnalysisToMatch,
         boolean chainMatchToRecommend,
         boolean zeroResultFallbackEnabled,
@@ -26,7 +27,7 @@ public record HarnessProperties(
     }
 
     public static HarnessProperties defaults() {
-        return new HarnessProperties(true, true, 2, true, 1, 0, false, false, false, false, true);
+        return new HarnessProperties(true, true, 2, true, 1, 0, false, false, false, false, false, true);
     }
 
     public HarnessIterationPolicy iterationPolicy() {

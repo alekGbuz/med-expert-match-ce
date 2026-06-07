@@ -38,6 +38,74 @@
                 </div>
             </div>
 
+            <div class="card mb-4" th:if="${message}">
+                <div class="card-body text-success" th:text="${message}">action</div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">Pending clinician review (HUMAN_REVIEW)</div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                        <tr>
+                            <th>Run ID</th>
+                            <th>Case ID</th>
+                            <th>Type</th>
+                            <th>Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(pendingReviews)}">
+                            <td class="text-muted" colspan="5">No runs awaiting review.</td>
+                        </tr>
+                        <tr th:each="run : ${pendingReviews}">
+                            <td><code th:text="${run.runId}">run</code></td>
+                            <td><code th:text="${run.caseId}">case</code></td>
+                            <td th:text="${run.workflowType}">TYPE</td>
+                            <td th:text="${run.updatedAt}">time</td>
+                            <td>
+                                <form class="d-inline" th:action="@{/admin/harness-chains/{id}/approve(id=${run.runId})}" method="post">
+                                    <input type="hidden" name="resumeToken" th:value="${run.resumeToken}"/>
+                                    <input type="hidden" name="user" value="admin"/>
+                                    <input type="text" name="comment" placeholder="Comment" class="form-control form-control-sm d-inline-block w-auto"/>
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form class="d-inline ms-1" th:action="@{/admin/harness-chains/{id}/reject(id=${run.runId})}" method="post">
+                                    <input type="hidden" name="resumeToken" th:value="${run.resumeToken}"/>
+                                    <input type="hidden" name="user" value="admin"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">Adjudication audit log</div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                        <tr><th>Run</th><th>Case</th><th>Reviewer</th><th>Decision</th><th>When</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(adjudicationLog)}">
+                            <td class="text-muted" colspan="5">No adjudication entries yet.</td>
+                        </tr>
+                        <tr th:each="entry : ${adjudicationLog}">
+                            <td><code th:text="${entry.runId()}">run</code></td>
+                            <td><code th:text="${entry.caseId()}">case</code></td>
+                            <td th:text="${entry.reviewerId()}">reviewer</td>
+                            <td th:text="${entry.decision()}">decision</td>
+                            <td th:text="${entry.recordedAt()}">time</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">Failed runs — backlog starter</div>
                 <div class="card-body">

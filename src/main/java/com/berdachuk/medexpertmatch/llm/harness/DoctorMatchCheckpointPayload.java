@@ -10,5 +10,18 @@ public record DoctorMatchCheckpointPayload(
         int maxResults,
         List<DoctorMatch> matches,
         String caseAnalysisJson,
-        int bundleSectionCount) {
+        int bundleSectionCount,
+        String policyAction,
+        String policyReason,
+        String policyUserMessage) {
+
+    public DoctorMatchCheckpointPayload(
+            String caseId,
+            String sessionId,
+            int maxResults,
+            List<DoctorMatch> matches,
+            String caseAnalysisJson,
+            int bundleSectionCount) {
+        this(caseId, sessionId, maxResults, matches, caseAnalysisJson, bundleSectionCount, null, null, null);
+    }
 }

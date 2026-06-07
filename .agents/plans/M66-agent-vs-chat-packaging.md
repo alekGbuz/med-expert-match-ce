@@ -1,8 +1,8 @@
 # M66: Agent vs Chat Product Packaging
 
-**Status:** Planned  
+**Status:** **Next** — ready to implement (2026-06-08)  
 **Created:** 2026-06-07  
-**Depends on:** M61–M65 (explainability inputs); harness + chat UI modules
+**Depends on:** M61–M65 (archived — policy + adjudication inputs); harness + chat UI modules
 
 ## Problem Statement
 

@@ -18,7 +18,9 @@ public class HarnessWorkflowRunQueryService {
     }
 
     public List<Map<String, Object>> listAwaitingHumanReview(int limit) {
-        return listByState(DoctorMatchWorkflowState.NEEDS_HUMAN, limit);
+        return runStore.findByState(DoctorMatchWorkflowState.NEEDS_HUMAN, limit).stream()
+                .map(this::toAdminPendingView)
+                .toList();
     }
 
     public List<Map<String, Object>> listByState(DoctorMatchWorkflowState state, int limit) {
@@ -48,6 +50,12 @@ public class HarnessWorkflowRunQueryService {
             return "TOOL_OUTPUT_INVALID";
         }
         return "UNKNOWN";
+    }
+
+    private Map<String, Object> toAdminPendingView(HarnessWorkflowRun run) {
+        Map<String, Object> view = toView(run);
+        view.put("resumeToken", run.resumeToken());
+        return view;
     }
 
     private Map<String, Object> toView(HarnessWorkflowRun run) {

@@ -24,4 +24,10 @@ public class CheckpointAccessGuard {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Checkpoint reviewer access required");
         }
     }
+
+    public String currentReviewerId() {
+        requireCheckpointReviewer();
+        String userId = userContext.currentUserId();
+        return userId != null ? userId : "unknown";
+    }
 }

@@ -128,6 +128,11 @@ public class DoctorMatchWorkflowEngine {
         int matchCount = matches != null ? matches.size() : 0;
         ConfidencePolicyDecision confidenceDecision = evaluateConfidencePolicy(
                 matchCount, matches, verification, urgency);
+        if (HumanAdjudicationSupport.shouldPauseForAdjudication(harnessProperties, confidenceDecision)) {
+            return pauseForHumanReview(
+                    caseId, sessionId, maxResults, matches, caseAnalysisJson, bundle, confidenceDecision);
+        }
+
         if (confidenceDecision.action() != PolicyAction.ANSWER
                 && !ConfidencePolicySupport.shouldIncludeMatchesInResponse(
                         confidenceDecision, matchCount, verification.passed())) {
@@ -136,7 +141,8 @@ public class DoctorMatchWorkflowEngine {
         }
 
         if (harnessProperties.humanCheckpointEnabled()) {
-            return pauseForHumanReview(caseId, sessionId, maxResults, matches, caseAnalysisJson, bundle);
+            return pauseForHumanReview(
+                    caseId, sessionId, maxResults, matches, caseAnalysisJson, bundle, null);
         }
 
         ConfidencePolicyDecision caveat = confidenceDecision.action() == PolicyAction.ANSWER
@@ -148,13 +154,14 @@ public class DoctorMatchWorkflowEngine {
     public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, DoctorMatchCheckpointPayload payload) {
         transition(payload.sessionId(), DoctorMatchWorkflowState.POLICY_GATE, "Resuming after human approval runId=" + runId);
         CaseContextBundle bundle = caseContextBundleService.build(payload.caseId(), CaseContextIntent.MATCH);
+        ConfidencePolicyDecision caveat = resolvePolicyCaveat(payload);
         return completeAfterVerify(
                 payload.caseId(),
                 payload.sessionId(),
                 payload.matches(),
                 payload.caseAnalysisJson(),
                 bundle,
-                null);
+                caveat);
     }
 
     private MedicalAgentService.AgentResponse pauseForHumanReview(
@@ -163,8 +170,9 @@ public class DoctorMatchWorkflowEngine {
             int maxResults,
             List<DoctorMatch> matches,
             String caseAnalysisJson,
-            CaseContextBundle bundle) {
-        transition(sessionId, DoctorMatchWorkflowState.NEEDS_HUMAN, "Awaiting human checkpoint review");
+            CaseContextBundle bundle,
+            ConfidencePolicyDecision policyDecision) {
+        transition(sessionId, DoctorMatchWorkflowState.NEEDS_HUMAN, "Awaiting human adjudication (HUMAN_REVIEW)");
         try {
             DoctorMatchCheckpointPayload payload = new DoctorMatchCheckpointPayload(
                     caseId,
@@ -172,7 +180,10 @@ public class DoctorMatchWorkflowEngine {
                     maxResults,
                     matches,
                     caseAnalysisJson,
-                    bundle.coreSections().size());
+                    bundle.coreSections().size(),
+                    policyDecision != null ? policyDecision.action().name() : null,
+                    policyDecision != null ? policyDecision.reason() : null,
+                    policyDecision != null ? policyDecision.userMessage() : null);
             String payloadJson = objectMapper.writeValueAsString(payload);
             String runId = HarnessWorkflowRunJdbcRepository.newRunId();
             String resumeToken = HarnessWorkflowRunJdbcRepository.newResumeToken();
@@ -193,11 +204,12 @@ public class DoctorMatchWorkflowEngine {
             metadata.put("harnessRunId", runId);
             metadata.put("harnessResumeToken", resumeToken);
             metadata.put("checkpointEndpoint", "/api/v1/workflows/" + runId + "/checkpoint");
+            metadata.put("pendingClinicianReview", true);
+            if (policyDecision != null) {
+                ConfidencePolicySupport.applyPolicyMetadata(metadata, policyDecision);
+            }
 
-            String pausedMessage = """
-                    Doctor matches are ready for human review before final narrative generation.
-                    This output is for research and educational purposes only and is not a substitute \
-                    for professional medical advice, diagnosis, or treatment.""";
+            String pausedMessage = HumanAdjudicationSupport.pendingReviewMessage(policyDecision);
             logStreamService.logCompletion(sessionId, "Match doctors operation",
                     "Paused for human checkpoint runId=" + runId);
             return new MedicalAgentService.AgentResponse(pausedMessage, metadata);
@@ -320,6 +332,21 @@ public class DoctorMatchWorkflowEngine {
         metadata.put("doctorMatchCount", matches.size());
         metadata.put("contextBundleSections", bundle.coreSections().size());
         return metadata;
+    }
+
+    private static ConfidencePolicyDecision resolvePolicyCaveat(DoctorMatchCheckpointPayload payload) {
+        if (payload.policyAction() == null || payload.policyAction().isBlank()) {
+            return null;
+        }
+        try {
+            PolicyAction action = PolicyAction.valueOf(payload.policyAction());
+            if (action == PolicyAction.ANSWER) {
+                return null;
+            }
+            return new ConfidencePolicyDecision(action, payload.policyReason(), payload.policyUserMessage());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     private static Map<String, Object> failureMetadata(

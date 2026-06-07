@@ -14,6 +14,9 @@ import com.berdachuk.medexpertmatch.llm.config.MedicalConfidencePolicyProperties
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
+import com.berdachuk.medexpertmatch.medicalcase.domain.CaseType;
+import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
@@ -188,5 +191,61 @@ class DoctorMatchWorkflowEngineTest {
         assertTrue(response.response().contains("below the recommended threshold"));
         assertTrue(response.response().contains("Dr. Lee"));
         assertTrue(response.response().contains("Matched Doctors (GraphRAG)"));
+    }
+
+    @Test
+    @DisplayName("ESCALATE policy pauses at NEEDS_HUMAN when human adjudication enabled")
+    void escalatePausesForHumanAdjudication() throws Exception {
+        MedicalAgentLlmSupportService llmSupport = mock(MedicalAgentLlmSupportService.class);
+        MedicalCaseRepository caseRepository = mock(MedicalCaseRepository.class);
+        LogStreamService logStream = mock(LogStreamService.class);
+        DoctorMatchingAgentTools matchingTools = mock(DoctorMatchingAgentTools.class);
+
+        String caseId = "6a1c68963a08e800010de68e";
+        Doctor doctor = new Doctor("d1", "Dr. Urgent", null, List.of("Neurology"), List.of(), List.of(), false, null);
+        DoctorMatch match = new DoctorMatch(doctor, 46.0, 1, "urgent low");
+        when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
+        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
+                .thenReturn(List.of(match));
+        when(caseRepository.findById(caseId)).thenReturn(Optional.of(
+                new MedicalCase(caseId, 40, "Seizure", "Seizure", "Epilepsy", List.of("G40.9"),
+                        List.of(), UrgencyLevel.HIGH, "Neurology", CaseType.CONSULT_REQUEST, "Notes", null)));
+
+        CaseContextBundleService bundleService = new CaseContextBundleServiceImpl(caseRepository);
+        AgentPlannerService planner = new AgentPlannerServiceImpl(
+                bundleService, new InMemoryAgentPlanArtefactStore());
+        HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
+        MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
+                HarnessProperties.defaults(), metrics);
+        MedicalConfidencePolicyService confidencePolicy = new MedicalConfidencePolicyServiceImpl(
+                MedicalConfidencePolicyProperties.defaults());
+        HarnessProperties adjudicationProps = new HarnessProperties(
+                true, true, 2, true, 1, 0, false, true, false, false, false, true);
+
+        DoctorMatchWorkflowEngine engine = new DoctorMatchWorkflowEngine(
+                llmSupport,
+                caseRepository,
+                logStream,
+                matchingTools,
+                new ObjectMapper(),
+                new AgentResponseVerifierImpl(),
+                policyGate,
+                confidencePolicy,
+                bundleService,
+                planner,
+                adjudicationProps,
+                metrics,
+                new InMemoryHarnessWorkflowRunStore(),
+                mock(ApplicationEventPublisher.class),
+                mock(ConsultationMatchRepository.class));
+
+        MedicalAgentService.AgentResponse response = engine.execute(
+                caseId,
+                Map.of("sessionId", "test-session-escalate"));
+
+        assertEquals("NEEDS_HUMAN", response.metadata().get("harnessState"));
+        assertEquals("ESCALATE", response.metadata().get("policyAction"));
+        assertEquals(true, response.metadata().get("pendingClinicianReview"));
+        assertTrue(response.metadata().containsKey("harnessRunId"));
     }
 }

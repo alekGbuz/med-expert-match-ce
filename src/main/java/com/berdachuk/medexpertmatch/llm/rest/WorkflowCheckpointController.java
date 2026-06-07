@@ -32,14 +32,16 @@ public class WorkflowCheckpointController {
     public Map<String, Object> checkpoint(
             @PathVariable String runId,
             @RequestBody CheckpointRequestBody body) {
-        checkpointAccessGuard.requireCheckpointReviewer();
         return checkpointService.checkpoint(
                 runId,
-                new HarnessWorkflowCheckpointService.CheckpointDecision(body.decision(), body.resumeToken()));
+                new HarnessWorkflowCheckpointService.CheckpointDecision(
+                        body.decision(), body.resumeToken(), body.comment()),
+                checkpointAccessGuard.currentReviewerId());
     }
 
     public record CheckpointRequestBody(
             HarnessWorkflowCheckpointService.CheckpointAction decision,
-            String resumeToken) {
+            String resumeToken,
+            String comment) {
     }
 }

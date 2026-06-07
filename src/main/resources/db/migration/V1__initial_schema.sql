@@ -500,6 +500,20 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.llm_harness_workflow_run (
 
 CREATE INDEX IF NOT EXISTS idx_llm_harness_workflow_run_session ON medexpertmatch.llm_harness_workflow_run (session_id);
 
+-- Harness human adjudication audit trail (M65)
+CREATE TABLE IF NOT EXISTS medexpertmatch.llm_harness_adjudication_log (
+    id CHAR(24) PRIMARY KEY,
+    run_id VARCHAR(36) NOT NULL,
+    case_id VARCHAR(24),
+    reviewer_id VARCHAR(128) NOT NULL,
+    decision VARCHAR(16) NOT NULL CHECK (decision IN ('APPROVE', 'REJECT')),
+    comment TEXT,
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_harness_adjudication_run ON medexpertmatch.llm_harness_adjudication_log (run_id);
+CREATE INDEX IF NOT EXISTS idx_llm_harness_adjudication_recorded ON medexpertmatch.llm_harness_adjudication_log (recorded_at DESC);
+
 -- ============================================
 -- LLM Harness Chain Events (M33)
 -- ============================================

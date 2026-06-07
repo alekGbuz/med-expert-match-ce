@@ -257,6 +257,7 @@ medexpertmatch:
       doctor-match-min-matches: ${MEDEXPERTMATCH_LLM_HARNESS_DOCTOR_MATCH_MIN_MATCHES:1}
       routing-match-min-matches: ${MEDEXPERTMATCH_LLM_HARNESS_ROUTING_MATCH_MIN_MATCHES:0}
       human-checkpoint-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_HUMAN_CHECKPOINT_ENABLED:false}
+      human-adjudication-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_HUMAN_ADJUDICATION_ENABLED:false}
       chain-analysis-to-match: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_ANALYSIS_TO_MATCH:false}
       chain-match-to-recommend: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_MATCH_TO_RECOMMEND:false}
       zero-result-fallback-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_ZERO_RESULT_FALLBACK_ENABLED:false}
