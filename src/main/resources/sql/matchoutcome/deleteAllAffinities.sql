@@ -1,0 +1,1 @@
+DELETE FROM medexpertmatch.doctor_outcome_affinities

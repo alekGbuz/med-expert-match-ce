@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.system.health;
 
+import com.berdachuk.medexpertmatch.system.config.GraphQualityProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
@@ -22,9 +23,11 @@ public class EvidenceHealthIndicator implements HealthIndicator {
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
 
     private final RestTemplate restTemplate;
+    private final GraphQualityProperties graphQualityProperties;
 
-    public EvidenceHealthIndicator() {
+    public EvidenceHealthIndicator(GraphQualityProperties graphQualityProperties) {
         this.restTemplate = new RestTemplate();
+        this.graphQualityProperties = graphQualityProperties;
     }
 
     @Override
@@ -40,6 +43,8 @@ public class EvidenceHealthIndicator implements HealthIndicator {
             details.put("responseTime", responseTime + "ms");
             details.put("endpoint", PUBMED_PING_URL);
             details.put("reachable", response != null && !response.isBlank());
+            details.put("freshnessTtlDays", graphQualityProperties.evidenceFreshnessTtlDays());
+            details.put("freshnessPolicy", "Evidence older than TTL should be deprioritized in scoring metadata");
 
             return Health.up().withDetails(details).build();
         } catch (Exception e) {

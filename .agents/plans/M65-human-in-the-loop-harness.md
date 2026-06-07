@@ -1,8 +1,8 @@
 # M65: Human-in-the-Loop Harness
 
-**Status:** Planned  
+**Status:** **Next** — ready to implement (2026-06-08)  
 **Created:** 2026-06-07  
-**Depends on:** M61 (escalation signals); M63 (outcome labels from overrides)
+**Depends on:** M61 (archived — escalation signals); M63 (archived — `POST /api/v1/match-outcomes` for `OVERRIDDEN`)
 
 ## Problem Statement
 

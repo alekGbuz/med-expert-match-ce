@@ -12,7 +12,7 @@ Hybrid GraphRAG retrieval engine — combines vector similarity (PgVector), grap
 
 ## Owned Domain Models
 
-- `DoctorMatch`, `FacilityMatch`, `ConsultationMatch` — match results
+- `DoctorMatch`, `FacilityMatch`, `ConsultationMatch`, `MatchOutcome`, `DoctorOutcomeAffinity` — match results and outcome flywheel (M63)
 - `ScoreResult`, `RouteScoreResult` — scoring outputs
 - `PriorityScore` — queue priority computation
 - `MatchOptions`, `RoutingOptions` — configuration records

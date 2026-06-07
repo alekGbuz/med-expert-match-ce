@@ -1,0 +1,2 @@
+{"caseId":"outcome_flip_1","experienceWeight":0.6,"outcomeWeight":0.4,"doctors":[{"id":"d_accepted","experience":0.5,"label":"ACCEPTED"},{"id":"d_rejected","experience":0.5,"label":"REJECTED"}],"expectedTop":"d_accepted"}
+{"caseId":"outcome_stable_1","experienceWeight":0.6,"outcomeWeight":0.4,"doctors":[{"id":"d_high","experience":0.8,"label":"ACCEPTED"},{"id":"d_low","experience":0.2,"label":"REJECTED"}],"expectedTop":"d_high"}

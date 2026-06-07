@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.system.health;
 
+import com.berdachuk.medexpertmatch.system.config.GraphQualityProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.health.contributor.Health;
 
@@ -10,7 +11,7 @@ class EvidenceHealthIndicatorTest {
 
     @Test
     void shouldReportStatusWhenPubMedChecked() {
-        EvidenceHealthIndicator indicator = new EvidenceHealthIndicator();
+        EvidenceHealthIndicator indicator = new EvidenceHealthIndicator(new GraphQualityProperties(365, 180));
         Health health = indicator.health();
 
         assertNotNull(health);

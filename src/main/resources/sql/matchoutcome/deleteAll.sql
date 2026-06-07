@@ -1,0 +1,1 @@
+DELETE FROM medexpertmatch.match_outcomes

@@ -17,7 +17,8 @@ public final class EvalFlywheelAggregator {
                 ToolSelectionEvalRunner.run(),
                 PolicyConfidenceEvalRunner.run(),
                 ContextSummarizerEvalRunner.run(),
-                ScoringWeightAbEvalRunner.run());
+                ScoringWeightAbEvalRunner.run(),
+                MatchOutcomeCalibrationEvalRunner.run());
 
         boolean releaseGatePassed = families.stream().allMatch(EvalFamilyResult::allPassed);
 

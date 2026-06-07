@@ -16,6 +16,7 @@ import com.berdachuk.medexpertmatch.retrieval.config.RetrievalScoringProperties;
 import com.berdachuk.medexpertmatch.retrieval.domain.PriorityScore;
 import com.berdachuk.medexpertmatch.retrieval.domain.RouteScoreResult;
 import com.berdachuk.medexpertmatch.retrieval.domain.ScoreResult;
+import com.berdachuk.medexpertmatch.retrieval.service.MatchOutcomeCalibrationService;
 import com.berdachuk.medexpertmatch.retrieval.service.SemanticGraphRetrievalService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -50,6 +51,7 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
     private final com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository medicalCaseRepository;
     private final GraphQueryService graphQueryService;
     private final RetrievalScoringProperties scoringProperties;
+    private final MatchOutcomeCalibrationService matchOutcomeCalibrationService;
 
     public SemanticGraphRetrievalServiceImpl(
             NamedParameterJdbcTemplate namedJdbcTemplate,
@@ -60,7 +62,8 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
             LogStreamService logStreamService,
             com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository medicalCaseRepository,
             GraphQueryService graphQueryService,
-            RetrievalScoringProperties scoringProperties) {
+            RetrievalScoringProperties scoringProperties,
+            MatchOutcomeCalibrationService matchOutcomeCalibrationService) {
         this.namedJdbcTemplate = namedJdbcTemplate;
         this.graphService = graphService;
         this.clinicalExperienceRepository = clinicalExperienceRepository;
@@ -70,6 +73,7 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         this.medicalCaseRepository = medicalCaseRepository;
         this.graphQueryService = graphQueryService;
         this.scoringProperties = scoringProperties;
+        this.matchOutcomeCalibrationService = matchOutcomeCalibrationService;
     }
 
     @Override
@@ -330,9 +334,10 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
                     clinicalExperienceRepository.findByDoctorId(doctor.id());
 
             if (experiences.isEmpty()) {
-                // No historical data - return low score instead of neutral
-                log.debug("Doctor {} has no clinical experiences, returning low historical performance score", doctor.id());
-                return 0.1;
+                double outcomeOnly = matchOutcomeCalibrationService.resolveOutcomeSignal(
+                        medicalCase.id(), doctor.id());
+                log.debug("Doctor {} has no clinical experiences; using outcome signal {}", doctor.id(), outcomeOnly);
+                return Math.max(0.1, Math.min(1.0, outcomeOnly));
             }
 
             // Calculate average rating and success rate
@@ -359,8 +364,11 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
             // Normalize rating (1-5 scale) to 0-1
             double normalizedRating = (avgRating - 1.0) / 4.0;
 
-            // Combine rating and success rate
-            double performanceScore = (normalizedRating * 0.6) + (successRate * 0.4);
+            // Combine rating and success rate with outcome-calibrated signal (M63)
+            double experienceScore = (normalizedRating * 0.6) + (successRate * 0.4);
+            double outcomeSignal = matchOutcomeCalibrationService.resolveOutcomeSignal(
+                    medicalCase.id(), doctor.id());
+            double performanceScore = (experienceScore * 0.6) + (outcomeSignal * 0.4);
 
             return Math.max(0.0, Math.min(1.0, performanceScore));
         } catch (Exception e) {

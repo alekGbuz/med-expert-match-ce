@@ -224,6 +224,29 @@ CREATE INDEX consultation_matches_status_idx ON medexpertmatch.consultation_matc
 CREATE INDEX consultation_matches_case_rank_idx ON medexpertmatch.consultation_matches(case_id, rank);
 CREATE INDEX consultation_matches_match_score_idx ON medexpertmatch.consultation_matches(match_score DESC);
 
+-- Match outcome labels for historical scoring calibration (M63)
+CREATE TABLE medexpertmatch.match_outcomes (
+    id CHAR(24) PRIMARY KEY,
+    case_id CHAR(24) NOT NULL REFERENCES medexpertmatch.medical_cases(id) ON DELETE CASCADE,
+    doctor_id VARCHAR(74) NOT NULL REFERENCES medexpertmatch.doctors(id) ON DELETE CASCADE,
+    label VARCHAR(20) NOT NULL CHECK (label IN ('ACCEPTED', 'REJECTED', 'OVERRIDDEN')),
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX match_outcomes_case_id_idx ON medexpertmatch.match_outcomes(case_id);
+CREATE INDEX match_outcomes_doctor_id_idx ON medexpertmatch.match_outcomes(doctor_id);
+CREATE INDEX match_outcomes_case_doctor_idx ON medexpertmatch.match_outcomes(case_id, doctor_id);
+CREATE INDEX match_outcomes_recorded_at_idx ON medexpertmatch.match_outcomes(recorded_at DESC);
+
+-- Calibrated doctor affinity scores from match outcomes (M63)
+CREATE TABLE medexpertmatch.doctor_outcome_affinities (
+    doctor_id VARCHAR(74) PRIMARY KEY REFERENCES medexpertmatch.doctors(id) ON DELETE CASCADE,
+    affinity_score DECIMAL(5, 4) NOT NULL CHECK (affinity_score >= 0 AND affinity_score <= 1),
+    sample_count INT NOT NULL DEFAULT 0 CHECK (sample_count >= 0),
+    calibrated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ============================================
 -- Graph Schema (Apache AGE)
 -- ============================================

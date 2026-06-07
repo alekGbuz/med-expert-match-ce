@@ -309,6 +309,10 @@ medexpertmatch:
     api-keys: ${MEDEXPERTMATCH_AUTH_API_KEYS:}
     session-tokens:
       enabled: ${MEDEXPERTMATCH_SESSION_TOKEN_AUTH:false}
+  system:
+    graph-quality:
+      stale-experience-days: ${MEDEXPERTMATCH_GRAPH_QUALITY_STALE_EXPERIENCE_DAYS:365}
+      evidence-freshness-ttl-days: ${MEDEXPERTMATCH_EVIDENCE_FRESHNESS_TTL_DAYS:180}
 
 chat:
   retention:

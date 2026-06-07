@@ -36,6 +36,7 @@ mvn -DskipTests exec:java \
 | `policy_confidence` | `src/main/resources/eval/policy-confidence-cases.jsonl` | FULL |
 | `context_summarizer` | `src/main/resources/eval/context-summarizer-cases.jsonl` | FULL |
 | `scoring_weight_ab` | `src/main/resources/eval/scoring-weight-ab-cases.jsonl` | RETRIEVAL |
+| `match_outcome_calibration` | `src/main/resources/eval/match-outcome-calibration-cases.jsonl` | RETRIEVAL |
 
 ## ROI formula (high-stakes changes)
 
