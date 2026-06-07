@@ -1,6 +1,6 @@
 # M64: Cost-Quality Tier Routing
 
-**Status:** Planned  
+**Status:** Archived (2026-06-07) — Phases 1–3 implemented; Phases 4–5 deferred (cache tuning → backlog; M60 fine-tune)  
 **Created:** 2026-06-07  
 **Depends on:** M57 routing; M60 (optional fine-tune); M61 (policy tiers)
 
@@ -29,28 +29,30 @@ Route requests by goal tier and enforce token budgets with Prometheus visibility
 
 ## Phases
 
-| Phase | Task | Deliverable |
-|-------|------|-------------|
-| 1 | `RoutingTier` enum + classifier hook | Map `GoalType` → tier in `ChatAssistantServiceImpl` |
-| 2 | Token budget config | `medexpertmatch.llm.tier.*.max-tokens` in `application.yml` |
-| 3 | Prometheus metrics | `tokens_per_goal`, `tokens_per_tier`, `harness_invocations_total` |
-| 4 | Hot-case LLM cache tuning | Extend existing `LLM_RESPONSES_CACHE` keys for repeat caseId turns |
-| 5 | M60 integration | Fine-tuned FunctionGemma on Light tier when live eval passes gates |
+| Phase | Task | Deliverable | Status |
+|-------|------|-------------|--------|
+| 1 | `RoutingTier` enum + classifier hook | Map `GoalType` → tier in `ChatAssistantServiceImpl` | **Done** |
+| 2 | Token budget config | `medexpertmatch.llm.tier.*.max-tokens` in `application.yml` | **Done** |
+| 3 | Prometheus metrics | `llm.routing.decisions.total`, `llm.harness.invocations.total`, `llm.calls.total` | **Done** |
+| 4 | Hot-case LLM cache tuning | Extend existing `LLM_RESPONSES_CACHE` keys for repeat caseId turns | Deferred |
+| 5 | M60 integration | Fine-tuned FunctionGemma on Light tier when live eval passes gates | Deferred → M60 |
 
 ## Acceptance criteria
 
-- [ ] `GENERAL_QUESTION` never invokes full `DoctorMatchWorkflowEngine` without explicit user intent shift
-- [ ] Per-tier token metrics visible in Prometheus / Grafana dashboard
-- [ ] Documented cost model in `docs/eval/` linking tier to estimated tokens
-- [ ] `mvn test` green
+- [x] `GENERAL_QUESTION` never invokes full `DoctorMatchWorkflowEngine` without explicit user intent shift
+- [x] Per-tier routing metrics visible in Prometheus (`llm.routing.decisions.total`, `llm.harness.invocations.total`)
+- [x] ADR and harness docs (`docs/decisions/M64-cost-quality-tier-routing.md`, `docs/HARNESS.md`)
+- [x] `mvn test` green on tier routing tests
+- [ ] Documented cost model in `docs/eval/` linking tier to estimated tokens (deferred)
 
 ## Artifacts
 
 | Artifact | Location |
 |----------|----------|
-| Config | `application.yml` tier section |
-| Metrics | `llm/` or `core/monitoring/` |
-| Docs | `docs/HARNESS.md` — Cost tiers |
+| Config | `application.yml` → `medexpertmatch.llm.tier.*` |
+| Routing | `llm/routing/RoutingTier.java`, `RoutingTierResolver.java` |
+| Metrics | `llm/monitoring/LlmRoutingMetrics.java`, `core/monitoring/LlmCallMetrics.java` |
+| Docs | `docs/HARNESS.md` — Cost tiers; `docs/decisions/M64-cost-quality-tier-routing.md` — ADR |
 
 ## Effort
 
@@ -63,4 +65,4 @@ Route requests by goal tier and enforce token budgets with Prometheus visibility
 
 ## References
 
-- User doc Phase D; M60 for D4
+- User doc Phase D; M60 for phase 5
