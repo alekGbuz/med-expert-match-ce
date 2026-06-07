@@ -231,7 +231,7 @@ Prometheus endpoints (`/actuator/prometheus`):
 | `llm.harness.invocations.total` | `goal_type` | Full harness workflow started |
 | `llm.calls.total` | `client_type`, `tier`, `goal_type` | Chat-path LLM invocation |
 | `llm.calls.by_client.total` | `client_type` | Any LLM call through `LlmCallLimiter` |
-| `llm.tokens.total` | `client_type`, `tier`, `goal_type`, `direction` | Token usage (API ready; wiring planned) |
+| `llm.tokens.total` | `client_type`, `tier`, `goal_type`, `direction` | Token usage (wired via M71 `LlmUsageTelemetryService`) |
 
 Use these to build Grafana panels: % LIGHT vs FULL, harness invocations per day, cost proxy by tier.
 
