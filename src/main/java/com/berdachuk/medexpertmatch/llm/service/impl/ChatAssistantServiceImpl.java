@@ -23,8 +23,12 @@ import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.llm.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
+import com.berdachuk.medexpertmatch.llm.routing.RoutingTier;
+import com.berdachuk.medexpertmatch.llm.routing.RoutingTierResolver;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -73,6 +77,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final MedicalAgentService medicalAgentService;
     private final SessionService sessionService;
     private final PipelineProgressCollector pipelineProgressCollector;
+    private final LlmRoutingMetrics llmRoutingMetrics;
+    private final LlmTierProperties llmTierProperties;
 
     public ChatAssistantServiceImpl(
             ChatService chatService,
@@ -93,7 +99,9 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             ChatLanguageService chatLanguageService,
             MedicalAgentService medicalAgentService,
             SessionService sessionService,
-            PipelineProgressCollector pipelineProgressCollector) {
+            PipelineProgressCollector pipelineProgressCollector,
+            LlmRoutingMetrics llmRoutingMetrics,
+            LlmTierProperties llmTierProperties) {
         this.chatService = chatService;
         this.chatClient = chatClient;
         this.promptSupportService = promptSupportService;
@@ -113,6 +121,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.medicalAgentService = medicalAgentService;
         this.sessionService = sessionService;
         this.pipelineProgressCollector = pipelineProgressCollector;
+        this.llmRoutingMetrics = llmRoutingMetrics;
+        this.llmTierProperties = llmTierProperties;
     }
 
     @Override
@@ -123,7 +133,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             String normalizedContent = ChatUserContentSanitizer.sanitize(content);
             ChatLanguageTurn languageTurn = chatLanguageService.prepareTurn(normalizedContent);
             GoalClassification goal = classifyWithContext(chatId, userId, languageTurn.processingText());
-            log.info("Goal classified: {} (caseId={})", goal.goalType(), goal.caseId().orElse("none"));
+            recordRoutingDecision(goal);
 
             if (goal.isRoutableToEngine() && goal.hasCaseId()) {
                 return processViaHarnessEngine(chatId, userId, languageTurn, goal);
@@ -169,7 +179,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         } finally {
             OrchestrationContextHolder.clear();
         }
-        log.info("Goal classified: {} (caseId={})", goal.goalType(), goal.caseId().orElse("none"));
+        recordRoutingDecision(goal);
 
         if (goal.isRoutableToEngine() && goal.hasCaseId()) {
             return streamViaHarnessEngine(chatId, userId, languageTurn, goal, tier);
@@ -263,6 +273,17 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         return goalClassifier.classify(processingText, buildClassificationContext(chatId, userId));
     }
 
+    private void recordRoutingDecision(GoalClassification goal) {
+        RoutingTier tier = RoutingTierResolver.fromClassification(goal);
+        llmRoutingMetrics.recordRoutingDecision(tier, goal.goalType());
+        log.info("Goal classified: {} (caseId={}, routingTier={}, maxTokens={})",
+                goal.goalType(), goal.caseId().orElse("none"), tier, llmTierProperties.maxTokensFor(tier));
+    }
+
+    private void recordHarnessRoute(GoalClassification goal) {
+        llmRoutingMetrics.recordHarnessInvocation(goal.goalType());
+    }
+
     private GoalClassificationContext buildClassificationContext(String chatId, String userId) {
         return new GoalClassificationContext(buildHistoryBlock(chatId, userId, "", 4));
     }
@@ -320,11 +341,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     }
 
     private String invokeSync(TurnContext ctx) {
-        log.info("Chat LLM turn — agent: {}, session: {}, model: {}",
-                ctx.profile().agentId(), ctx.sessionId(), functionGemmaModelName);
+        log.info("Chat LLM turn — agent: {}, session: {}, model: {}, tier: {}, tokenBudget: {}",
+                ctx.profile().agentId(), ctx.sessionId(), functionGemmaModelName,
+                ctx.routingTier(), llmTierProperties.maxTokensFor(ctx.routingTier()));
         logStreamService.sendLog(ctx.sessionId(), "INFO", "Chat Agent",
-                "Invoking agent " + ctx.profile().agentId() + " via " + functionGemmaModelName);
+                "Invoking agent " + ctx.profile().agentId() + " via " + functionGemmaModelName
+                        + " (tier=" + ctx.routingTier() + ")");
 
+        llmRoutingMetrics.recordLlmCall(LlmClientType.TOOL_CALLING, ctx.routingTier(), ctx.goal().goalType());
         String reply = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
                 .system(ctx.systemPrompt())
                 .user(ctx.userPrompt())
@@ -388,7 +412,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
 
         String systemPrompt = buildSystemPrompt(profile);
         String userPrompt = buildUserPrompt(profile, languageTurn.processingText(), goal, chatId, userId);
-        return new TurnContext(userMessage, sessionId, profile, goal, systemPrompt, userPrompt, languageTurn);
+        RoutingTier routingTier = RoutingTierResolver.fromClassification(goal);
+        return new TurnContext(userMessage, sessionId, profile, goal, routingTier, systemPrompt, userPrompt, languageTurn);
     }
 
     private void clearTurnContext(String sessionId) {
@@ -521,6 +546,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Harness routing requires a non-blank case ID for goal " + goal.goalType()));
         log.info("Routing to harness engine: goal={}, caseId={}", goal.goalType(), caseId);
+        recordHarnessRoute(goal);
 
         ChatMessage userMessage = chatService.appendUserMessage(chatId, userId, languageTurn.originalText().trim());
         String sessionId = userId + "-" + chatId;
@@ -646,6 +672,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                 .orElseThrow(() -> new IllegalStateException(
                         "Case analysis harness requires a non-blank case ID"));
         log.info("Routing to case analysis harness: caseId={}", caseId);
+        recordHarnessRoute(goal);
 
         ChatMessage userMessage = chatService.appendUserMessage(chatId, userId, languageTurn.originalText().trim());
         String sessionId = userId + "-" + chatId;
@@ -735,6 +762,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             String sessionId,
             ChatAgentProfile profile,
             GoalClassification goal,
+            RoutingTier routingTier,
             String systemPrompt,
             String userPrompt,
             ChatLanguageTurn languageTurn) {}

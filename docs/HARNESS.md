@@ -219,6 +219,29 @@ HARNESS_PROGRESS {"engine": "CaseAnalysis", "state": "DONE", ...}
 Browser slide deck (Reveal.js): [Harness — how it works](presentations/medexpertmatch-harness.md) — eight high-level
 steps with the harness metaphor image. View via `mkdocs serve` → **Presentations**.
 
+## Cost-quality tiers (M64)
+
+Requests are classified into routing tiers for token budgets and Prometheus metrics:
+
+| Tier | Goals | Path | Default max tokens |
+|------|-------|------|-------------------|
+| **LIGHT** | `GENERAL_QUESTION` | FunctionGemma Auto chat | 2048 |
+| **STANDARD** | `SEARCH_EVIDENCE`, `TRIAGE_INTAKE`, `GENERATE_RECOMMENDATIONS` | Tools + retrieval slice | 4096 |
+| **FULL** | `MATCH_DOCTORS`, `ROUTE_CASE`, `ANALYZE_CASE` | Harness engines + GraphRAG | 6000 |
+
+Config: `medexpertmatch.llm.tier.*.max-tokens` in [application.yml](../src/main/resources/application.yml).
+
+Prometheus counters (via `/actuator/prometheus`):
+
+- `llm.routing.decisions.total{tier, goal_type}` — tier assigned after goal classification
+- `llm.harness.invocations.total{goal_type}` — full harness workflow runs
+- `llm.calls.total{client_type, tier, goal_type}` — chat-path LLM invocations
+- `llm.calls.by_client.total{client_type}` — all LLM calls via `LlmCallLimiter`
+
+Implementation: `RoutingTierResolver`, `LlmTierProperties`, `LlmRoutingMetrics` in `llm/routing/` and `llm/monitoring/`.
+
+Full architecture decision: [M64 Cost-Quality Tier Routing ADR](decisions/M64-cost-quality-tier-routing.md).
+
 ## Related documentation
 
 - [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool-calling model used in Auto chat path

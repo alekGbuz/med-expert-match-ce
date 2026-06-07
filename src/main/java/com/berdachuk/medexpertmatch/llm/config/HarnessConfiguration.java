@@ -7,6 +7,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties({HarnessProperties.class, HarnessRetentionProperties.class})
+@EnableConfigurationProperties({HarnessProperties.class, HarnessRetentionProperties.class, LlmTierProperties.class})
 public class HarnessConfiguration {
 }

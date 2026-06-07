@@ -16,7 +16,9 @@ import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.llm.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -69,14 +71,17 @@ class ChatAssistantServiceImplTest {
     private final MedicalAgentService medicalAgentService = mock(MedicalAgentService.class);
     private final SessionService sessionService = mock(SessionService.class);
     private final PipelineProgressCollector pipelineProgressCollector = mock(PipelineProgressCollector.class);
+    private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private final LlmRoutingMetrics llmRoutingMetrics = new LlmRoutingMetrics(meterRegistry);
+    private final LlmTierProperties llmTierProperties = new LlmTierProperties(null, null, null);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
-            new ChatTurnMetrics(new SimpleMeterRegistry()), chatAgentSystemTemplate,
+            new ChatTurnMetrics(meterRegistry), chatAgentSystemTemplate,
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
             medicalAgentPolicyGateService, HarnessProperties.defaults(),
             "functiongemma", goalClassifier, chatLanguageService, medicalAgentService, sessionService,
-            pipelineProgressCollector);
+            pipelineProgressCollector, llmRoutingMetrics, llmTierProperties);
 
     @BeforeEach
     void stubLanguageAndClassification() {
@@ -271,5 +276,64 @@ class ChatAssistantServiceImplTest {
 
         verify(medicalAgentService, never()).matchDoctors(any(), any());
         verify(chatClient).prompt();
+    }
+
+    @Test
+    @DisplayName("processMessage records LIGHT routing tier for GENERAL_QUESTION")
+    void processMessageRecordsLightRoutingTier() {
+        Chat chat = new Chat("c1", "user-a", "Test", "auto", false,
+                Instant.now(), Instant.now(), Instant.now(), 0);
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "What is ICD-10?", 1, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "ICD-10 is...", 2, null, Instant.now());
+
+        when(chatService.requireOwnedChat("c1", "user-a")).thenReturn(chat);
+        when(chatService.appendUserMessage("c1", "user-a", "What is ICD-10?")).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage("c1", "user-a", "ICD-10 is...")).thenReturn(assistantMsg);
+        when(goalClassifier.classify(anyString(), any())).thenReturn(GoalClassification.general());
+        when(promptSupport.loadSkill(any())).thenReturn("skill body");
+        when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
+        when(chatAgentSystemTemplate.render(any())).thenReturn("system");
+        when(chatUserMessageTemplate.render(any())).thenReturn("user prompt");
+        when(chatCasePromptSupport.buildCaseToolHints(any(), any())).thenReturn("");
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.user(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
+        when(requestSpec.call()).thenReturn(callSpec);
+        when(callSpec.content()).thenReturn("ICD-10 is...");
+        when(medicalAgentPolicyGateService.review(any(), any()))
+                .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "ICD-10 is...", null, null));
+
+        service.processMessage("c1", "user-a", "What is ICD-10?", "auto");
+
+        assertEquals(1.0, meterRegistry.get("llm.routing.decisions.total")
+                .tag("tier", "LIGHT")
+                .tag("goal_type", "GENERAL_QUESTION")
+                .counter()
+                .count());
+        verify(medicalAgentService, never()).matchDoctors(any(), any());
+    }
+
+    @Test
+    @DisplayName("processMessage records harness invocation for MATCH_DOCTORS with case ID")
+    void processMessageRecordsHarnessInvocation() {
+        String caseId = "6a23f05200155d711484cf64";
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "find specialist", 1, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "Dr. Smith ranked first", 2, null, Instant.now());
+
+        when(goalClassifier.classify(anyString(), any())).thenReturn(
+                GoalClassification.matchDoctors(caseId, "keyword: doctor matching with case ID"));
+        when(chatService.appendUserMessage(eq("c1"), eq("user-a"), any())).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage(eq("c1"), eq("user-a"), any())).thenReturn(assistantMsg);
+        when(medicalAgentService.matchDoctors(eq(caseId), any())).thenReturn(
+                new MedicalAgentService.AgentResponse("Dr. Smith ranked first", Map.of("doctorMatchCount", 3)));
+
+        service.processMessage("c1", "user-a",
+                "Find Specialist Case Information Case ID: " + caseId, "auto");
+
+        assertEquals(1.0, meterRegistry.get("llm.harness.invocations.total")
+                .tag("goal_type", "MATCH_DOCTORS")
+                .counter()
+                .count());
     }
 }

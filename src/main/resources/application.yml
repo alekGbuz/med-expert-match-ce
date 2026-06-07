@@ -218,6 +218,13 @@ medexpertmatch:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS:1}
     tool-calling:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS:1}
+    tier:
+      light:
+        max-tokens: ${MEDEXPERTMATCH_LLM_TIER_LIGHT_MAX_TOKENS:2048}
+      standard:
+        max-tokens: ${MEDEXPERTMATCH_LLM_TIER_STANDARD_MAX_TOKENS:4096}
+      full:
+        max-tokens: ${MEDEXPERTMATCH_LLM_TIER_FULL_MAX_TOKENS:6000}
     harness:
       policy-gate-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_POLICY_GATE_ENABLED:true}
       policy-gate-chat-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_POLICY_GATE_CHAT_ENABLED:true}

@@ -42,6 +42,7 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 ### Architecture
 
 - [Architecture Overview](ARCHITECTURE.md) - System architecture and design
+- [M64 Cost-Quality Tier Routing (ADR)](decisions/M64-cost-quality-tier-routing.md) - Multi-tier LLM routing decision and full design
 
 ### Development
 
@@ -72,6 +73,7 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 ### AI & LLM
 
 - [Harness Architecture](HARNESS.md) - Goal routing, workflow engines, configuration, and observability
+- [M64 Cost-Quality Tier Routing (ADR)](decisions/M64-cost-quality-tier-routing.md) - Multi-tier LLM cost routing architecture decision
 - [Harness presentation](presentations/medexpertmatch-harness.md) - Reveal.js deck: high-level steps and harness metaphor
 - [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) - Tool-calling model setup, tool pairs, and fine-tuning
 - [Harness & Agent Patterns](HARNESS_AND_AGENT_USAGE.md) - Model vs harness terminology and repository conventions

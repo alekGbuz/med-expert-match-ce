@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.core.config;
 
+import com.berdachuk.medexpertmatch.core.monitoring.LlmCallMetrics;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,14 +20,16 @@ public class LlmCallLimiterConfig {
             @Value("${medexpertmatch.llm.chat.max-concurrent-calls:10}") int chatMaxConcurrentCalls,
             @Value("${medexpertmatch.llm.embedding.max-concurrent-calls:10}") int embeddingMaxConcurrentCalls,
             @Value("${medexpertmatch.llm.reranking.max-concurrent-calls:10}") int rerankingMaxConcurrentCalls,
-            @Value("${medexpertmatch.llm.tool-calling.max-concurrent-calls:10}") int toolCallingMaxConcurrentCalls) {
+            @Value("${medexpertmatch.llm.tool-calling.max-concurrent-calls:10}") int toolCallingMaxConcurrentCalls,
+            LlmCallMetrics callMetrics) {
         log.info("Creating LlmCallLimiter bean with limits - CHAT: {}, EMBEDDING: {}, RERANKING: {}, TOOL_CALLING: {}",
                 chatMaxConcurrentCalls, embeddingMaxConcurrentCalls, rerankingMaxConcurrentCalls, toolCallingMaxConcurrentCalls);
         return new LlmCallLimiter(
                 chatMaxConcurrentCalls,
                 embeddingMaxConcurrentCalls,
                 rerankingMaxConcurrentCalls,
-                toolCallingMaxConcurrentCalls
+                toolCallingMaxConcurrentCalls,
+                callMetrics
         );
     }
 }
