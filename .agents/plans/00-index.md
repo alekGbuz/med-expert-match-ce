@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M58 | [`M58-functiongemma-tool-calling-finetune.md`](M58-functiongemma-tool-calling-finetune.md) | Optional FunctionGemma fine-tune for tool disambiguation (after M57) |
+| M60 | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | GPU fine-tune execution + live before/after eval (after M58 repo work) |
 
 ## Archive
 
@@ -70,6 +70,7 @@
 | M55 | [`M55-rest-controller-config-coverage.md`](archive/M55-rest-controller-config-coverage.md) | REST controller config coverage |
 | M56 | [`M56-chat-auto-find-specialist-fix.md`](archive/M56-chat-auto-find-specialist-fix.md) | Chat Auto Find Specialist harness routing and CoT sanitization |
 | M57 | [`M57-goal-classifier-hybrid-session-routing.md`](archive/M57-goal-classifier-hybrid-session-routing.md) | Hybrid GoalClassifier: session rules + LLM context + chat continuity + PolicyGate rename |
+| M58 | [`M58-functiongemma-tool-calling-finetune.md`](archive/M58-functiongemma-tool-calling-finetune.md) | FunctionGemma tool-selection policy, live eval pipeline, Unsloth export (GPU train → M60) |
 | M59 | [`M59-chat-collapsible-reasoning-and-follow-up.md`](archive/M59-chat-collapsible-reasoning-and-follow-up.md) | Collapsible CoT in chat, follow-up routing, case-analysis interpretation, chat UI |
 
 ## Creating a New Plan

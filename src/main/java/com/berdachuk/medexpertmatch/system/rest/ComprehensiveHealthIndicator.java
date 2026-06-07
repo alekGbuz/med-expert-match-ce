@@ -680,6 +680,7 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
 
             if (model != null && !model.isEmpty()) {
                 config.put("model", model);
+                config.put("finetuned", model.contains("functiongemma-medexpertmatch"));
             }
             if (baseUrl != null && !baseUrl.isEmpty()) {
                 config.put("baseUrl", baseUrl);

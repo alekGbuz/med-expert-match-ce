@@ -1,6 +1,6 @@
 # M58: FunctionGemma Tool-Calling Fine-Tune (Optional)
 
-**Status:** Phase 1 complete (policy eval + server-side guard); Phase 2–4 pending live baseline / fine-tune  
+**Status:** Archived (2026-06-07) — repo phases 1–2 + serving scaffold complete; GPU fine-tune deferred to M60  
 **Created:** 2026-05-31  
 **Depends on:** M57 (goal-classifier-hybrid-session-routing) — complete session routing before measuring tool-selection gaps.
 
@@ -10,8 +10,8 @@
 |-------|-------|--------|
 | 1 | Policy eval JSONL, `ToolSelectionEvalTest`, `ToolSelectionGuardingResolver`, training data script | **Done** (2026-06-07) |
 | 2 | Live golden eval + before/after compare (`tool-selection-golden.jsonl`, `ToolSelectionLiveEvalIT`, scripts) | **Done** (2026-06-07) — run manually against Ollama |
-| 3 | Fine-tune (Tuning Lab or TRL) | Pending |
-| 4 | Serve fine-tuned model + smoke | Pending |
+| 3 | Fine-tune (Tuning Lab or TRL) | **Deferred → M60** (GPU / Colab) |
+| 4 | Serve fine-tuned model + smoke | **Done** (profile sample, health `finetuned` flag, validate script) |
 
 ## Problem Statement
 
@@ -201,10 +201,12 @@ Add health check: `ComprehensiveHealthIndicator` reports fine-tuned model name.
 - [x] Server-side tool guard (`ToolSelectionGuardingResolver`)
 - [x] Synthetic training data script (`scripts/generate-functiongemma-training-data.py`)
 - [x] Golden live eval dataset (`tool-selection-golden.jsonl`) + `run-tool-selection-live-eval.sh` + compare script
-- [ ] Pair A live accuracy ≥ 90% (measure via live golden eval)
-- [ ] Pair B live accuracy ≥ 95%
-- [ ] No regression on `analyze_case_text` when **no** case ID in hints (live model)
-- [ ] `mvn verify` green with default (base) model in CI; fine-tuned model tested in optional profile `local-finetuned`
+- [x] Repo acceptance: policy eval 100%, guard wired, live eval pipeline, Unsloth export + validate script
+- [x] `application-local-finetuned.yml.sample` + health `toolCalling.finetuned` reporting
+- [ ] Pair A live accuracy ≥ 90% (M60 — measure via live golden eval on Ollama)
+- [ ] Pair B live accuracy ≥ 95% (M60)
+- [ ] No regression on `analyze_case_text` when **no** case ID in hints (M60 live model)
+- [x] `mvn test` green with default (base) model in CI; fine-tuned eval gated via `ToolSelectionLiveEvalIT`
 
 ## Repository Artifacts (M58 deliverables)
 

@@ -1,7 +1,7 @@
 # FunctionGemma Fine-Tuning Runbook (M58)
 
 **Audience:** ML engineers improving Auto chat tool selection.  
-**Plan:** [M58-functiongemma-tool-calling-finetune.md](../../.agents/plans/M58-functiongemma-tool-calling-finetune.md)
+**Plans:** [M58 (archived)](../../.agents/plans/archive/M58-functiongemma-tool-calling-finetune.md) · [M60 (active)](../../.agents/plans/M60-functiongemma-finetune-execution.md)
 
 ## Phase 1 — Baseline (complete in repo)
 
@@ -193,12 +193,29 @@ as in the demo cell (that omits the user turn).
 
 ## Phase 4 — Serving
 
+Sample profile: `src/main/resources/application-local-finetuned.yml.sample` (copy to
+`application-local-finetuned.yml`, activate `local,local-finetuned`).
+
 ```yaml
-# application-local.yml
 TOOL_CALLING_MODEL: functiongemma-medexpertmatch:270m
 ```
 
-Keep `functiongemma:270m` as rollback via env var.
+Keep `functiongemma:270m` as rollback via env var. Health endpoint reports
+`toolCalling.finetuned: true` when the configured model name contains
+`functiongemma-medexpertmatch`.
+
+Validate export before Colab upload:
+
+```bash
+python scripts/validate-unsloth-functiongemma-dataset.py target/functiongemma-unsloth-train.jsonl --apply-template
+```
+
+Smoke after import to Ollama:
+
+```bash
+export TOOL_CALLING_MODEL=functiongemma-medexpertmatch:270m
+./scripts/run-tool-selection-live-eval.sh finetuned
+```
 
 ## Acceptance criteria
 

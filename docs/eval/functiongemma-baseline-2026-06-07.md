@@ -3,7 +3,7 @@
 ## Scope
 
 M58 Phase 1 policy baseline (deterministic `ToolSelectionPolicy` + JSONL regression).  
-Live `functiongemma:270m` measurement deferred to Phase 2 (requires running Ollama endpoint).
+Phase 2 live eval tooling is in-repo; run against Ollama when the endpoint is available.
 
 ## Policy eval results
 
@@ -28,8 +28,9 @@ Live `functiongemma:270m` measurement deferred to Phase 2 (requires running Olla
 | `negative_text_only` | 4 |
 | Other (triage, route no ID) | 10 |
 
-## Next steps
+## Next steps (M60)
 
-1. Run live baseline against Ollama `functiongemma:270m` on the same JSONL prompts.
-2. Compare live accuracy to M58 thresholds (Pair A ≥ 90%, Pair B ≥ 95%).
-3. If above gate, generate expanded dataset via `scripts/generate-functiongemma-training-data.py` and fine-tune.
+1. Run live baseline: `./scripts/run-tool-selection-live-eval.sh baseline`
+2. Compare live accuracy to thresholds (Pair A ≥ 90%, Pair B ≥ 95%).
+3. If above gate, train via Unsloth Colab (`docs/ai/functiongemma-finetune.md` Phase 3).
+4. Serve with `local-finetuned` profile and re-run `./scripts/run-tool-selection-live-eval.sh finetuned`.
