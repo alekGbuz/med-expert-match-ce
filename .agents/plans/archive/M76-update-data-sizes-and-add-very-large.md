@@ -1,6 +1,6 @@
 # M76: Update Synthetic Data Time Estimates + Add "very-large" (1000 doctors) Size
 
-**Status:** Active (in progress 2026-06-09)
+**Status:** **Done** (2026-06-09)
 **Created:** 2026-06-09
 **Depends on:** M73 (archived — quality of the synthetic data layer; same UI surface)
 

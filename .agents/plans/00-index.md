@@ -2,9 +2,11 @@
 
 ## Active
 
+Roadmap updated 2026-06-09. All currently planned work is implemented or in archive; next iteration TBD.
+
 | # | Plan | Description |
 |---|------|-------------|
-| M76 | [`M76-update-data-sizes-and-add-very-large.md`](M76-update-data-sizes-and-add-very-large.md) | Fix wildly wrong time estimates in `data-sizes.csv` (current "1 day 14 hours" for `large` is actually ~95 s), normalize all sizes to 20 cases per doctor, add new `very-large` size (1,000 doctors / 20,000 cases) |
+| _none_ | | |
 
 ## Deferred
 
@@ -96,6 +98,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](archive/M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality: `MAJOR_SPECIALTIES` round-robin, `reconcileSpecialtyGraph()` (idempotent MERGE), admin endpoint `POST /api/v1/admin/synthetic-data/reconcile-specialties`, unconditional `INFO` LLM-usage log with `cache_hit=true\|false` |
 | M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, **UI path only** (`formatForChatDisplay`); data path (`toHumanReadable`) kept untouched so internal consumers still see the original JSON |
 | M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` for the case side (parallel to M73's doctor-side heal) + bidirectional substring match in `calculateSpecializationMatchScore` so "Cardiology" matches "Advanced Heart Failure and Transplant Cardiology" |
+| M76 | [`M76-update-data-sizes-and-add-very-large.md`](archive/M76-update-data-sizes-and-add-very-large.md) | Fix wildly wrong time estimates in `data-sizes.csv` (pre-M76 "1 day 14 hours" for `large` was actually ~95 s), normalize all sizes to 20 cases per doctor, add new `very_large` size (1,000 doctors / 20,000 cases) |
 
 ## Creating a New Plan
 
