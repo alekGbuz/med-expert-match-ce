@@ -73,3 +73,33 @@ Adapters should be auto-generated scripts that:
 Do NOT manually maintain tool-specific copies — they go stale.
 
 Currently, `.kilo/` has only the SDK runtime (`@kilocode/plugin`). Kilo commands and agents should be generated from skills when needed.
+
+## Ralph-Style Autonomous Loop
+
+The repo has a script-driven iteration loop (`scripts/ralph.sh`, see M78/M79)
+that mechanically walks through a milestone's stories, runs their test
+targets, and on green commits + marks `passes: true` + appends to
+`.agents/plans/progress.txt`.
+
+How it integrates with the context architecture:
+
+- **Skills** (`.agents/skills/**/SKILL.md`) — each story in
+  `M{NN}-stories.json` lists its `skills_to_load[]`. The agent invoked by
+  the loop reads those SKILL.md files to ground itself in the right
+  conventions before changing code.
+- **Plans** (`.agents/plans/M{NN}-*.md`) — the source of truth for the
+  what (prose, phases, acceptance criteria). `M{NN}-stories.json` is a
+  machine-parseable projection of the same content.
+- **Tests** (`testing/SKILL.md`) — the loop uses the test tiering rules
+  (`*Test.java` for unit, `*IT.java` for integration, `mvn test` vs.
+  `mvn verify -Dit.test=...`). On red, the loop does not commit; it
+  appends a `[RED]` block to `progress.txt` and exits non-zero.
+- **Iteration log** (`.agents/plans/progress.txt`) — append-only
+  scrolling notebook. The loop writes one dated block per story. Read
+  it before starting any new milestone.
+
+The loop deliberately does not invoke the LLM itself in M79; that is the
+M80 pilot. The M79 build assumes the human has implemented the story in
+the working tree and the loop's job is to verify + commit + advance
+state. See root `AGENTS.md` → "Ralph workflow" for the full
+contract and the explicit "Do NOT Ralph-ify" list.
