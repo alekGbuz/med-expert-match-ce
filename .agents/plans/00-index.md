@@ -4,9 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M77 | [`M77-runtime-measured-estimates.md`](M77-runtime-measured-estimates.md) | Measure every actual synthetic-data run; persist in new `synthetic_data_generation_runs` table; surface "Last actual: X" in admin UI; nightly job auto-adjusts the static `estimated_time_minutes` in `data-sizes.csv` so the estimate never silently drifts from reality |
-| M78 | [`M78-ralph-autonomous-loop.md`](M78-ralph-autonomous-loop.md) | Ralph-style autonomous iteration loop: `scripts/ralph.sh` (bash) + `.agents/plans/progress.txt` (cross-iteration learnings) + `M{NN}-stories.json` (machine-parseable Phase list) + `.agents/templates/bootstrap-new-project.md` (sample MD for new repos); pilot on M77, then promote to `AGENTS.md` Commands |
-| M79 | [`M79-ralph-loop-pilot-m77.md`](M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure: `scripts/ralph.sh` (the bash loop) + `M77-stories.json` (10 atomic stories) + `progress.txt` (cross-iteration learnings) + AGENTS.md Commands entry + architecture note append. TDD-first, smoke-test with `--max 1`. Actual full M77 pilot is a separate, time-boxed effort. |
+| M80 | [`M80-wire-real-agent-invocation.md`](M80-wire-real-agent-invocation.md) | Replace the M79 `invoke_agent()` stub in `scripts/ralph.sh` with a real OpenAI-compatible agent pipeline: render prompt template → call chat endpoint → extract ```diff block → apply patch. Adds `--agent stub\|openai\|<path>` flag, `OPENAI_*` env contract, `.agents/templates/M{NN}-prompt.md.template`. The unattended M77 pilot run itself is M81. |
 
 ## Deferred
 
@@ -99,6 +97,9 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, **UI path only** (`formatForChatDisplay`); data path (`toHumanReadable`) kept untouched so internal consumers still see the original JSON |
 | M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` for the case side (parallel to M73's doctor-side heal) + bidirectional substring match in `calculateSpecializationMatchScore` so "Cardiology" matches "Advanced Heart Failure and Transplant Cardiology" |
 | M76 | [`M76-update-data-sizes-and-add-very-large.md`](archive/M76-update-data-sizes-and-add-very-large.md) | Fix wildly wrong time estimates in `data-sizes.csv` (pre-M76 "1 day 14 hours" for `large` was actually ~95 s), normalize all sizes to 20 cases per doctor, add new `very_large` size (1,000 doctors / 20,000 cases) |
+| M77 | [`M77-runtime-measured-estimates.md`](archive/M77-runtime-measured-estimates.md) | Measure every actual synthetic-data run; persist in new `synthetic_data_generation_runs` table; surface "Last actual: X" in admin UI; nightly job auto-adjusts the static `estimated_time_minutes` in `data-sizes.csv` so the estimate never silently drifts from reality. **Pilot target for the Ralph loop** (see M79). |
+| M78 | [`M78-ralph-autonomous-loop.md`](archive/M78-ralph-autonomous-loop.md) | Ralph-style autonomous iteration loop: `scripts/ralph.sh` (bash) + `.agents/plans/progress.txt` (cross-iteration learnings) + `M{NN}-stories.json` (machine-parseable Phase list) + `.agents/templates/bootstrap-new-project.md` (sample MD for new repos); pilot on M77, then promote to `AGENTS.md` Commands |
+| M79 | [`M79-ralph-loop-pilot-m77.md`](archive/M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure: `scripts/ralph.sh` (the bash loop) + `M77-stories.json` (10 atomic stories) + `progress.txt` (cross-iteration learnings) + AGENTS.md Commands entry + architecture note append. TDD-first, smoke-test with `--max 1`. Actual full M77 pilot is a separate, time-boxed effort (M80). |
 
 ## Creating a New Plan
 
