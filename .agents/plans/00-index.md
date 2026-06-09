@@ -93,6 +93,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 | M68 | [`M68-harness-context-summarizer.md`](archive/M68-harness-context-summarizer.md) | Harness context summarizer before clinical LLM (M64 ADR Phase 3) |
 | M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
 | M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
+| M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
 
 ## Creating a New Plan
 
