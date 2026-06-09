@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.medicalcase.service.impl;
 
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.service.ChatCompletionTextClient;
 import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
@@ -7,6 +8,7 @@ import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionSe
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -63,6 +65,12 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
             String enhancedText = chatClient.prompt()
                     .system(systemPrompt)
                     .user(userPrompt)
+                    .advisors(a -> {
+                        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+                        if (sessionId != null && !sessionId.isBlank()) {
+                            a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId);
+                        }
+                    })
                     .call()
                     .content();
 
