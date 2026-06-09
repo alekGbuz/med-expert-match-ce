@@ -1,12 +1,46 @@
 package com.berdachuk.medexpertmatch.core.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class LlmResponseSanitizer {
 
     private static final String STRATEGIZING_MARKER = "strategizing complete";
+
+    /**
+     * Toggle for the M74 embedded-JSON renderer. Default {@code true}.
+     * Set via {@code medexpertmatch.llm.response.render-embedded-json: false}
+     * in application.yml to disable; the sanitizer then leaves any
+     * embedded JSON block untouched so operators can debug a prompt change.
+     */
+    private static final AtomicBoolean RENDER_EMBEDDED_JSON = new AtomicBoolean(true);
+
+    /**
+     * Lightweight Jackson mapper for parsing the small JSON objects that
+     * the LLM sometimes returns in its {@code Response} block.
+     */
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+
+    // Public label map — fixed order so the output is deterministic.
+    private static final Map<String, String> FIELD_LABELS = new LinkedHashMap<>();
+    static {
+        FIELD_LABELS.put("requiredSpecialty", "Recommended specialty");
+        FIELD_LABELS.put("urgencyLevel",       "Urgency");
+        FIELD_LABELS.put("clinicalFindings",   "Key findings");
+        FIELD_LABELS.put("icd10Codes",         "ICD-10 codes");
+        FIELD_LABELS.put("caseSummary",        "Summary");
+        FIELD_LABELS.put("recommendations",    "Recommendations");
+        FIELD_LABELS.put("urgencyRationale",   "Urgency rationale");
+    }
 
     private static final Pattern CONTENT_SECTION_PATTERN = Pattern.compile(
             "(?i)(?:^|[\\n.]\\s*)(Case Summary|Clinical Presentation|Matched Doctors|"
@@ -372,9 +406,21 @@ public final class LlmResponseSanitizer {
 
         cleaned = stripJsonPrefix(cleaned);
         cleaned = stripFinalResponsePrefix(cleaned);
+        if (RENDER_EMBEDDED_JSON.get()) {
+            cleaned = renderEmbeddedJson(cleaned);
+        }
         cleaned = cleanJsonOnlyContent(cleaned);
 
         return cleaned;
+    }
+
+    /**
+     * Spring-friendly setter for the {@link #RENDER_EMBEDDED_JSON} flag.
+     * Wired by {@link LlmResponseRenderConfig} from the
+     * {@code medexpertmatch.llm.response.render-embedded-json} property.
+     */
+    public static void setRenderEmbeddedJson(boolean enabled) {
+        RENDER_EMBEDDED_JSON.set(enabled);
     }
 
     private static String stripJsonPrefix(String response) {
@@ -414,7 +460,12 @@ public final class LlmResponseSanitizer {
         String trimmed = response.trim();
 
         if (isJsonOnly(trimmed)) {
-            return "[Data received; unable to display formatted response]";
+            // Before M74 this returned the generic "[Data received; unable to
+            // display formatted response]". Now we delegate to the
+            // embedded-JSON renderer so the operator sees the parsed fields.
+            String rendered = renderJsonObjectText(trimmed);
+            return rendered != null ? rendered
+                    : "[Data received; unable to display formatted response]";
         }
 
         if (trimmed.startsWith("[") && looksLikeJsonArray(trimmed)) {
@@ -422,7 +473,9 @@ public final class LlmResponseSanitizer {
             if (closeIdx > 0 && isJsonOnly(trimmed.substring(0, closeIdx + 1))) {
                 String remainder = trimmed.substring(closeIdx + 1).trim();
                 if (remainder.isEmpty()) {
-                    return "[Data received; unable to display formatted response]";
+                    String rendered = renderJsonObjectText(trimmed);
+                    return rendered != null ? rendered
+                            : "[Data received; unable to display formatted response]";
                 }
                 return remainder;
             }
@@ -433,13 +486,205 @@ public final class LlmResponseSanitizer {
             if (closeIdx > 0 && isJsonOnly(trimmed.substring(0, closeIdx + 1))) {
                 String remainder = trimmed.substring(closeIdx + 1).trim();
                 if (remainder.isEmpty()) {
-                    return "[Data received; unable to display formatted response]";
+                    String rendered = renderJsonObjectText(trimmed);
+                    return rendered != null ? rendered
+                            : "[Data received; unable to display formatted response]";
                 }
                 return remainder;
             }
         }
 
         return response;
+    }
+
+    // -----------------------------------------------------------------
+    // M74: render embedded JSON blocks as human-readable prose.
+    // -----------------------------------------------------------------
+
+    /**
+     * Scans {@code response} for any JSON object ({@code { ... }}) and
+     * replaces each one that parses cleanly with a prose rendering of
+     * its fields. JSON that fails to parse is left in place (we never
+     * delete data we cannot understand). Text outside the JSON blocks
+     * is preserved.
+     */
+    static String renderEmbeddedJson(String response) {
+        if (response == null || response.isEmpty()) {
+            return response;
+        }
+        if (!response.contains("{")) {
+            return response;
+        }
+
+        StringBuilder out = new StringBuilder(response.length());
+        int cursor = 0;
+        while (cursor < response.length()) {
+            int openIdx = response.indexOf('{', cursor);
+            if (openIdx < 0) {
+                out.append(response, cursor, response.length());
+                break;
+            }
+            // Copy everything before the '{' verbatim
+            out.append(response, cursor, openIdx);
+
+            int closeIdx = findMatchingBrace(response, openIdx);
+            if (closeIdx < 0) {
+                // Unbalanced brace — leave the rest untouched.
+                out.append(response, openIdx, response.length());
+                break;
+            }
+            String candidate = response.substring(openIdx, closeIdx + 1);
+            String rendered = renderJsonObjectText(candidate);
+            if (rendered != null) {
+                out.append(rendered);
+            } else {
+                // Could not parse — preserve the original block
+                out.append(candidate);
+            }
+            cursor = closeIdx + 1;
+        }
+        return out.toString();
+    }
+
+    /**
+     * Attempts to parse {@code jsonText} as a JSON object and render it
+     * as prose. Returns {@code null} if the text is not a parseable
+     * JSON object or has no fields worth rendering (caller should
+     * leave the original in place).
+     */
+    @SuppressWarnings("unchecked")
+    static String renderJsonObjectText(String jsonText) {
+        if (jsonText == null) {
+            return null;
+        }
+        String trimmed = jsonText.trim();
+        if (!trimmed.startsWith("{")) {
+            return null;
+        }
+        Map<String, Object> map;
+        try {
+            map = JSON_MAPPER.readValue(trimmed, Map.class);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+        if (map == null || map.isEmpty()) {
+            return null;
+        }
+        return formatFieldsAsProse(map);
+    }
+
+    /**
+     * Renders a parsed JSON object as a multi-line prose string with
+     * friendly labels in a fixed order. Unknown fields are rendered
+     * after the known fields in insertion order.
+     */
+    private static String formatFieldsAsProse(Map<String, Object> map) {
+        List<String> lines = new ArrayList<>();
+
+        // 1. Known fields first, in the fixed order defined in FIELD_LABELS.
+        for (Map.Entry<String, String> e : FIELD_LABELS.entrySet()) {
+            Object value = map.get(e.getKey());
+            if (value == null) {
+                continue;
+            }
+            String rendered = renderValue(value);
+            if (rendered != null) {
+                lines.add(e.getValue() + ": " + rendered);
+            }
+        }
+        // 2. Unknown fields, in the order Jackson gave us (insertion order
+        //    for parsed LinkedHashMap).
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            if (FIELD_LABELS.containsKey(e.getKey())) {
+                continue;
+            }
+            Object value = e.getValue();
+            if (value == null) {
+                continue;
+            }
+            String rendered = renderValue(value);
+            if (rendered != null) {
+                lines.add(e.getKey() + ": " + rendered);
+            }
+        }
+        if (lines.isEmpty()) {
+            return null;
+        }
+        return String.join("\n", lines);
+    }
+
+    /**
+     * Renders a single JSON value as a human-friendly string.
+     * Strings are kept as-is (with surrounding quotes stripped).
+     * Arrays of primitives / objects are comma-joined.
+     * Nested objects and nulls are rendered as {@code null} so the
+     * caller skips them.
+     */
+    private static String renderValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String s) {
+            return s;
+        }
+        if (value instanceof Number || value instanceof Boolean) {
+            return value.toString();
+        }
+        if (value instanceof List<?> list) {
+            List<String> parts = new ArrayList<>(list.size());
+            for (Object item : list) {
+                String r = renderValue(item);
+                if (r != null) {
+                    parts.add(r);
+                }
+            }
+            return parts.isEmpty() ? null : String.join(", ", parts);
+        }
+        if (value instanceof Map<?, ?> nested) {
+            return renderValue(new ArrayList<>(nested.values()));
+        }
+        return value.toString();
+    }
+
+    /**
+     * Returns the index of the {@code }} that closes the JSON object
+     * opened at {@code openIdx}, respecting string boundaries and
+     * nested braces. Returns {@code -1} if the brace is not matched.
+     */
+    private static int findMatchingBrace(String text, int openIdx) {
+        if (openIdx < 0 || openIdx >= text.length() || text.charAt(openIdx) != '{') {
+            return -1;
+        }
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = openIdx; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (c == '\\' && inString) {
+                escaped = true;
+                continue;
+            }
+            if (c == '"') {
+                inString = !inString;
+                continue;
+            }
+            if (inString) {
+                continue;
+            }
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private static boolean isJsonOnly(String text) {

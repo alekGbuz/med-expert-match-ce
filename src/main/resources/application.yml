@@ -230,6 +230,8 @@ medexpertmatch:
   llm: # Concurrency per component; 1 = sequential (safe for local Ollama), increase for remote APIs
     max-tokens: 4096
     temperature: 0.7
+    response: # M74: server-side rendering of LLM response (embedded-JSON → prose)
+      render-embedded-json: ${MEDEXPERTMATCH_LLM_RESPONSE_RENDER_EMBEDDED_JSON:true}
     chat: # Deprecated alias for clinical limit (M67)
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS:1}
     clinical:

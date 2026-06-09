@@ -2,20 +2,19 @@
 
 ## Active
 
-Roadmap updated 2026-06-08. Suggested order: **M60** (GPU fine-tune, when capacity available).
+Roadmap updated 2026-06-09. Suggested order: **M73** (synthetic data quality).
 
 | # | Plan | Description |
 |---|------|-------------|
-| M60 | [`M60-functiongemma-finetune-execution-next.md`](M60-functiongemma-finetune-execution-next.md) | **Next** — GPU fine-tune execution + live before/after eval (blocked on GPU) |
 | M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality (primary specialty guarantees, SQL/graph sync, admin reconcile endpoint) + unconditional `INFO` log for LLM cache hits |
-| M74 | [`M74-human-readable-response-rendering.md`](M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, server-side in `LlmResponseSanitizer` |
 
 ## Deferred
 
-Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity is available.
+Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU fine-tune capacity is available and a stakeholder confirms the fine-tune is worth the engineering cost vs. the server-side `ToolSelectionGuardingResolver` (M57) which already covers the production gap.
 
 | # | Plan | Description |
 |---|------|-------------|
+| M60 | [`M60-functiongemma-finetune-execution-next.md`](M60-functiongemma-finetune-execution-next.md) | GPU fine-tune execution + live before/after eval (postponed 2026-06-09) |
 | — | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | Superseded by `M60-functiongemma-finetune-execution-next.md` (same scope, refreshed 2026-06-08) |
 
 ## Archive
@@ -96,6 +95,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 | M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
 | M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
 | M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
+| M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, server-side in `LlmResponseSanitizer` |
 
 ## Creating a New Plan
 
