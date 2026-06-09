@@ -72,6 +72,10 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
         // M73: clear the primary-specialty coverage so a stale
         // snapshot from a previous run cannot mislead operators.
         catalogState.getPrimarySpecialtyCoverage().clear();
+        // M75: clear the case-side specialty coverage for the same
+        // reason — a stale snapshot from a previous run would report
+        // ghost cases that have been wiped by clearTestData.
+        catalogState.getCaseSpecialtyCoverage().clear();
         log.debug("Cleared result caches");
         log.info("Synthetic data cleared");
     }
@@ -193,6 +197,12 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
             ReconcileReport reconcile = reconcileSpecialtyGraph();
             log.info("Post-build reconcile: processed={} doctors={}",
                     reconcile.processed(), reconcile.doctorsProcessed());
+            // M75: same idea for the case side — re-walk the
+            // medical_cases table and ensure every case with a
+            // required_specialty has a REQUIRES_SPECIALTY edge.
+            ReconcileCaseReport reconcileCase = reconcileCaseSpecialtyGraph();
+            log.info("Post-build case reconcile: processed={} cases={}",
+                    reconcileCase.processed(), reconcileCase.casesProcessed());
         } catch (DataAccessException e) {
             log.error("Database error building graph: {}", e.getMessage(), e);
         } catch (RuntimeException e) {
@@ -254,6 +264,61 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
                 processed[0], doctorIds.size());
         return new ReconcileReport(processed[0], doctorIds.size(),
                 new java.util.ArrayList<>(touchedDoctors),
+                new java.util.ArrayList<>(touchedSpecialties));
+    }
+
+    /**
+     * Walks the SQL {@code medical_cases} table and ensures every case
+     * with a non-blank {@code required_specialty} has a matching
+     * {@code (c:MedicalCase)-[:REQUIRES_SPECIALTY]->(s:MedicalSpecialty)}
+     * edge in the graph. The underlying
+     * {@code MedicalGraphBuilderService.createRequiresSpecialtyRelationship}
+     * uses a {@code MERGE} Cypher so the operation is idempotent —
+     * running it twice produces the same graph state with no errors.
+     * <p>
+     * M75 motivation: M73's {@link #reconcileSpecialtyGraph()} only
+     * covers the doctor side. The pre-M75 {@code buildGraph()} path
+     * created the case-side edges during the initial build, but no
+     * code path refreshed them afterwards — new cases created by the
+     * chat intake harness or the synthetic generator had no
+     * {@code REQUIRES_SPECIALTY} edge, leaving the 25% specialisation
+     * component of the Find Specialist score at 0.00.
+     *
+     * @return summary of what was processed; never {@code null}.
+     */
+    @Override
+    public ReconcileCaseReport reconcileCaseSpecialtyGraph() {
+        List<String> caseIds = medicalCaseRepository.findAllIds(0);
+        final int[] processed = {0};
+        final java.util.Set<String> touchedCases = new java.util.LinkedHashSet<>();
+        final java.util.Set<String> touchedSpecialties = new java.util.LinkedHashSet<>();
+        // M75: track case-side specialty coverage for the catalog state
+        final java.util.Map<String, Integer> coverage = new java.util.LinkedHashMap<>();
+        for (String caseId : caseIds) {
+            medicalCaseRepository.findById(caseId).ifPresent(medicalCase -> {
+                String requiredSpecialty = medicalCase.requiredSpecialty();
+                if (requiredSpecialty == null || requiredSpecialty.isBlank()) {
+                    return;
+                }
+                try {
+                    graphBuilderService.createRequiresSpecialtyRelationship(caseId, requiredSpecialty);
+                    processed[0]++;
+                    touchedCases.add(caseId);
+                    touchedSpecialties.add(requiredSpecialty);
+                    coverage.merge(requiredSpecialty, 1, Integer::sum);
+                } catch (RuntimeException e) {
+                    log.warn("Reconcile: could not create REQUIRES_SPECIALTY edge for case={} specialty='{}': {}",
+                            caseId, requiredSpecialty, e.getMessage());
+                }
+            });
+        }
+        // M75: publish the case-side specialty coverage so the
+        // synthetic-data state endpoint can report it.
+        catalogState.setCaseSpecialtyCoverage(coverage);
+        log.info("Reconciled case specialty graph: {} (case, specialty) pairs across {} cases",
+                processed[0], caseIds.size());
+        return new ReconcileCaseReport(processed[0], caseIds.size(),
+                new java.util.ArrayList<>(touchedCases),
                 new java.util.ArrayList<>(touchedSpecialties));
     }
 

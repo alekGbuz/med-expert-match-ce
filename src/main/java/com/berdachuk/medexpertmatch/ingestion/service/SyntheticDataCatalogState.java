@@ -50,4 +50,15 @@ public class SyntheticDataCatalogState {
      * {@code clearTestData()}.
      */
     private Map<String, Integer> primarySpecialtyCoverage = new LinkedHashMap<>();
+
+    /**
+     * M75: number of medical cases per required specialty. Populated by
+     * {@code SyntheticDataPostProcessingService.reconcileCaseSpecialtyGraph()}
+     * and exposed via the synthetic-data state endpoint so operators
+     * can see at a glance how many cases map to each specialty
+     * (and how many were skipped because of a blank
+     * {@code required_specialty}). Read-only after the catalog is
+     * loaded; cleared on {@code clearTestData()}.
+     */
+    private Map<String, Integer> caseSpecialtyCoverage = new LinkedHashMap<>();
 }

@@ -2,11 +2,9 @@
 
 ## Active
 
-Roadmap updated 2026-06-09. All currently planned work is implemented or in archive; next iteration TBD.
-
 | # | Plan | Description |
 |---|------|-------------|
-| _none_ | | |
+| M75 | [`M75-find-specialist-case-specialty-reconcile.md`](M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` for the case side (parallel to M73's doctor-side heal) + bidirectional substring match in `calculateSpecializationMatchScore` so "Cardiology" matches "Advanced Heart Failure and Transplant Cardiology" |
 
 ## Deferred
 

@@ -46,4 +46,26 @@ public class SyntheticDataAdminController {
         adminAccessGuard.requireAdmin();
         return postProcessingService.reconcileSpecialtyGraph();
     }
+
+    /**
+     * M75: re-walks the SQL medical_cases table and ensures every case
+     * with a non-blank {@code required_specialty} has a
+     * {@code (c:MedicalCase)-[:REQUIRES_SPECIALTY]->(s:MedicalSpecialty)}
+     * edge in the graph. Idempotent; safe to re-run.
+     * <p>
+     * Triggers a one-shot heal of the case-side gap without re-running
+     * the whole synthetic-data generation. Mirror of the M73
+     * {@code /reconcile-specialties} endpoint but for the case side.
+     */
+    @Operation(
+            summary = "Reconcile case–specialty edges in the graph",
+            description = "Walks the SQL medical_cases table and (re)creates every "
+                    + "(MedicalCase)-[:REQUIRES_SPECIALTY]->(MedicalSpecialty) edge for "
+                    + "cases with a non-blank required_specialty. Idempotent; safe to re-run."
+    )
+    @PostMapping("/reconcile-case-specialties")
+    public SyntheticDataPostProcessingService.ReconcileCaseReport reconcileCaseSpecialties() {
+        adminAccessGuard.requireAdmin();
+        return postProcessingService.reconcileCaseSpecialtyGraph();
+    }
 }

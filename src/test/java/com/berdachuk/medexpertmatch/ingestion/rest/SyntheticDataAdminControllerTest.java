@@ -104,4 +104,62 @@ class SyntheticDataAdminControllerTest {
         mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-specialties"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("M75: POST /reconcile-case-specialties returns 200 with processed, cases, specialties")
+    void reconcileCaseReturnsReport() throws Exception {
+        SyntheticDataPostProcessingService.ReconcileCaseReport report =
+                new SyntheticDataPostProcessingService.ReconcileCaseReport(
+                        4839, 6015,
+                        List.of("c-1", "c-2", "c-3"),
+                        List.of("Cardiology", "Oncology", "Pediatrics"));
+        when(postProcessingService.reconcileCaseSpecialtyGraph()).thenReturn(report);
+
+        mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-case-specialties"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.processed").value(4839))
+                .andExpect(jsonPath("$.casesProcessed").value(6015))
+                .andExpect(jsonPath("$.cases.length()").value(3))
+                .andExpect(jsonPath("$.specialties.length()").value(3))
+                .andExpect(jsonPath("$.specialties[0]").value("Cardiology"));
+    }
+
+    @Test
+    @DisplayName("M75: POST /reconcile-case-specialties calls the admin guard")
+    void reconcileCaseCallsAdminGuard() throws Exception {
+        when(postProcessingService.reconcileCaseSpecialtyGraph())
+                .thenReturn(new SyntheticDataPostProcessingService.ReconcileCaseReport(
+                        0, 0, List.of(), List.of()));
+
+        mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-case-specialties"))
+                .andExpect(status().isOk());
+
+        verify(adminAccessGuard, times(1)).requireAdmin();
+    }
+
+    @Test
+    @DisplayName("M75: POST /reconcile-case-specialties is idempotent — re-running it is safe")
+    void reconcileCaseIsIdempotent() throws Exception {
+        SyntheticDataPostProcessingService.ReconcileCaseReport report =
+                new SyntheticDataPostProcessingService.ReconcileCaseReport(
+                        4839, 6015, List.of("c-1"), List.of("Cardiology"));
+        when(postProcessingService.reconcileCaseSpecialtyGraph()).thenReturn(report);
+
+        mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-case-specialties"));
+        mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-case-specialties"));
+        mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-case-specialties"));
+
+        verify(postProcessingService, times(3)).reconcileCaseSpecialtyGraph();
+    }
+
+    @Test
+    @DisplayName("M75: POST /reconcile-case-specialties propagates 403 when admin guard rejects")
+    void reconcileCasePropagatesForbiddenFromAdminGuard() throws Exception {
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN, "Admin access required"))
+                .when(adminAccessGuard).requireAdmin();
+
+        mockMvc.perform(post("/api/v1/admin/synthetic-data/reconcile-case-specialties"))
+                .andExpect(status().isForbidden());
+    }
 }

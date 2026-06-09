@@ -115,16 +115,25 @@ public class GraphQueryServiceImpl implements GraphQueryService {
             return 0.5; // No specialty name, return neutral score
         }
 
+        // M75: pull all SPECIALIZES_IN edges for this doctor and do a
+        // bidirectional case-insensitive substring match in Java.
+        // The pre-M75 exact-name match failed for the Find Specialist
+        // run on case 6a280f43ae781e00015d0113 (89 yo, angina,
+        // required_specialty = "Advanced Heart Failure and Transplant
+        // Cardiology") because most cardiologists' SPECIALIZES_IN edge
+        // points to the simpler "Cardiology" name, not the longer
+        // variant. Bidirectional substring match (doctor's name is a
+        // substring of the case's requirement, OR vice versa) closes
+        // that gap without producing false positives for unrelated
+        // specialties ("Cardiology" and "Urology" share no substrings
+        // of length 5+).
         String cypherQuery = """
-                MATCH (d:Doctor {id: $doctorId})-[:SPECIALIZES_IN]->(s:MedicalSpecialty {name: $specialtyName})
-                RETURN count(*)
+                MATCH (d:Doctor {id: $doctorId})-[:SPECIALIZES_IN]->(s:MedicalSpecialty)
+                RETURN s.name AS name
                 """;
 
         Map<String, Object> params = new HashMap<>();
         params.put("doctorId", doctorId);
-        params.put("specialtyName", specialtyName);
-
-        // Logging removed for modularity - caller can handle logging if needed
 
         List<Map<String, Object>> results = graphService.executeCypher(cypherQuery, params);
 
@@ -133,18 +142,39 @@ public class GraphQueryServiceImpl implements GraphQueryService {
             return 0.0;
         }
 
-        // The result is stored under "c" for single-column queries
-        Object countObj = results.get(0).get("c");
-        if (countObj == null) {
-            // Logging removed for modularity - caller can handle logging if needed
-            return 0.0;
+        String normalizedSpecialty = specialtyName.toLowerCase(java.util.Locale.ROOT).trim();
+        for (Map<String, Object> result : results) {
+            Object nameObj = result.get("name");
+            if (nameObj == null) {
+                // Apache AGE returns single-column results under "c" too
+                nameObj = result.get("c");
+            }
+            if (nameObj == null) {
+                continue;
+            }
+            // Apache AGE 1.6 returns string-typed results wrapped in
+            // JSON quotes, e.g. `"Cardiology"`. Strip the surrounding
+            // quotes so the substring comparison works on the raw name.
+            String raw = nameObj.toString();
+            if (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\"")) {
+                raw = raw.substring(1, raw.length() - 1);
+            }
+            String doctorSpecialty = raw.toLowerCase(java.util.Locale.ROOT).trim();
+            if (doctorSpecialty.isEmpty()) {
+                continue;
+            }
+            // Bidirectional substring: either contains the other.
+            // Both sides trimmed + lowercased to avoid case / whitespace
+            // mismatches ("Cardiology" vs "cardiology ", etc.).
+            if (normalizedSpecialty.contains(doctorSpecialty)
+                    || doctorSpecialty.contains(normalizedSpecialty)) {
+                return 1.0;
+            }
         }
 
-        int count = Integer.parseInt(countObj.toString());
-        double score = Math.min(1.0, count);
         // Logging removed for modularity - caller can handle logging if needed
         // Specialization match = 1.0, no match = 0.0
-        return score;
+        return 0.0;
     }
 
     @Override

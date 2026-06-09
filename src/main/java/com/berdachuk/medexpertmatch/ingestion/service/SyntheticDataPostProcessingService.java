@@ -68,4 +68,37 @@ public interface SyntheticDataPostProcessingService {
                            List<String> doctors,
                            List<String> specialties) {
     }
+
+    /**
+     * M75: walks the SQL {@code medical_cases} table and ensures every
+     * case with a non-blank {@code required_specialty} has a matching
+     * {@code (c:MedicalCase)-[:REQUIRES_SPECIALTY]->(s:MedicalSpecialty)}
+     * edge in the graph. Mirrors M73's {@link #reconcileSpecialtyGraph()}
+     * for the case side; idempotent; safe to call on a healthy graph.
+     * <p>
+     * M73 only touched the doctor side, which left a stale-edge gap on
+     * the case side: 5,439 SQL cases with a non-blank specialty but
+     * only 600 graph edges (2026-06-09 audit). New cases created via
+     * the chat intake harness or the synthetic generator have no
+     * pre-existing graph edge, so this helper heals that gap.
+     *
+     * @return summary of what was processed; never {@code null}
+     */
+    ReconcileCaseReport reconcileCaseSpecialtyGraph();
+
+    /**
+     * Summary of a {@link #reconcileCaseSpecialtyGraph()} run.
+     *
+     * @param processed         number of (case, specialty) pairs that were
+     *                          passed to the graph builder (either newly
+     *                          created or no-op due to MERGE idempotency)
+     * @param casesProcessed    number of medical cases scanned in this run
+     * @param cases             distinct case IDs that were touched
+     * @param specialties       distinct specialty names that were touched
+     */
+    record ReconcileCaseReport(int processed,
+                               int casesProcessed,
+                               List<String> cases,
+                               List<String> specialties) {
+    }
 }

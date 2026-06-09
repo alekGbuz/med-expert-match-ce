@@ -169,6 +169,76 @@ class GraphQueryServiceIT extends BaseIntegrationTest {
     }
 
     @Test
+    void testCalculateSpecializationMatchScore_CaseNameIsSubstringOfDoctorName_ReturnsOne() {
+        // M75: case asks for the simpler name "Cardiology" but the doctor
+        // is recorded under the more specific
+        // "Advanced Heart Failure and Transplant Cardiology". The
+        // pre-M75 exact match returned 0.0, killing the 25% graph
+        // component for Find Specialist.
+        createDoctorVertex("test-doctor-006a", "Test Doctor 6a");
+        createSpecialtyVertex("Advanced Heart Failure and Transplant Cardiology");
+        createDoctorSpecializesInRelationship("test-doctor-006a",
+                "Advanced Heart Failure and Transplant Cardiology");
+
+        double score = graphQueryService.calculateSpecializationMatchScore(
+                "test-doctor-006a", "Cardiology", TEST_SESSION_ID);
+
+        assertEquals(1.0, score, 0.01,
+                "M75: doctor specialty contains case specialty → 1.0 (substring match)");
+    }
+
+    @Test
+    void testCalculateSpecializationMatchScore_DoctorNameIsSubstringOfCaseName_ReturnsOne() {
+        // M75: case asks for the longer name
+        // "Advanced Heart Failure and Transplant Cardiology" and the
+        // doctor is recorded under the simpler "Cardiology". The
+        // pre-M75 exact match returned 0.0.
+        createDoctorVertex("test-doctor-006b", "Test Doctor 6b");
+        createSpecialtyVertex("Cardiology");
+        createDoctorSpecializesInRelationship("test-doctor-006b", "Cardiology");
+
+        double score = graphQueryService.calculateSpecializationMatchScore(
+                "test-doctor-006b", "Advanced Heart Failure and Transplant Cardiology",
+                TEST_SESSION_ID);
+
+        assertEquals(1.0, score, 0.01,
+                "M75: case specialty contains doctor specialty → 1.0 (substring match)");
+    }
+
+    @Test
+    void testCalculateSpecializationMatchScore_NoOverlap_ReturnsZero() {
+        // M75: doctor is a Urologist, case asks for Cardiology. The two
+        // names share no meaningful substrings (any overlap is a
+        // 3-letter common word like "and" / "the") so the result
+        // must be 0.0 — substring match must not produce false
+        // positives for unrelated specialties.
+        createDoctorVertex("test-doctor-006c", "Test Doctor 6c");
+        createSpecialtyVertex("Urology");
+        createDoctorSpecializesInRelationship("test-doctor-006c", "Urology");
+
+        double score = graphQueryService.calculateSpecializationMatchScore(
+                "test-doctor-006c", "Cardiology", TEST_SESSION_ID);
+
+        assertEquals(0.0, score, 0.01,
+                "M75: no overlap → 0.0 (no false positives for unrelated specialties)");
+    }
+
+    @Test
+    void testCalculateSpecializationMatchScore_CaseInsensitive_ReturnsOne() {
+        // M75: case-insensitive match. "CARDIOLOGY" / "cardiology" /
+        // "Cardiology" all match the same vertex.
+        createDoctorVertex("test-doctor-006d", "Test Doctor 6d");
+        createSpecialtyVertex("Cardiology");
+        createDoctorSpecializesInRelationship("test-doctor-006d", "Cardiology");
+
+        double score = graphQueryService.calculateSpecializationMatchScore(
+                "test-doctor-006d", "CARDIOLOGY", TEST_SESSION_ID);
+
+        assertEquals(1.0, score, 0.01,
+                "M75: case-insensitive → 1.0");
+    }
+
+    @Test
     void testCalculateSimilarCasesScore_NoICDCodes_ReturnsNeutral() {
         // Test with null ICD-10 codes
         double score = graphQueryService.calculateSimilarCasesScore(
