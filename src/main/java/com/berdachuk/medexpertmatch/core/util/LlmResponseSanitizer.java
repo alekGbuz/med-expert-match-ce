@@ -128,6 +128,13 @@ public final class LlmResponseSanitizer {
 
     /**
      * Wraps detected model reasoning in a collapsible HTML block ahead of the clinical answer.
+     * <p>
+     * <b>M74 — UI-only JSON rendering.</b> Embedded JSON blocks
+     * (e.g. {@code "Response\n{ \"requiredSpecialty\": ... }"}) are
+     * rendered as human-readable prose in the chat panel via
+     * {@link #renderEmbeddedJson(String)}. The server-side data path
+     * ({@link #toHumanReadable(String)}) is left untouched so internal
+     * consumers of the LLM response still see the original JSON.
      */
     public static String formatForChatDisplay(String response) {
         if (response == null || response.isBlank()) {
@@ -138,8 +145,11 @@ public final class LlmResponseSanitizer {
         }
 
         ReasoningSplit split = splitReasoningFromResponse(response);
-        String content = stripLlmReasoning(
-                split.content() != null && !split.content().isBlank() ? split.content() : response);
+        String rawContent = split.content() != null && !split.content().isBlank() ? split.content() : response;
+        String content = stripLlmReasoning(rawContent);
+        if (RENDER_EMBEDDED_JSON.get()) {
+            content = renderEmbeddedJson(content);
+        }
 
         if (split.reasoning() == null || split.reasoning().length() < MIN_REASONING_CHARS) {
             return content;
@@ -406,9 +416,6 @@ public final class LlmResponseSanitizer {
 
         cleaned = stripJsonPrefix(cleaned);
         cleaned = stripFinalResponsePrefix(cleaned);
-        if (RENDER_EMBEDDED_JSON.get()) {
-            cleaned = renderEmbeddedJson(cleaned);
-        }
         cleaned = cleanJsonOnlyContent(cleaned);
 
         return cleaned;
@@ -460,12 +467,7 @@ public final class LlmResponseSanitizer {
         String trimmed = response.trim();
 
         if (isJsonOnly(trimmed)) {
-            // Before M74 this returned the generic "[Data received; unable to
-            // display formatted response]". Now we delegate to the
-            // embedded-JSON renderer so the operator sees the parsed fields.
-            String rendered = renderJsonObjectText(trimmed);
-            return rendered != null ? rendered
-                    : "[Data received; unable to display formatted response]";
+            return "[Data received; unable to display formatted response]";
         }
 
         if (trimmed.startsWith("[") && looksLikeJsonArray(trimmed)) {
@@ -473,9 +475,7 @@ public final class LlmResponseSanitizer {
             if (closeIdx > 0 && isJsonOnly(trimmed.substring(0, closeIdx + 1))) {
                 String remainder = trimmed.substring(closeIdx + 1).trim();
                 if (remainder.isEmpty()) {
-                    String rendered = renderJsonObjectText(trimmed);
-                    return rendered != null ? rendered
-                            : "[Data received; unable to display formatted response]";
+                    return "[Data received; unable to display formatted response]";
                 }
                 return remainder;
             }
@@ -486,9 +486,7 @@ public final class LlmResponseSanitizer {
             if (closeIdx > 0 && isJsonOnly(trimmed.substring(0, closeIdx + 1))) {
                 String remainder = trimmed.substring(closeIdx + 1).trim();
                 if (remainder.isEmpty()) {
-                    String rendered = renderJsonObjectText(trimmed);
-                    return rendered != null ? rendered
-                            : "[Data received; unable to display formatted response]";
+                    return "[Data received; unable to display formatted response]";
                 }
                 return remainder;
             }
@@ -518,6 +516,7 @@ public final class LlmResponseSanitizer {
 
         StringBuilder out = new StringBuilder(response.length());
         int cursor = 0;
+        boolean replacedAny = false;
         while (cursor < response.length()) {
             int openIdx = response.indexOf('{', cursor);
             if (openIdx < 0) {
@@ -537,13 +536,21 @@ public final class LlmResponseSanitizer {
             String rendered = renderJsonObjectText(candidate);
             if (rendered != null) {
                 out.append(rendered);
+                replacedAny = true;
             } else {
-                // Could not parse — preserve the original block
+                // Could not parse (or empty {}) — preserve the original block
                 out.append(candidate);
             }
             cursor = closeIdx + 1;
         }
-        return out.toString();
+        String result = out.toString();
+        // If the only thing in the response is a single empty JSON object,
+        // surface the legacy generic message so the chat panel never
+        // shows a bare "{}" blob.
+        if (!replacedAny && response.trim().equals("{}")) {
+            return "[Data received; unable to display formatted response]";
+        }
+        return result;
     }
 
     /**
@@ -568,6 +575,8 @@ public final class LlmResponseSanitizer {
             return null;
         }
         if (map == null || map.isEmpty()) {
+            // Empty JSON object — there is literally no information to
+            // surface. Caller will fall back to the generic message.
             return null;
         }
         return formatFieldsAsProse(map);

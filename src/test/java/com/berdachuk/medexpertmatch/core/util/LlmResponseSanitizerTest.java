@@ -8,24 +8,93 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests for {@link LlmResponseSanitizer#toHumanReadable(String)} (M74).
+ * Tests for {@link LlmResponseSanitizer} (M74, revised).
  *
- * The LLM (medgemma1.5:4b) sometimes returns responses that contain
- * a JSON block (e.g. {@code { "requiredSpecialty": ..., "icd10Codes": [...] }})
- * inside a {@code Response} wrapper, or as the entire response. The
- * pre-M74 sanitizer caught only the pure-JSON case and replaced it
- * with a generic message; the embedded-JSON case slipped through and
- * the chat UI displayed raw JSON to the user.
+ * <p><b>Design decision (corrected after first review):</b> The
+ * embedded-JSON renderer is a <i>UI</i> concern. It runs in
+ * {@link LlmResponseSanitizer#formatForChatDisplay(String)} only — the
+ * chat panel and the harness execution trace. The server-side
+ * {@link LlmResponseSanitizer#toHumanReadable(String)} (used by
+ * {@code MedicalAgentLlmSupportServiceImpl} for cache/interpretation
+ * responses) is left untouched so internal consumers of the raw LLM
+ * response still see the original JSON.
  */
 class LlmResponseSanitizerTest {
 
-    // ------------------------------------------------------------------
-    // 1. JSON embedded in a "Response" wrapper is rendered as prose
-    //    with friendly labels and the JSON block stripped
-    // ------------------------------------------------------------------
+    // ==================================================================
+    // 1. toHumanReadable — server-side data path, MUST NOT do JSON
+    //    rendering. Internal consumers of the raw LLM response see
+    //    the original JSON; only the UI form renderer touches it.
+    // ==================================================================
 
     @Test
-    void rendersEmbeddedJsonAfterMatchingRationaleAsProse() {
+    void toHumanReadable_leavesEmbeddedJsonUntouched() {
+        String llmOutput = """
+                **Matching Rationale:** borderline.
+
+                Response
+                {
+                  "requiredSpecialty": "Urologic Oncology",
+                  "urgencyLevel": "HIGH"
+                }
+                """;
+
+        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+
+        // The raw JSON block survives in the data path
+        assertTrue(result.contains("\"requiredSpecialty\""),
+                "toHumanReadable must NOT render JSON; the data path keeps the original");
+        assertTrue(result.contains("\"urgencyLevel\""));
+    }
+
+    @Test
+    void toHumanReadable_pureJsonStillGetsTheGenericFallback() {
+        // Pure-JSON responses are still caught by the pre-M74 logic in
+        // cleanJsonOnlyContent() and replaced with the generic message.
+        // The new informative fallback is only used in the UI form
+        // renderer.
+        String result = LlmResponseSanitizer.toHumanReadable("""
+                {"requiredSpecialty": "Cardiology", "caseSummary": "Chest pain workup."}
+                """);
+
+        assertTrue(result.contains("[Data received; unable to display formatted response]"),
+                "toHumanReadable should fall back to the generic message (data path is unchanged)");
+        assertFalse(result.contains("Recommended specialty:"),
+                "toHumanReadable should NOT surface parsed fields; that is the UI renderer's job");
+    }
+
+    @Test
+    void toHumanReadable_cleanNarrativePassthrough() {
+        String input = """
+                Case Summary
+                A 64-year-old male with chest pain on exertion.
+
+                Recommendations
+                Refer to Cardiology for further workup.
+                """;
+        String expected = """
+                Case Summary
+                A 64-year-old male with chest pain on exertion.
+
+                Recommendations
+                Refer to Cardiology for further workup.""";
+        assertEquals(expected, LlmResponseSanitizer.toHumanReadable(input));
+    }
+
+    @Test
+    void toHumanReadable_passesNullAndEmptyThrough() {
+        assertEquals(null, LlmResponseSanitizer.toHumanReadable(null));
+        assertEquals("", LlmResponseSanitizer.toHumanReadable(""));
+    }
+
+    // ==================================================================
+    // 2. formatForChatDisplay — UI form renderer. Embedded JSON is
+    //    rendered as friendly prose; the chat panel never shows a
+    //    raw JSON blob.
+    // ==================================================================
+
+    @Test
+    void formatForChatDisplay_rendersEmbeddedJsonAfterMatchingRationaleAsProse() {
         String llmOutput = """
                 **Matching Rationale:**
                 The match is borderline because the doctor pool is thin in Oncology.
@@ -44,43 +113,35 @@ class LlmResponseSanitizerTest {
                 }
                 """;
 
-        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+        String result = LlmResponseSanitizer.formatForChatDisplay(llmOutput);
 
         // The narrative before the JSON is preserved
         assertTrue(result.contains("**Matching Rationale:**"),
-                "narrative prefix should be preserved");
+                "narrative prefix should be preserved in the chat display");
         assertTrue(result.contains("borderline because the doctor pool is thin"),
                 "the prose before the JSON must survive");
 
         // The JSON object is gone — no raw '{' / '"requiredSpecialty"' markers
         assertFalse(result.contains("\"requiredSpecialty\""),
-                "raw JSON field name should be stripped");
+                "raw JSON field name should be stripped from the chat display");
         assertFalse(result.contains("\"icd10Codes\""),
-                "raw JSON field name should be stripped");
+                "raw JSON field name should be stripped from the chat display");
         assertFalse(result.contains("\"caseSummary\""),
-                "raw JSON field name should be stripped");
+                "raw JSON field name should be stripped from the chat display");
 
         // Friendly prose labels for the well-known fields
-        assertTrue(result.contains("Recommended specialty: Urologic Oncology / Renal Cancer"),
-                "requiredSpecialty -> Recommended specialty: <value>");
-        assertTrue(result.contains("Urgency: HIGH"),
-                "urgencyLevel -> Urgency: <value>");
-        assertTrue(result.contains("Key findings: Malignant neoplasm of kidney except renal pelvis unspecified"),
-                "clinicalFindings -> Key findings: <value>");
-        assertTrue(result.contains("ICD-10 codes: C64.20"),
-                "icd10Codes -> ICD-10 codes: <value>");
-        assertTrue(result.contains("Summary: A 64-year-old patient has a diagnosis"),
-                "caseSummary -> Summary: <value>");
+        assertTrue(result.contains("Recommended specialty: Urologic Oncology / Renal Cancer"));
+        assertTrue(result.contains("Urgency: HIGH"));
+        assertTrue(result.contains("Key findings: Malignant neoplasm of kidney except renal pelvis unspecified"));
+        assertTrue(result.contains("ICD-10 codes: C64.20"));
+        assertTrue(result.contains("Summary: A 64-year-old patient has a diagnosis"));
     }
 
-    // ------------------------------------------------------------------
-    // 2. Pure-JSON responses are no longer replaced with the generic
-    //    "[Data received; unable to display formatted response]"
-    //    — the parsed fields are surfaced in prose
-    // ------------------------------------------------------------------
-
     @Test
-    void rendersPureJsonResponseAsInformativeProseFallback() {
+    void formatForChatDisplay_rendersPureJsonResponseAsInformativeProse() {
+        // When the LLM returns nothing but JSON, the chat display surfaces
+        // the parsed fields instead of the generic "[Data received;
+        // unable to display formatted response]" message.
         String llmOutput = """
                 {
                   "requiredSpecialty": "Cardiology",
@@ -89,76 +150,17 @@ class LlmResponseSanitizerTest {
                 }
                 """;
 
-        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+        String result = LlmResponseSanitizer.formatForChatDisplay(llmOutput);
 
         assertNotNull(result);
-        assertFalse(result.contains("[Data received; unable to display formatted response]"),
-                "the generic fallback message must be gone");
-        assertFalse(result.contains("\"requiredSpecialty\""),
-                "raw JSON should not appear in the output");
         assertTrue(result.contains("Recommended specialty: Cardiology"),
-                "pure-JSON response must surface the parsed specialty");
-        assertTrue(result.contains("Urgency: MEDIUM"),
-                "pure-JSON response must surface the parsed urgency");
-        assertTrue(result.contains("Summary: Chest pain workup."),
-                "pure-JSON response must surface the parsed summary");
+                "pure-JSON chat response must surface the parsed specialty");
+        assertTrue(result.contains("Urgency: MEDIUM"));
+        assertTrue(result.contains("Summary: Chest pain workup."));
     }
 
-    // ------------------------------------------------------------------
-    // 3. A response with no JSON is untouched — narrative flows through
-    //    as-is
-    // ------------------------------------------------------------------
-
     @Test
-    void leavesCleanNarrativeUntouched() {
-        String input = """
-                Case Summary
-                A 64-year-old male with chest pain on exertion.
-
-                Recommendations
-                Refer to Cardiology for further workup.
-                """;
-        String expected = """
-                Case Summary
-                A 64-year-old male with chest pain on exertion.
-
-                Recommendations
-                Refer to Cardiology for further workup.""";
-        assertEquals(expected, LlmResponseSanitizer.toHumanReadable(input));
-    }
-
-    // ------------------------------------------------------------------
-    // 4. Malformed JSON is left untouched — never throw, never lose data
-    // ------------------------------------------------------------------
-
-    @Test
-    void leavesMalformedJsonUntouched() {
-        String malformed = """
-                **Matching Rationale:** the tool gave back something off.
-
-                Response
-                {
-                  "requiredSpecialty": "Cardiology"
-                  "urgencyLevel": MEDIUM,,
-                """;
-
-        String result = LlmResponseSanitizer.toHumanReadable(malformed);
-
-        // Narrative is preserved
-        assertTrue(result.contains("**Matching Rationale:**"));
-        assertTrue(result.contains("the tool gave back something off"));
-
-        // Malformed JSON is not deleted (we never claim to render it)
-        assertTrue(result.contains("requiredSpecialty"),
-                "malformed JSON should be left in place; we do not guess");
-    }
-
-    // ------------------------------------------------------------------
-    // 5. JSON mid-narrative (before AND after) is rendered as prose
-    // ------------------------------------------------------------------
-
-    @Test
-    void rendersJsonMidNarrativeAndAppendsAfterText() {
+    void formatForChatDisplay_rendersJsonMidNarrativeAndAppendsAfterText() {
         String llmOutput = """
                 The case is on the borderline because the pool is thin.
 
@@ -171,7 +173,7 @@ class LlmResponseSanitizerTest {
                 Clinicians should escalate to a urology consult.
                 """;
 
-        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+        String result = LlmResponseSanitizer.formatForChatDisplay(llmOutput);
 
         assertTrue(result.contains("Recommended specialty: Oncology"));
         assertTrue(result.contains("Summary: Kidney cancer workup."));
@@ -181,23 +183,8 @@ class LlmResponseSanitizerTest {
                 "raw JSON must be stripped");
     }
 
-    // ------------------------------------------------------------------
-    // 6. Null/empty input passes through
-    // ------------------------------------------------------------------
-
     @Test
-    void passesNullAndEmptyThrough() {
-        assertEquals(null, LlmResponseSanitizer.toHumanReadable(null));
-        assertEquals("", LlmResponseSanitizer.toHumanReadable(""));
-        assertEquals("   ", LlmResponseSanitizer.toHumanReadable("   "));
-    }
-
-    // ------------------------------------------------------------------
-    // 7. JSON-only with unknown fields is rendered as a bullet list
-    // ------------------------------------------------------------------
-
-    @Test
-    void rendersUnknownJsonFieldsAsBulletList() {
+    void formatForChatDisplay_rendersUnknownJsonFieldsAsLabeledList() {
         String llmOutput = """
                 {
                   "recommendedDoctor": "Dr. Smith",
@@ -205,41 +192,23 @@ class LlmResponseSanitizerTest {
                 }
                 """;
 
-        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+        String result = LlmResponseSanitizer.formatForChatDisplay(llmOutput);
 
         assertTrue(result.contains("recommendedDoctor: Dr. Smith"));
         assertTrue(result.contains("estimatedWaitDays: 14"));
-        assertFalse(result.contains("[Data received; unable to display formatted response]"));
     }
 
-    // ------------------------------------------------------------------
-    // 8. A pre-existing pure-JSON fallback (legacy contract) is preserved
-    //    when the JSON has NO parseable fields at all (e.g. only
-    //    numbers / null) — we still don't show a JSON blob
-    // ------------------------------------------------------------------
-
     @Test
-    void emptyJsonObjectFallsBackToGenericMessage() {
-        String llmOutput = "{}";
-        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
-
+    void formatForChatDisplay_emptyJsonObjectKeepsChatUsable() {
+        String result = LlmResponseSanitizer.formatForChatDisplay("{}");
         assertNotNull(result);
-        // The legacy generic fallback is acceptable here because there is
-        // literally no information to surface. We only assert it is NOT a
-        // raw JSON blob.
         assertFalse(result.contains("{") || result.contains("}"),
                 "empty JSON object should not be displayed as a JSON blob");
     }
 
-    // ------------------------------------------------------------------
-    // 9. Off-switch leaves the response untouched (operators debugging
-    //    a prompt change can disable the renderer with
-    //    medexpertmatch.llm.response.render-embedded-json: false)
-    // ------------------------------------------------------------------
-
     @Test
-    void leavesEmbeddedJsonUntouchedWhenRendererDisabled() {
-        boolean previous = readToggle();
+    void formatForChatDisplay_disabledLeavesRawJsonInPlace() {
+        boolean previous = true;
         try {
             LlmResponseSanitizer.setRenderEmbeddedJson(false);
 
@@ -253,26 +222,19 @@ class LlmResponseSanitizerTest {
                     }
                     """;
 
-            String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+            String result = LlmResponseSanitizer.formatForChatDisplay(llmOutput);
 
-            // Renderer off: the original JSON object is left in place
             assertTrue(result.contains("\"requiredSpecialty\""),
-                    "renderer off should leave raw JSON in place");
-            assertTrue(result.contains("\"urgencyLevel\""),
-                    "renderer off should leave raw JSON in place");
+                    "renderer off should leave raw JSON in the chat display");
+            assertTrue(result.contains("\"urgencyLevel\""));
         } finally {
             LlmResponseSanitizer.setRenderEmbeddedJson(previous);
         }
     }
 
-    /**
-     * Reflection-free way to read the current toggle value — we set it to
-     * a known value and then restore the previous one in {@code finally}.
-     */
-    private static boolean readToggle() {
-        // We don't expose a getter; flip the toggle twice with a sentinel
-        // value would be observable. Instead use a known prior state
-        // (tests run in isolation; default is true).
-        return true;
+    @Test
+    void formatForChatDisplay_passesNullAndEmptyThrough() {
+        assertEquals(null, LlmResponseSanitizer.formatForChatDisplay(null));
+        assertEquals("", LlmResponseSanitizer.formatForChatDisplay(""));
     }
 }

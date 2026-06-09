@@ -95,7 +95,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
 | M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
 | M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
-| M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, server-side in `LlmResponseSanitizer` |
+| M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, **UI path only** (`formatForChatDisplay`); data path (`toHumanReadable`) kept untouched so internal consumers still see the original JSON |
 
 ## Creating a New Plan
 
