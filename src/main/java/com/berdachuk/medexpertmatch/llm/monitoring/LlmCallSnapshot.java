@@ -138,6 +138,32 @@ public record LlmCallSnapshot(
         return formatCompactMessage();
     }
 
+    /**
+     * Single source of truth for the one-line log format used by the
+     * standard log file (M73). Includes the operation, the latency, the
+     * prompt / completion token counts, the cache hit flag, and the
+     * cache source. Format:
+     * {@code "LLM usage <clientType> <operation> latency=<ms>ms in=<n> out=<n> cache_hit=<bool> cache_source=<source>"}.
+     */
+    public String formatLogLine() {
+        StringBuilder sb = new StringBuilder("LLM usage ")
+                .append(clientType.name())
+                .append(' ')
+                .append(operation.uiLabel())
+                .append(" latency=").append(latencyMs).append("ms");
+        if (promptTokens != null) {
+            sb.append(" in=").append(promptTokens);
+        }
+        if (completionTokens != null) {
+            sb.append(" out=").append(completionTokens);
+        }
+        sb.append(" cache_hit=").append(cacheHit);
+        if (cacheSource != null) {
+            sb.append(" cache_source=").append(cacheSource);
+        }
+        return sb.toString();
+    }
+
     public String formatHarnessDetails() {
         StringBuilder sb = new StringBuilder();
         if (promptTokens != null) {

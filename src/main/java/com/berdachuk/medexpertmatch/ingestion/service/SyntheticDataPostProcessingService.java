@@ -42,4 +42,30 @@ public interface SyntheticDataPostProcessingService {
      * Rebuilds the graph representation from relational data.
      */
     void buildGraph();
+
+    /**
+     * M73: walks the SQL doctor table and ensures every
+     * {@code (d:Doctor)-[:SPECIALIZES_IN]->(s:MedicalSpecialty)}
+     * edge implied by {@code d.specialties} exists in the graph.
+     * Idempotent; safe to call on a healthy graph.
+     *
+     * @return summary of what was processed; never {@code null}
+     */
+    ReconcileReport reconcileSpecialtyGraph();
+
+    /**
+     * Summary of a {@link #reconcileSpecialtyGraph()} run.
+     *
+     * @param processed         number of (doctor, specialty) pairs that were
+     *                          passed to the graph builder (either newly
+     *                          created or no-op due to MERGE idempotency)
+     * @param doctorsProcessed  number of doctors scanned in this run
+     * @param doctors           distinct doctor IDs that were touched
+     * @param specialties       distinct specialty names that were touched
+     */
+    record ReconcileReport(int processed,
+                           int doctorsProcessed,
+                           List<String> doctors,
+                           List<String> specialties) {
+    }
 }

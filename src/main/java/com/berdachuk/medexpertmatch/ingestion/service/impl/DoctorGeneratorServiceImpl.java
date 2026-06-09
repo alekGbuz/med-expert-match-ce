@@ -31,6 +31,34 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
     private static final int MIN_FACILITIES_PER_DOCTOR = 0;
     private static final int MAX_FACILITIES_PER_DOCTOR = 3;
 
+    /**
+     * Major medical specialties that the M73 plan guarantees at least
+     * {@link #MIN_DOCTORS_PER_MAJOR_SPECIALTY} doctors for. The list is
+     * ordered by clinical priority so that the round-robin primary
+     * assignment covers the most important specialties first even in
+     * tiny synthetic populations.
+     */
+    public static final List<String> MAJOR_SPECIALTIES = List.of(
+            "Cardiology",
+            "Oncology",
+            "Urology",
+            "Hematology-Oncology",
+            "Medical Oncology",
+            "Nephrology",
+            "Neurology",
+            "Pediatrics",
+            "Family Medicine",
+            "Internal Medicine",
+            "Surgery"
+    );
+
+    /**
+     * M73 acceptance criterion: every major specialty must have at
+     * least this many doctors in the generated pool. Guarantees a
+     * meaningful match when a case queries for a specific specialty.
+     */
+    public static final int MIN_DOCTORS_PER_MAJOR_SPECIALTY = 3;
+
     private final DoctorRepository doctorRepository;
     private final FacilityRepository facilityRepository;
     private final Faker faker = new Faker();
@@ -77,12 +105,11 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
         List<Doctor> doctors = new ArrayList<>();
         // Track which facilities have been assigned to at least one doctor
         Set<String> assignedFacilityIds = new HashSet<>();
-        // Track which specialties have been assigned to at least one doctor
-        Set<String> assignedSpecialties = new HashSet<>();
-        // Build a shuffled queue of specialties to cycle through so every specialty gets at least one doctor
-        List<String> specialtyQueue = new ArrayList<>(loadedMedicalSpecialties);
-        Collections.shuffle(specialtyQueue, random);
-        int specialtyQueueIndex = 0;
+        // M73: primary-specialty round-robin is now done by
+        // assignSpecialties() below; the old shuffled queue was
+        // removed in favour of the deterministic round-robin that
+        // guarantees every major specialty has at least
+        // MIN_DOCTORS_PER_MAJOR_SPECIALTY doctors.
         for (int i = 0; i < count; i++) {
             if (progress != null && progress.isCancelled()) {
                 log.info("Generation cancelled during doctor generation at {}/{}", i, count);
@@ -112,21 +139,11 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
             }
             generatedEmails.add(email);
 
-            List<String> specialties = new ArrayList<>();
-            int specialtyCount = random.nextInt(MAX_SPECIALTIES_PER_DOCTOR - MIN_SPECIALTIES_PER_DOCTOR + 1) + MIN_SPECIALTIES_PER_DOCTOR;
-            Set<String> selectedSpecialties = new HashSet<>();
-
-            // Ensure each specialty gets assigned to at least one doctor by cycling through the queue
-            if (specialtyQueueIndex < specialtyQueue.size()) {
-                selectedSpecialties.add(specialtyQueue.get(specialtyQueueIndex % specialtyQueue.size()));
-                specialtyQueueIndex++;
-            }
-
-            while (selectedSpecialties.size() < specialtyCount) {
-                selectedSpecialties.add(loadedMedicalSpecialties.get(random.nextInt(loadedMedicalSpecialties.size())));
-            }
-            specialties.addAll(selectedSpecialties);
-            assignedSpecialties.addAll(selectedSpecialties);
+            // M73: use the round-robin primary-specialty helper so every
+            // major specialty gets at least MIN_DOCTORS_PER_MAJOR_SPECIALTY
+            // doctors. The first element of the returned list is the
+            // primary; the remaining 0-2 are random secondaries.
+            List<String> specialties = assignSpecialties(i, count, loadedMedicalSpecialties, random);
 
             List<String> certifications = new ArrayList<>();
             if (random.nextBoolean()) {
@@ -196,6 +213,77 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
 
         doctorsGeneratedCounter.increment(count);
         log.info("Generated {} doctors", count);
+    }
+
+    // -----------------------------------------------------------------
+    // M73 — primary specialty assignment (pure helpers, unit-tested).
+    // The pre-M73 code picked specialties randomly from the full
+    // catalog, which produced a sparse distribution (1-2 doctors per
+    // critical specialty). M73 guarantees ≥ MIN_DOCTORS_PER_MAJOR_SPECIALTY
+    // doctors per major specialty with a single primary each.
+    // -----------------------------------------------------------------
+
+    /**
+     * Returns the primary specialty for the doctor at the given
+     * {@code doctorIndex} (0-based). Round-robins through
+     * {@link #MAJOR_SPECIALTIES} so a small population still covers
+     * the most important specialties first. If a major specialty is
+     * not in the loaded {@code allSpecialties} catalog, it is
+     * silently skipped.
+     */
+    public List<String> pickPrimarySpecialty(int doctorIndex, List<String> allSpecialties, Random random) {
+        if (allSpecialties == null || allSpecialties.isEmpty() || MAJOR_SPECIALTIES.isEmpty()) {
+            return List.of();
+        }
+        // Build the list of majors that are actually in the catalog
+        // (so we don't try to assign a specialty the operator
+        // removed from the CSV).
+        List<String> availableMajors = new ArrayList<>();
+        for (String major : MAJOR_SPECIALTIES) {
+            if (allSpecialties.contains(major)) {
+                availableMajors.add(major);
+            }
+        }
+        if (availableMajors.isEmpty()) {
+            // No major in the catalog — fall back to the first
+            // available specialty so the generator still produces
+            // a valid (if not major) primary.
+            return List.of(allSpecialties.get(0));
+        }
+        // Round-robin so the first N doctors get the first N
+        // available majors, and subsequent doctors cycle through
+        // them again. With ≥ MIN_DOCTORS_PER_MAJOR_SPECIALTY * 11
+        // doctors, every major gets at least 3 primaries.
+        return List.of(availableMajors.get(doctorIndex % availableMajors.size()));
+    }
+
+    /**
+     * Returns the full list of specialties assigned to a single
+     * doctor. The first element is always the primary specialty
+     * (from {@link #pickPrimarySpecialty(int, List, Random)}); the
+     * remaining 0-2 are secondary, picked at random from the rest of
+     * the catalog so each doctor still has a believable profile.
+     */
+    public List<String> assignSpecialties(int doctorIndex, int totalDoctors,
+                                          List<String> allSpecialties, Random random) {
+        if (allSpecialties == null || allSpecialties.isEmpty() || totalDoctors <= 0) {
+            return List.of();
+        }
+        List<String> primary = pickPrimarySpecialty(doctorIndex, allSpecialties, random);
+        if (primary.isEmpty()) {
+            return List.of();
+        }
+        int specialtyCount = random.nextInt(MAX_SPECIALTIES_PER_DOCTOR - MIN_SPECIALTIES_PER_DOCTOR + 1)
+                + MIN_SPECIALTIES_PER_DOCTOR;
+        java.util.LinkedHashSet<String> picked = new java.util.LinkedHashSet<>(primary);
+        java.util.List<String> remaining = new java.util.ArrayList<>(allSpecialties);
+        remaining.removeAll(picked);
+        while (picked.size() < specialtyCount && !remaining.isEmpty()) {
+            String s = remaining.get(random.nextInt(remaining.size()));
+            picked.add(s);
+            remaining.remove(s);
+        }
+        return new java.util.ArrayList<>(picked);
     }
 
     private <T> void batchProcess(

@@ -69,6 +69,9 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
         catalogState.getCachedIcd10Codes().clear();
         catalogState.getCachedSpecialties().clear();
         catalogState.getCachedProcedures().clear();
+        // M73: clear the primary-specialty coverage so a stale
+        // snapshot from a previous run cannot mislead operators.
+        catalogState.getPrimarySpecialtyCoverage().clear();
         log.debug("Cleared result caches");
         log.info("Synthetic data cleared");
     }
@@ -182,10 +185,86 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
         try {
             graphBuilderService.buildGraph();
             log.info("Graph building completed successfully");
+            // M73: re-walk the doctor table and ensure every
+            // (doctor, specialty) pair has a SPECIALIZES_IN edge in
+            // the graph. The build above may have dropped edges if
+            // a doctor was added after the build or if a specialty
+            // was missing from the catalog at build time.
+            ReconcileReport reconcile = reconcileSpecialtyGraph();
+            log.info("Post-build reconcile: processed={} doctors={}",
+                    reconcile.processed(), reconcile.doctorsProcessed());
         } catch (DataAccessException e) {
             log.error("Database error building graph: {}", e.getMessage(), e);
         } catch (RuntimeException e) {
             log.error("Unexpected error building graph: {}", e.getMessage(), e);
         }
     }
+
+    /**
+     * Walks the SQL doctor table and ensures every
+     * {@code (d:Doctor)-[:SPECIALIZES_IN]->(s:MedicalSpecialty)}
+     * edge implied by {@code d.specialties} exists in the graph. The
+     * underlying {@code MedicalGraphBuilderService.createSpecializesInRelationship}
+     * uses a {@code MERGE} Cypher so the operation is idempotent —
+     * running it twice produces the same graph state with no errors.
+     * <p>
+     * M73 motivation: the pre-M73 {@code buildGraph()} path
+     * occasionally missed edges when a doctor was added after the
+     * initial graph build (e.g. synthetic data regenerated while the
+     * app was up) or when a specialty was missing from the catalog.
+     * The Kory Terry gap (Oncology in SQL but no graph edge) was the
+     * triggering incident.
+     *
+     * @return summary of what was processed; never {@code null}.
+     */
+    @Override
+    public ReconcileReport reconcileSpecialtyGraph() {
+        List<String> doctorIds = doctorRepository.findAllIds(0);
+        final int[] processed = {0};
+        final java.util.Set<String> touchedDoctors = new java.util.LinkedHashSet<>();
+        final java.util.Set<String> touchedSpecialties = new java.util.LinkedHashSet<>();
+        // M73: track primary specialty coverage for the catalog state
+        final java.util.Map<String, Integer> coverage = new java.util.LinkedHashMap<>();
+        for (String doctorId : doctorIds) {
+            doctorRepository.findById(doctorId).ifPresent(doctor -> {
+                if (doctor.specialties() == null || doctor.specialties().isEmpty()) {
+                    return;
+                }
+                for (String specialty : doctor.specialties()) {
+                    if (specialty == null || specialty.isBlank()) {
+                        continue;
+                    }
+                    try {
+                        graphBuilderService.createSpecializesInRelationship(doctorId, specialty);
+                        processed[0]++;
+                        touchedDoctors.add(doctorId);
+                        touchedSpecialties.add(specialty);
+                        coverage.merge(specialty, 1, Integer::sum);
+                    } catch (RuntimeException e) {
+                        log.warn("Reconcile: could not create SPECIALIZES_IN edge for doctor={} specialty='{}': {}",
+                                doctorId, specialty, e.getMessage());
+                    }
+                }
+            });
+        }
+        // M73: publish the specialty coverage so the synthetic-data
+        // state endpoint can report it.
+        catalogState.setPrimarySpecialtyCoverage(coverage);
+        log.info("Reconciled specialty graph: {} (doctor, specialty) pairs across {} doctors",
+                processed[0], doctorIds.size());
+        return new ReconcileReport(processed[0], doctorIds.size(),
+                new java.util.ArrayList<>(touchedDoctors),
+                new java.util.ArrayList<>(touchedSpecialties));
+    }
+
+    /**
+     * Summary of a {@link #reconcileSpecialtyGraph()} run.
+     *
+     * @param processed         number of (doctor, specialty) pairs that were
+     *                          passed to the graph builder (either newly
+     *                          created or no-op due to MERGE idempotency)
+     * @param doctorsProcessed  number of doctors scanned in this run
+     */
+    // The ReconcileReport record is declared on the service interface
+    // (see SyntheticDataPostProcessingService.ReconcileReport).
 }

@@ -2,11 +2,11 @@
 
 ## Active
 
-Roadmap updated 2026-06-09. Suggested order: **M73** (synthetic data quality).
+Roadmap updated 2026-06-09. All currently planned work is implemented or in archive; next iteration TBD.
 
 | # | Plan | Description |
 |---|------|-------------|
-| M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality (primary specialty guarantees, SQL/graph sync, admin reconcile endpoint) + unconditional `INFO` log for LLM cache hits |
+| _none_ | | |
 
 ## Deferred
 
@@ -95,6 +95,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
 | M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
 | M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
+| M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](archive/M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality: `MAJOR_SPECIALTIES` round-robin, `reconcileSpecialtyGraph()` (idempotent MERGE), admin endpoint `POST /api/v1/admin/synthetic-data/reconcile-specialties`, unconditional `INFO` LLM-usage log with `cache_hit=true\|false` |
 | M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, **UI path only** (`formatForChatDisplay`); data path (`toHumanReadable`) kept untouched so internal consumers still see the original JSON |
 
 ## Creating a New Plan

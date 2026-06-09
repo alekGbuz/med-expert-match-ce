@@ -57,11 +57,13 @@ public class LlmUsageTelemetryService {
         logStreamService.logLlmUsage(sessionId, snapshot.formatHarnessDetails());
         eventPublisher.publishEvent(new LlmCallCompletedEvent(snapshot));
 
-        if (log.isDebugEnabled() && !snapshot.cacheHit()) {
-            log.debug("LLM usage {} {} latency={}ms in={} out={}",
-                    clientType, snapshot.operation(), snapshot.latencyMs(),
-                    promptTokens, completionTokens);
-        }
+        // M73: unconditional INFO log line so every LLM call (live or
+        // cached) shows up in the standard log file. The pre-M73 code
+        // only logged live calls at DEBUG level, which made it
+        // impossible to tell from `./logs/app/med-expert-match.log`
+        // whether a call hit the LLM provider or was served from the
+        // in-process Caffeine cache.
+        log.info("{}", snapshot.formatLogLine());
     }
 
     public LlmUsageSessionRollup sessionRollup(String sessionId) {

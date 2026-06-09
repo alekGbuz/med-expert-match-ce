@@ -40,4 +40,14 @@ public class SyntheticDataCatalogState {
     private Map<String, String> icd10CodeDisplays = new HashMap<>();
     private Map<String, String> encounterClassDisplays = new HashMap<>();
     private List<String> extendedMedicalSpecialties = new ArrayList<>();
+
+    /**
+     * M73: number of doctors per major specialty. Populated by
+     * {@code SyntheticDataPostProcessingService.reconcileSpecialtyGraph()}
+     * and exposed via the synthetic-data state endpoint so operators
+     * can see whether the M73 minimum ({@code MIN_DOCTORS_PER_MAJOR_SPECIALTY = 3})
+     * is satisfied. Read-only after the catalog is loaded; cleared on
+     * {@code clearTestData()}.
+     */
+    private Map<String, Integer> primarySpecialtyCoverage = new LinkedHashMap<>();
 }

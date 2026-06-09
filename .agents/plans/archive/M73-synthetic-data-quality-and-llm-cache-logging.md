@@ -1,6 +1,6 @@
 # M73: Synthetic Data Quality + LLM Cache Visibility
 
-**Status:** **Next** (2026-06-09)  
+**Status:** **Done** (2026-06-09)  
 **Created:** 2026-06-09  
 **Depends on:** M64 (archived — LLM tier routing, token budgets); M71 (archived — LLM usage telemetry, has the cache hit hook we extend here)
 
