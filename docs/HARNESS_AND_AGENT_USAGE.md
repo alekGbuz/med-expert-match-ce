@@ -96,7 +96,8 @@ flowchart TD
     VR -->|pass| CP
     CP --> HC
     HC -->|yes| HARNESS_CHECKPOINT[HarnessWorkflowRun<br/>NEEDS_HUMAN]
-    HC -->|no| IN --> PG
+    HC -->|no| IN
+    IN --> PG
     MT --> RET
     RT --> RET
     EV --> RET
