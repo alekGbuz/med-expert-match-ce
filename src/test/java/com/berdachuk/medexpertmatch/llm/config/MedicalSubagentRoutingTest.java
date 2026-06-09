@@ -1,11 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
-import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springaicommunity.agent.tools.AskUserQuestionTool;

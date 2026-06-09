@@ -6,14 +6,14 @@ import com.berdachuk.medexpertmatch.evidence.service.PubMedService;
 import com.berdachuk.medexpertmatch.llm.tools.support.AgentToolSessionSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public class EvidenceAgentTools {
 
     public EvidenceAgentTools(
             PubMedService pubmedService,
-            @Qualifier("caseAnalysisChatClient") ChatClient medGemmaChatClient,
+            @Qualifier("caseAnalysisChatClient") @Lazy ChatClient medGemmaChatClient,
             LogStreamService logStreamService,
             @Qualifier("clinicalGuidelinesSearchPromptTemplate") PromptTemplate clinicalGuidelinesSearchPromptTemplate) {
         this.pubmedService = pubmedService;

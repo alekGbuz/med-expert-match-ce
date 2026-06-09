@@ -2,12 +2,8 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.config.CacheConfig;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
-import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
-import com.berdachuk.medexpertmatch.core.util.LlmClientType;
-import com.berdachuk.medexpertmatch.core.util.LlmOperation;
-import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
-import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
-import com.berdachuk.medexpertmatch.core.util.LlmUsageContextSupport;
+import com.berdachuk.medexpertmatch.core.util.*;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessContextKind;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessContextSummarizer;
@@ -17,17 +13,18 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
+import java.net.ConnectException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.net.ConnectException;
 
 /**
  * Shared LLM support for workflow-oriented agent services.
@@ -310,11 +307,14 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     private String callMedGemmaOnce(String systemPrompt, String userPrompt) {
-        return medGemmaChatClient.prompt()
+        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+        var promptSpec = medGemmaChatClient.prompt()
                 .system(systemPrompt)
-                .user(userPrompt)
-                .call()
-                .content();
+                .user(userPrompt);
+        if (sessionId != null && !sessionId.isBlank()) {
+            promptSpec = promptSpec.advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId));
+        }
+        return promptSpec.call().content();
     }
 
     private static String formatInterpretationFallback(String toolResults, String caseAnalysis) {

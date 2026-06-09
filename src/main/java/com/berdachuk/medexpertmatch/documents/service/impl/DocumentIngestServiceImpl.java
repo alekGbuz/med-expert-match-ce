@@ -1,13 +1,12 @@
 package com.berdachuk.medexpertmatch.documents.service.impl;
 
-import com.berdachuk.medexpertmatch.chunking.service.impl.ChunkerFactory;
 import com.berdachuk.medexpertmatch.chunking.domain.DocumentChunk;
 import com.berdachuk.medexpertmatch.chunking.repository.ChunkRepository;
+import com.berdachuk.medexpertmatch.chunking.service.impl.ChunkerFactory;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.documents.DocumentIngestApi;
 import com.berdachuk.medexpertmatch.documents.domain.SourceDocumentEntity;
 import com.berdachuk.medexpertmatch.documents.repository.SourceDocumentRepository;
-import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

@@ -1,10 +1,10 @@
 package com.berdachuk.medexpertmatch.core.config;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.slf4j.MDC;
 
 import static org.junit.jupiter.api.Assertions.*;
 

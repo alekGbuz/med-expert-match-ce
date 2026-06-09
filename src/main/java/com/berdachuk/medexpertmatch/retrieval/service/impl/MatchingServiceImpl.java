@@ -71,6 +71,35 @@ public class MatchingServiceImpl implements MatchingService {
         MedicalCase medicalCase = medicalCaseRepository.findById(normalizedCaseId)
                 .orElseThrow(() -> new IllegalArgumentException("Medical case not found: " + caseId + " (normalized: " + normalizedCaseId + ")"));
 
+        // Defensive validation: if the case has no real medical data on its own fields,
+        // try to extend the request context from related sources (abstract, similar cases
+        // in the DB) before refusing the match. Without this, the graph returns default
+        // 0.30 scores for every doctor and the vector search matches against whatever
+        // abstract text exists, producing random, low-confidence results.
+        if (hasInsufficientMedicalData(medicalCase)) {
+            log.warn("Case {} has no real medical data (chiefComplaint/icd10Codes/currentDiagnosis are all blank or invalid); attempting to extend context from related cases",
+                    normalizedCaseId);
+            String extendedContext = buildExtendedContext(medicalCase);
+            if (extendedContext != null) {
+                // Return an empty match list with the extended context surfaced in the
+                // response metadata. The caller (LLM harness) can either re-run the match
+                // with the extended context injected, or present the context to the user
+                // so they can supply the missing data.
+                log.info("Extended context for case {}: '{}'", normalizedCaseId, extendedContext);
+                throw new IllegalStateException(
+                        "Insufficient medical data on case " + caseId
+                                + " for matching, but related context was found: '" + extendedContext
+                                + "'. Please re-run the match with the extended context "
+                                + "(e.g. pass the borrowed chief complaint in userFocus or update the case).");
+            }
+            log.warn("No extended context available for case {}; refusing match", normalizedCaseId);
+            throw new IllegalStateException(
+                    "Insufficient medical data for case " + caseId
+                            + ": chiefComplaint, currentDiagnosis, and icd10Codes are all blank or invalid, "
+                            + "and no related cases were found to extend the context. "
+                            + "Please provide a real chief complaint, diagnosis, or ICD-10 code to enable matching.");
+        }
+
         // Find candidate doctors based on options
         List<Doctor> candidates = findCandidateDoctors(medicalCase, options);
 
@@ -320,5 +349,125 @@ public class MatchingServiceImpl implements MatchingService {
                 facility.locationLongitude()
         );
         return distanceKm != null && distanceKm <= maxDistanceKm;
+    }
+
+    /**
+     * Returns true when a case has no real medical data to match against.
+     * A case is considered insufficient when ALL of the following are blank or
+     * non-medical (e.g. a MongoDB ObjectId stored by mistake):
+     * <ul>
+     *   <li>chiefComplaint is null/blank or matches a 24-char hex ObjectId</li>
+     *   <li>currentDiagnosis is null/blank or matches a 24-char hex ObjectId</li>
+     *   <li>icd10Codes is null/empty or every code is blank/looks like an ObjectId</li>
+     * </ul>
+     * In that situation the graph returns default 0.30 scores for every doctor and
+     * the vector search matches against whatever abstract text exists, producing
+     * random, low-confidence results.
+     */
+    private boolean hasInsufficientMedicalData(MedicalCase medicalCase) {
+        boolean chiefOk = isRealMedicalTerm(medicalCase.chiefComplaint());
+        boolean diagnosisOk = isRealMedicalTerm(medicalCase.currentDiagnosis());
+        boolean icdOk = medicalCase.icd10Codes() != null
+                && !medicalCase.icd10Codes().isEmpty()
+                && medicalCase.icd10Codes().stream().anyMatch(this::isRealMedicalTerm);
+        return !chiefOk && !diagnosisOk && !icdOk;
+    }
+
+    private boolean isRealMedicalTerm(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String trimmed = value.trim();
+        // Reject 24-char hex strings (MongoDB ObjectId shape) stored as text.
+        if (trimmed.length() == 24 && trimmed.matches("[0-9a-fA-F]{24}")) {
+            return false;
+        }
+        // Reject anything that contains no letters (a medical term must have letters).
+        return trimmed.chars().anyMatch(Character::isLetter);
+    }
+
+    /**
+     * Tries to build an extended medical context for a case whose own fields are blank.
+     * Strategy:
+     *  1. Mine the case's {@code symptoms}, {@code additionalNotes}, and {@code abstractText}
+     *     for any real medical term. Free text can still carry useful signal even when
+     *     structured fields are blank — but we reject obvious LLM "thought" blocks and
+     *     metadata echoes that just restate that the data is missing.
+     *  2. If that fails, look at other cases with the same {@code caseType} and borrow
+     *     the chief complaint of the first one that has real medical data.
+     *  3. Returns {@code null} if no usable context can be found.
+     */
+    String buildExtendedContext(MedicalCase medicalCase) {
+        String fromCaseText = firstMedicalTerm(medicalCase.symptoms(), medicalCase.additionalNotes(),
+                medicalCase.abstractText());
+        if (fromCaseText != null) {
+            return fromCaseText;
+        }
+        if (medicalCase.caseType() == null) {
+            return null;
+        }
+        try {
+            List<MedicalCase> sameType = medicalCaseRepository.findByCaseType(medicalCase.caseType().name(), 5);
+            for (MedicalCase other : sameType) {
+                if (other.id().equals(medicalCase.id())) {
+                    continue;
+                }
+                String otherChief = isRealMedicalTerm(other.chiefComplaint()) ? other.chiefComplaint() : null;
+                String otherDiag = isRealMedicalTerm(other.currentDiagnosis()) ? other.currentDiagnosis() : null;
+                String otherIcd = (other.icd10Codes() != null)
+                        ? other.icd10Codes().stream().filter(this::isRealMedicalTerm).findFirst().orElse(null)
+                        : null;
+                String borrowed = firstNonBlank(otherChief, otherDiag, otherIcd);
+                if (borrowed != null) {
+                    log.info("Borrowed medical context from sibling case {} ('{}') for case {}",
+                            other.id(), borrowed, medicalCase.id());
+                    return borrowed;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to query sibling cases for context extension on case {}: {}",
+                    medicalCase.id(), e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Returns the first non-blank / non-ObjectId / non-template-echo term found across
+     * the given free-text fields. Returns {@code null} if no real medical term is found.
+     */
+    private String firstMedicalTerm(String... fields) {
+        for (String f : fields) {
+            String cleaned = stripTemplateEcho(f);
+            if (isRealMedicalTerm(cleaned)) {
+                return cleaned.trim();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Strips common LLM "thought" / metadata-echo boilerplate that some legacy
+     * abstract fields contain (e.g. "&lt;unused94&gt;thought\nThe user wants a clinical
+     * case summary..."). Returns the original string when no boilerplate is detected.
+     */
+    private static String stripTemplateEcho(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.startsWith("<unused") || trimmed.toLowerCase().startsWith("thought")
+                || trimmed.toLowerCase().startsWith("the user wants")) {
+            return null;
+        }
+        return trimmed;
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String v : values) {
+            if (v != null && !v.isBlank()) {
+                return v;
+            }
+        }
+        return null;
     }
 }

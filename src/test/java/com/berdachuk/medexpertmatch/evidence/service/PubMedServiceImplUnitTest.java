@@ -4,13 +4,12 @@ import com.berdachuk.medexpertmatch.evidence.domain.PubMedArticle;
 import com.berdachuk.medexpertmatch.evidence.service.impl.PubMedServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestTemplate;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PubMedServiceImplUnitTest {
 

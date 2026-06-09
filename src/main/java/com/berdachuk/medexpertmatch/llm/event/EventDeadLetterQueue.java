@@ -1,13 +1,12 @@
 package com.berdachuk.medexpertmatch.llm.event;
 
+import org.springframework.stereotype.Component;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.springframework.stereotype.Component;
 
 @Component
 public class EventDeadLetterQueue {

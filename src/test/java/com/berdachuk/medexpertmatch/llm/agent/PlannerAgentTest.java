@@ -2,10 +2,8 @@ package com.berdachuk.medexpertmatch.llm.agent;
 
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
-import com.berdachuk.medexpertmatch.llm.event.ExecutionPlan;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.event.PlanReadyEvent;
-import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
@@ -16,9 +14,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.time.Instant;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

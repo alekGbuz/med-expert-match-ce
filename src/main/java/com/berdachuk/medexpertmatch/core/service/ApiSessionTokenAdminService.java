@@ -1,6 +1,5 @@
 package com.berdachuk.medexpertmatch.core.service;
 
-import com.berdachuk.medexpertmatch.core.domain.ApiSessionToken;
 import com.berdachuk.medexpertmatch.core.domain.ApiSessionTokenCreated;
 import com.berdachuk.medexpertmatch.core.domain.ApiSessionTokenView;
 import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;

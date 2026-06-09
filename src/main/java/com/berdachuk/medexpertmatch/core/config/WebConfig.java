@@ -1,8 +1,6 @@
 package com.berdachuk.medexpertmatch.core.config;
 
 import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
@@ -11,8 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.io.IOException;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {

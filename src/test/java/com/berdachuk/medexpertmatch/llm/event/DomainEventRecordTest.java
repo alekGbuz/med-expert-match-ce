@@ -1,12 +1,9 @@
 package com.berdachuk.medexpertmatch.llm.event;
 
-import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
-import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

@@ -1,12 +1,12 @@
 package com.berdachuk.medexpertmatch.core.health;
 
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import com.zaxxer.hikari.HikariDataSource;
-import com.zaxxer.hikari.HikariPoolMXBean;
 
 @Component("hikariPool")
 public class ConnectionLeakHealthIndicator implements HealthIndicator {

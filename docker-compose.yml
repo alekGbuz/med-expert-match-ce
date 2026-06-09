@@ -42,13 +42,25 @@ services:
     # Optional: mount custom skills to extend built-in ones (set MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY=/app/custom-skills)
     # volumes:
     #   - ./custom-skills:/app/custom-skills
+    # Mount app logs from the container to the host ./logs/app directory so they
+    # survive container restarts and can be tailed / archived from the host.
+    # MkDocs runs on the host (not in this container) and writes to ./logs/mkdocs.log.
+    volumes:
+      - ./logs/app:/app/logs
     environment:
       SPRING_PROFILES_ACTIVE: local,debug,docker-stack
+      SPRING_MAIN_ALLOW_CIRCULAR_REFERENCES: "true"
       # Database: postgres container exposes 5433 on host
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/medexpertmatch
       SPRING_DATASOURCE_USERNAME: medexpertmatch
       SPRING_DATASOURCE_PASSWORD: medexpertmatch
       SERVER_PORT: "8094"
+      # Persist app logs to /app/logs/med-expert-match.log (rotated by Spring Boot)
+      LOGGING_FILE_NAME: /app/logs/med-expert-match.log
+      LOGGING_FILE_MAX_SIZE: 50MB
+      LOGGING_FILE_MAX_HISTORY: 7
+      LOGGING_FILE_TOTAL_SIZE_CAP: 500MB
+      LOGGING_PATTERN_FILE: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
       # LLM: set OLLAMA_BASE_URL or per-service *_BASE_URL in .env (copy from .env.example).
       # Use the LAN IP of the machine running Ollama when it is not on this host (e.g. http://192.168.0.73:11434/v1).
       CHAT_PROVIDER: ${CHAT_PROVIDER:-openai}

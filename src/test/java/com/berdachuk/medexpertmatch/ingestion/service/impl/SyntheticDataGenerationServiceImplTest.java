@@ -1,13 +1,7 @@
 package com.berdachuk.medexpertmatch.ingestion.service.impl;
 
-import com.berdachuk.medexpertmatch.ingestion.service.ClinicalExperienceGeneratorService;
-import com.berdachuk.medexpertmatch.ingestion.service.DoctorGeneratorService;
-import com.berdachuk.medexpertmatch.ingestion.service.FacilityGeneratorService;
-import com.berdachuk.medexpertmatch.ingestion.service.MedicalCaseGeneratorService;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataCatalogState;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationProgress;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationService;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
+import com.berdachuk.medexpertmatch.ingestion.service.*;
 import com.berdachuk.medexpertmatch.medicalcoding.domain.Procedure;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;

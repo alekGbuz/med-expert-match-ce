@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.net.URI;
 
 @Slf4j

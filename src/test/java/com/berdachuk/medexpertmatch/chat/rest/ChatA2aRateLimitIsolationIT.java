@@ -1,7 +1,5 @@
 package com.berdachuk.medexpertmatch.chat.rest;
 
-import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
-import com.berdachuk.medexpertmatch.chat.service.RateLimitScope;
 import com.berdachuk.medexpertmatch.core.security.HeaderBasedUserContext;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import org.junit.jupiter.api.DisplayName;

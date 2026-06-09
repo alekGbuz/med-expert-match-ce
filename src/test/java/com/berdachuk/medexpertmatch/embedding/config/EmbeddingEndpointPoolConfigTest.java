@@ -1,19 +1,16 @@
 package com.berdachuk.medexpertmatch.embedding.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.berdachuk.medexpertmatch.embedding.multiendpoint.EmbeddingEndpointPool;
 import com.berdachuk.medexpertmatch.embedding.multiendpoint.EndpointState;
-import java.lang.reflect.Field;
-import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
+
+import java.lang.reflect.Field;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link EmbeddingEndpointPoolConfig} focused on the static URL

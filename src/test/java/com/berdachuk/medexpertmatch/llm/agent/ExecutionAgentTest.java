@@ -1,7 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.agent;
 
 import com.berdachuk.medexpertmatch.llm.event.ContextReadyEvent;
-import com.berdachuk.medexpertmatch.llm.event.ExecutionPlan;
 import com.berdachuk.medexpertmatch.llm.event.ResultsReadyEvent;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundle;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
@@ -17,12 +16,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class ExecutionAgentTest {
 

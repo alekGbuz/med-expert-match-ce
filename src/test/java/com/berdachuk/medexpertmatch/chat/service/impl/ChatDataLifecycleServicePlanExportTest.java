@@ -1,12 +1,11 @@
 package com.berdachuk.medexpertmatch.chat.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
-import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.service.HarnessPlanExportQuery;
-import com.berdachuk.medexpertmatch.llm.harness.HarnessPlanExportQueryImpl;
 import com.berdachuk.medexpertmatch.llm.harness.AgentPlanArtefact;
+import com.berdachuk.medexpertmatch.llm.harness.HarnessPlanExportQueryImpl;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowType;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;

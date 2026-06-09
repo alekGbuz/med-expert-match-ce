@@ -2,13 +2,13 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.harness.CaseAnalysisCompletedEvent;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentCaseAnalysisWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
-import com.berdachuk.medexpertmatch.llm.harness.CaseAnalysisCompletedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -84,12 +84,20 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
                 specialty = "general";
             }
 
+            String effectivePubmedQuery = pubmedQuery;
+            if (isLikelyObjectId(pubmedQuery)) {
+                log.warn("pubmedQuery appears to be an ObjectId ('{}'), using condition '{}' instead for PubMed search",
+                        pubmedQuery, condition);
+                effectivePubmedQuery = !condition.isBlank() && !isLikelyObjectId(condition)
+                        ? condition : "clinical case medical evidence";
+            }
+
             final int evidenceMaxResults = 3;
             log.info("Case analysis evidence: condition={}, specialty={}, pubmedQuery={}, maxResults={}",
-                    condition, specialty, pubmedQuery, evidenceMaxResults);
+                    condition, specialty, effectivePubmedQuery, evidenceMaxResults);
             logStreamService.sendLog(sessionId, "INFO", "Evidence retrieval", "Calling search_clinical_guidelines and query_pubmed");
             List<String> guidelines = evidenceAgentTools.search_clinical_guidelines(condition, specialty, evidenceMaxResults);
-            List<String> pubmedResults = evidenceAgentTools.query_pubmed(pubmedQuery, evidenceMaxResults);
+            List<String> pubmedResults = evidenceAgentTools.query_pubmed(effectivePubmedQuery, evidenceMaxResults);
             int pubmedArticleCount = pubmedResults.size();
             if (pubmedResults.size() == 1 && pubmedResults.get(0) != null && pubmedResults.get(0).startsWith("No articles found")) {
                 pubmedArticleCount = 0;
@@ -134,5 +142,12 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
             OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
+    }
+
+    private boolean isLikelyObjectId(String value) {
+        if (value == null || value.length() < 12) {
+            return false;
+        }
+        return value.matches("[0-9a-fA-F]{24}");
     }
 }

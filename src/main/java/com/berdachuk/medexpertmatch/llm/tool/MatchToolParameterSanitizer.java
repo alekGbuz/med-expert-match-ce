@@ -2,11 +2,7 @@ package com.berdachuk.medexpertmatch.llm.tool;
 
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Strips agent/skill tokens mistakenly passed as {@code preferredSpecialties} by tool-calling models.

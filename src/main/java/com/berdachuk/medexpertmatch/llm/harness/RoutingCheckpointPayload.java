@@ -1,7 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 import java.util.List;
-import java.util.Map;
 
 public record RoutingCheckpointPayload(
         String caseId,

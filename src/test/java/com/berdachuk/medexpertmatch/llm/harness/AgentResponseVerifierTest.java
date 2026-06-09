@@ -1,8 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 import com.berdachuk.medexpertmatch.doctor.domain.Doctor;
-import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.facility.domain.Facility;
+import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.berdachuk.medexpertmatch.retrieval.domain.FacilityMatch;
 import org.junit.jupiter.api.DisplayName;
@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AgentResponseVerifierTest {
 

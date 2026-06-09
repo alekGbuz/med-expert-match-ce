@@ -2,16 +2,15 @@ package com.berdachuk.medexpertmatch.web.controller;
 
 import com.berdachuk.medexpertmatch.llm.rest.MedicalAgentController;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
+import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
-import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
 
 import java.util.ArrayList;
 import java.util.HashMap;

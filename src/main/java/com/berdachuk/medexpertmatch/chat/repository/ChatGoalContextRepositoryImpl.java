@@ -1,13 +1,11 @@
 package com.berdachuk.medexpertmatch.chat.repository;
 
-import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
