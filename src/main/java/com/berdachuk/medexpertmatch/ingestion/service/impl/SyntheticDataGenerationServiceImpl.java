@@ -1,19 +1,13 @@
 package com.berdachuk.medexpertmatch.ingestion.service.impl;
 
-import com.berdachuk.medexpertmatch.ingestion.service.ClinicalExperienceGeneratorService;
+import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.doctor.domain.MedicalSpecialty;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
-import com.berdachuk.medexpertmatch.ingestion.service.DoctorGeneratorService;
-import com.berdachuk.medexpertmatch.ingestion.service.FacilityGeneratorService;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataCatalogState;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationProgress;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationService;
-import com.berdachuk.medexpertmatch.ingestion.service.MedicalCaseGeneratorService;
+import com.berdachuk.medexpertmatch.ingestion.service.*;
 import com.berdachuk.medexpertmatch.medicalcoding.domain.ICD10Code;
 import com.berdachuk.medexpertmatch.medicalcoding.domain.Procedure;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
-import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r5.model.Bundle;
@@ -22,16 +16,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Encapsulates the heavy-lifting logic for synthetic data generation so the facade can stay thin.

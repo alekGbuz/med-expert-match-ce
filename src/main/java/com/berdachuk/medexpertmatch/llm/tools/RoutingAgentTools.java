@@ -19,11 +19,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Spring AI tools for facility routing and regional center selection.

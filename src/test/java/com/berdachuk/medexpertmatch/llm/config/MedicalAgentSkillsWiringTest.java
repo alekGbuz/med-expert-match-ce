@@ -10,9 +10,7 @@ import org.springframework.util.StreamUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Verifies the Agent Skills wiring in {@link MedicalAgentConfiguration}: the {@code skillsTool}

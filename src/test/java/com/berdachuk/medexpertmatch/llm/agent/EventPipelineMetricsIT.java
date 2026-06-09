@@ -1,9 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.agent;
 
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
-import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
-import com.berdachuk.medexpertmatch.llm.chat.GoalType;
-import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
@@ -11,9 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.time.Instant;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

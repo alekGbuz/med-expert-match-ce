@@ -1,11 +1,9 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
 import com.berdachuk.medexpertmatch.core.service.JobStatusWebSocketPublisher;
-import com.berdachuk.medexpertmatch.llm.domain.MatchJobStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;

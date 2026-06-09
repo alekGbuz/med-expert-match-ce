@@ -219,7 +219,9 @@ start_stack_local() {
 
     require_docker
     cd "${PROJECT_ROOT}"
-    mkdir -p "${PROJECT_ROOT}/logs"
+    mkdir -p "${PROJECT_ROOT}/logs/app"
+    # Truncate app log file (rotated by Spring Boot inside the container up to 500MB total / 7 generations).
+    : > "${PROJECT_ROOT}/logs/app/med-expert-match.log" 2>/dev/null || true
 
     ensure_env_file
     free_app_port
@@ -275,10 +277,11 @@ start_stack_local() {
     fi
     echo "  Database:       localhost:${DB_PORT} (user/db: medexpertmatch)"
     echo ""
-    echo "Logs:"
-    echo "  docker compose -f docker-compose.yml logs -f app"
-    echo "  docker compose -f docker-compose.yml logs -f postgres"
-    echo "  tail -f logs/mkdocs.log"
+    echo "Logs (on host, in ./logs/):"
+    echo "  App:       tail -f logs/app/med-expert-match.log     (Spring Boot, rotated 50MB x 7)"
+    echo "  MkDocs:    tail -f logs/mkdocs.log"
+    echo "  Postgres:  docker compose -f docker-compose.yml logs -f postgres"
+    echo "  Live all:  docker compose -f docker-compose.yml logs -f"
     echo ""
     echo "Stop: ./stop-stack.sh"
 }

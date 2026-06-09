@@ -1,7 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.event;
 
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
-import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

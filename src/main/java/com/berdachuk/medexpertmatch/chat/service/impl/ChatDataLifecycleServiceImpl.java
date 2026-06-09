@@ -8,8 +8,8 @@ import com.berdachuk.medexpertmatch.chat.service.ChatDataLifecycleService;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
-import com.berdachuk.medexpertmatch.core.util.IdentifierHasher;
 import com.berdachuk.medexpertmatch.core.service.HarnessPlanExportQuery;
+import com.berdachuk.medexpertmatch.core.util.IdentifierHasher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {

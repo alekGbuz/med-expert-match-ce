@@ -11,7 +11,6 @@ import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class ToolScopeEnforcingResolverTest {
 

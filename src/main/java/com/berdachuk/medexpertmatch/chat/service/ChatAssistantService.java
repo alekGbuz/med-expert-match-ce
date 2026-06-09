@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.chat.service;
 
-import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
+import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;

@@ -1,11 +1,11 @@
 package com.berdachuk.medexpertmatch.llm.tools;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentCaseIntakeWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
-import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.retrieval.service.MatchingService;
 import com.berdachuk.medexpertmatch.retrieval.service.SemanticGraphRetrievalService;
 import org.junit.jupiter.api.AfterEach;
@@ -17,9 +17,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class DoctorMatchingAgentToolsMatchFromTextTest {
 

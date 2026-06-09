@@ -4,14 +4,7 @@ import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
 import com.berdachuk.medexpertmatch.llm.harness.ToolScopeEnforcingResolver;
 import com.berdachuk.medexpertmatch.llm.tool.NormalizingToolCallbackResolver;
 import com.berdachuk.medexpertmatch.llm.tool.ToolSelectionGuardingResolver;
-import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.ContextBuilderAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
-import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.*;
 import org.springaicommunity.agent.tools.AskUserQuestionTool;
 import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springframework.ai.tool.ToolCallback;
@@ -25,11 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Hardens function-calling tool resolution for local models that emit non-canonical tool names.

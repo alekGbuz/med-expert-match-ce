@@ -1,6 +1,5 @@
 package com.berdachuk.medexpertmatch.llm.event;
 
-import java.time.Instant;
 import java.util.List;
 
 public record ExecutionPlan(String sessionId, List<Step> steps) {

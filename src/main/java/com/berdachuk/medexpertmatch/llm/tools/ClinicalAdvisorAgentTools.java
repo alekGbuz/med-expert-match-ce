@@ -49,7 +49,7 @@ public class ClinicalAdvisorAgentTools {
     public ClinicalAdvisorAgentTools(
             MedicalCaseRepository medicalCaseRepository,
             ClinicalExperienceRepository clinicalExperienceRepository,
-            @Qualifier("caseAnalysisChatClient") ChatClient medGemmaChatClient,
+            @Qualifier("caseAnalysisChatClient") @Lazy ChatClient medGemmaChatClient,
             LogStreamService logStreamService,
             @Lazy EvidenceAgentTools evidenceAgentTools,
             @Qualifier("clinicalRecommendationsPromptTemplate") PromptTemplate clinicalRecommendationsPromptTemplate,

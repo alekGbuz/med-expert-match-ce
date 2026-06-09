@@ -1,18 +1,13 @@
 package com.berdachuk.medexpertmatch.ingestion.service;
 
 import com.berdachuk.medexpertmatch.ingestion.exception.SyntheticDataGenerationException;
-import com.berdachuk.medexpertmatch.ingestion.service.CaseDescriptionUpdate;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r5.model.Bundle;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Orchestrates synthetic data generation by delegating to scorched-down helper services.

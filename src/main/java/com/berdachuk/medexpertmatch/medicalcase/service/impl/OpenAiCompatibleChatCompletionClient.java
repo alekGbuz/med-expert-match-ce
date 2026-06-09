@@ -1,8 +1,8 @@
 package com.berdachuk.medexpertmatch.medicalcase.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.berdachuk.medexpertmatch.medicalcase.service.ChatCompletionTextClient;
 import com.berdachuk.medexpertmatch.medicalcase.service.support.OpenAiAssistantResponseParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;

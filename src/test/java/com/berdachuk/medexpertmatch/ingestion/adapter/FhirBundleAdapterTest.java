@@ -2,11 +2,7 @@ package com.berdachuk.medexpertmatch.ingestion.adapter;
 
 import com.berdachuk.medexpertmatch.doctor.domain.MedicalSpecialty;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
-import com.berdachuk.medexpertmatch.ingestion.adapter.impl.FhirBundleAdapterImpl;
-import com.berdachuk.medexpertmatch.ingestion.adapter.impl.FhirConditionAdapterImpl;
-import com.berdachuk.medexpertmatch.ingestion.adapter.impl.FhirEncounterAdapterImpl;
-import com.berdachuk.medexpertmatch.ingestion.adapter.impl.FhirObservationAdapterImpl;
-import com.berdachuk.medexpertmatch.ingestion.adapter.impl.FhirPatientAdapterImpl;
+import com.berdachuk.medexpertmatch.ingestion.adapter.impl.*;
 import com.berdachuk.medexpertmatch.medicalcase.domain.CaseType;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;

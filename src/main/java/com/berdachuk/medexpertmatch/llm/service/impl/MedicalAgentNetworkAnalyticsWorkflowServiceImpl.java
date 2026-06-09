@@ -11,12 +11,7 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Network analytics workflow extracted from the main medical agent service.

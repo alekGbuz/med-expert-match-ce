@@ -1,23 +1,16 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
-import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
+import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
-import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
-import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageService;
-import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageTurn;
-import com.berdachuk.medexpertmatch.llm.chat.ConversationGoalContext;
-import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
-import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
-import com.berdachuk.medexpertmatch.llm.chat.GoalType;
+import com.berdachuk.medexpertmatch.llm.chat.*;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
-import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmUsageTelemetryService;
@@ -25,6 +18,7 @@ import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +29,6 @@ import org.springframework.ai.session.SessionService;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,15 +36,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class ChatAssistantServiceImplTest {
 
