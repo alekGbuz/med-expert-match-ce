@@ -1,0 +1,19 @@
+# Ralph Loop Iteration Log
+
+This is an append-only scrolling notebook of cross-iteration learnings
+produced by `scripts/ralph.sh` (see M78/M79). It is NOT a CHANGELOG.
+
+## Format
+
+Each iteration of the loop appends one block in this exact format:
+
+    ## YYYY-MM-DD M{NN}-{storyId} ({storyTitle}) [GREEN|RED]
+    - commit: <sha>            (green only)
+    - test_target '<X>' green | failed (rc=N)
+    - Discovered: <one-line gotcha, or "none">
+    - Next: <next story id, or "none">
+
+Read this file BEFORE starting any new milestone — it captures the
+"rediscovered-the-same-gotcha" tax that motivated the loop in the first place.
+
+---

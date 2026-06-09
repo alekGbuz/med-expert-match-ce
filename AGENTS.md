@@ -51,7 +51,41 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 ./scripts/build-test-container.sh    # Build custom Postgres+AGE+PgVector test image
 ./scripts/start-local-stack.sh       # Local stack: Postgres + mvn -Plocal + MkDocs
 ./scripts/restart-service-local.sh   # Restart local stack (stop + start)
+./scripts/ralph.sh M{NN} [--max N]   # Ralph-style autonomous loop over M{NN}-stories.json
 ```
+
+## Ralph Workflow
+
+`scripts/ralph.sh` is the iteration driver described in M78/M79. It reads a
+machine-parseable milestone plan (`.agents/plans/M{NN}-stories.json`), picks
+the highest-priority unpassed story, runs its `test_target`, and on green
+commits + marks the story `passes: true` + writes a `commit_sha` + appends a
+block to `.agents/plans/progress.txt`. On red, it logs to `progress.txt` and
+exits non-zero.
+
+- **Story contract:** `.agents/plans/M{NN}-stories.json` — see `M77-stories.json`
+  for the canonical 10-story shape. Each story has `id`, `title`,
+  `test_target`, `files_touched[]`, `skills_to_load[]`, `accept[]`, `priority`,
+  `passes`, `commit_sha`, `started_at`, `finished_at`, `duration_min`, `notes`.
+- **Iteration log:** `.agents/plans/progress.txt` — append-only. Read it
+  before starting any new milestone; it captures the "rediscovered-the-same-
+  gotcha" tax that motivated the loop.
+- **Smoke test:** `./scripts/ralph.sh M77 --dry-run` prints the next story
+  and exits 0 without invoking the agent. Full loop: `./scripts/ralph.sh M77
+  --max 10`. Sanity: `bash scripts/ralph/test_ralph.sh` runs 4 negative
+  tests and exits 0.
+
+**Do NOT Ralph-ify** (per M78 non-goals + AGENTS.md global boundaries):
+
+- HIPAA / PHI handling (loop has no session memory)
+- Admin/auth boundaries (`AdminAccessGuard`, etc.)
+- New Flyway migrations on V2+ (AGENTS.md line 66)
+- AI provider swaps (AGENTS.md line 74)
+- `pom.xml` dependency version changes (AGENTS.md line 73)
+- Module boundary changes (`allowedDependencies`)
+- Exploration work (M58/M60) — Ralph assumes design is decided
+- Plans that delete or archive code (AGENTS.md line 75)
+- Plans requiring 24h manual smoke (loop has no clock / no browser)
 
 ## Module Guidance (nested AGENTS.md)
 
