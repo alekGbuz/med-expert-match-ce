@@ -4,7 +4,8 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M81 | [`M81-run-ralph-pilot-on-m77.md`](M81-run-ralph-pilot-on-m77.md) | Run the Ralph loop unattended against M77 (10 stories) end-to-end. Validate that the M80 wiring (render → call → extract → apply → test → commit) actually produces green commits for every story in a single multi-hour run, or surface a real failure in `progress.txt` that a human can fix. |
+| M81 | [`M81-run-ralph-pilot-on-m77.md`](M81-run-ralph-pilot-on-m77.md) | Run the Ralph loop unattended against M77 (10 stories) end-to-end. Validate that the M80 wiring (render → call → extract → apply → test → commit) actually produces green commits for every story in a single multi-hour run, or surface a real failure in `progress.txt` that a human can fix. Phases 1-9 done (in 611c017); Phases 10-12 (the actual pilot run) pending — needs `OPENAI_API_KEY` + 6h. |
+| M82 | [`M82-hand-implement-m77.md`](M82-hand-implement-m77.md) | Hand-driven fallback for M77: implement the 10 M77 stories (`M77-stories.json`) in the working tree on `feature/m82-hand-implement-m77`, with `./scripts/ralph.sh M77 --agent stub` doing the test+commit+mark+progress.txt bookkeeping. M82 is the path when the M81 pilot is not run, fails, or only partially completes. |
 
 ## Deferred
 
