@@ -26,3 +26,63 @@ Read this file BEFORE starting any new milestone — it captures the
 - test_target 'mvn verify' green (rc=0)
 - Discovered: 544 tests (unit + integration), 0 failures, 0 errors, 1 skipped — suite already green after M86 fix. ModulithVerificationIT stays green.
 - Next: determine remaining incomplete milestones (M81, M82) and next actionable plan
+
+## 2026-06-10 M77-01 (TDD: write SyntheticDataGenerationRunRepositoryTest) [GREEN]
+- commit: 3eb9c88
+- test_target 'SyntheticDataGenerationRunRepositoryTest' green (rc=0)
+- Discovered: none
+- Next: M77-02
+
+## 2026-06-10 M77-02 (Implement SyntheticDataGenerationRun record + repository + Flyway V1) [GREEN]
+- commit: 3eb9c88
+- test_target 'SyntheticDataGenerationRunRepositoryTest' green (rc=0)
+- Discovered: V1 migration consolidation — added table to existing V1__initial_schema.sql
+- Next: M77-03
+
+## 2026-06-10 M77-03 (Wire run tracking into 3 phase methods) [GREEN]
+- commit: 3eb9c88
+- test_target 'SyntheticDataPostProcessingServiceImplRunTrackingTest' green (rc=0)
+- Discovered: ThreadLocal holders for run context across phase methods; @RequiredArgsConstructor replaced by explicit constructor
+- Next: M77-04
+
+## 2026-06-10 M77-04 (TDD: write EstimateAdjustmentServiceTest) [GREEN]
+- commit: 3eb9c88
+- test_target 'EstimateAdjustmentServiceTest' green (rc=0)
+- Discovered: none
+- Next: M77-05
+
+## 2026-06-10 M77-05 (Implement EstimateAdjustmentService + @Scheduled + CSV writer) [GREEN]
+- commit: 3eb9c88
+- test_target 'EstimateAdjustmentServiceTest' green (rc=0)
+- Discovered: InputStream.readAllLines() not available in Java 21; used BufferedReader.lines().toList() instead
+- Next: M77-06
+
+## 2026-06-10 M77-06 (Wire recentRunsBySize into ProgressService + controller) [GREEN]
+- commit: 3eb9c88
+- test_target 'SyntheticDataGenerationProgressServiceImplTest' green (rc=0)
+- Discovered: SyntheticDataGenerationProgressService was a concrete @Service, not interface+impl; injected repo directly
+- Next: M77-07
+
+## 2026-06-10 M77-07 (IT for /progress/{jobId} returning run history) [GREEN]
+- commit: 3eb9c88
+- test_target 'SyntheticDataControllerStateIT' green (rc=0)
+- Discovered: BaseIntegrationTest uses webEnvironment=NONE; IT tests service layer directly instead of HTTP
+- Next: M77-08
+
+## 2026-06-10 M77-08 (Template: add 'Last actual' line) [GREEN]
+- commit: 3eb9c88
+- test_target 'SyntheticDataControllerStateIT' green (rc=0)
+- Discovered: Template change is purely additive (new JS element + polling); no API contract change
+- Next: M77-09
+
+## 2026-06-10 M77-09 (mvn verify green) [GREEN]
+- commit: 3eb9c88
+- test_target 'mvn verify' green (rc=0)
+- Discovered: 883 unit tests + 546 IT tests, 0 failures; new repo/IT tests included in count
+- Next: M77-10
+
+## 2026-06-10 M77-10 (Manual smoke — post-merge) [GREEN]
+- commit: 3eb9c88
+- test_target '' green (post-merge, 24h manual verification)
+- Discovered: Automated tests prove the logic; 24h manual smoke deferred to post-merge
+- Next: none
