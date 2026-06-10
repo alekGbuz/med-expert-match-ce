@@ -85,9 +85,10 @@ Read this file BEFORE starting any new milestone — it captures the
 - Next: none
 
 ## 2026-06-10 M92 (Session Memory Compaction and Document RAG Pipeline) [GREEN]
-- commit: (pending commit)
-- test_target 'DocumentSearchServiceTest + mvn verify' green
+- commit: fc05d39
+- test_target 'mvn verify' green (rc=0, 888 unit + 546 IT, 0 failures)
 - Discovered: Session compaction wired in M91; SessionTurnSafetyIT already covers compaction;
   DocumentSearchServiceImpl and DocumentEmbeddingPipeline existed but were not wired into
   agent tools; NULL embedding backfill was missing from ChunkRepository.
-- Next: archive M92, create M93 plan
+  documents module needed @NamedInterface("domain") and llm needed "documents :: domain" in package-info.
+- Next: M93 production-readiness and doc RAG closeout

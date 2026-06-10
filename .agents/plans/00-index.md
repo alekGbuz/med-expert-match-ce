@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M92 | [`M92-session-compaction-document-rag.md`](M92-session-compaction-document-rag.md) | Wire SessionMemoryAdvisor for turn-safe compaction; build document chunk embedding + search pipeline; wire into evidence-retriever skill |
+| M93 | [`M93-production-readiness-and-doc-rag-closeout.md`](M93-production-readiness-and-doc-rag-closeout.md) | Production-readiness close-out: document RAG embed scheduler, DocumentChunkRepositoryIT for findByEmbeddingIsNull, full-codebase security review, dependency-freshness pass, multi-module test-coverage infra closure |
 
 ## Deferred
 
@@ -103,6 +103,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec |
 | M90 | [`M90-implement-m77-feature.md`](archive/M90-implement-m77-feature.md) | Implement M77 runtime-measured synthetic data estimates (consolidated M81+M82) |
 | M91 | [`M91-m77-fixes-and-session-compaction.md`](archive/M91-m77-fixes-and-session-compaction.md) | Fix clinicalExperienceMs tracking gap, remove duplicate @EnableScheduling |
+| M92 | [`M92-session-compaction-document-rag.md`](archive/M92-session-compaction-document-rag.md) | Wire DocumentSearch into evidence-retriever skill; add chunk NULL embedding backfill; add DocumentSearchServiceTest |
 
 ## Creating a New Plan
 
