@@ -2,7 +2,9 @@
 
 ## Active
 
-No active plans.
+| # | Plan | Description |
+|---|------|-------------|
+| M92 | [`M92-session-compaction-document-rag.md`](M92-session-compaction-document-rag.md) | Wire SessionMemoryAdvisor for turn-safe compaction; build document chunk embedding + search pipeline; wire into evidence-retriever skill |
 
 ## Deferred
 
@@ -105,6 +107,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec |
 | M82 | [`M82-hand-implement-m77.md`](archive/M82-hand-implement-m77.md) | Hand-driven M77 implementation (superseded by M90) |
 | M90 | [`M90-implement-m77-feature.md`](archive/M90-implement-m77-feature.md) | Implement M77 runtime-measured synthetic data estimates (consolidated M81+M82) |
+| M91 | [`M91-m77-fixes-and-session-compaction.md`](archive/M91-m77-fixes-and-session-compaction.md) | Fix clinicalExperienceMs tracking gap, remove duplicate @EnableScheduling |
 
 ## Creating a New Plan
 
