@@ -2,11 +2,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M81 | [`M81-run-ralph-pilot-on-m77.md`](M81-run-ralph-pilot-on-m77.md) | Run the Ralph loop unattended against M77 (10 stories) end-to-end. Validate that the M80 wiring (render → call → extract → apply → test → commit) actually produces green commits for every story in a single multi-hour run, or surface a real failure in `progress.txt` that a human can fix. Phases 1-9 done (in 611c017); Phases 10-12 (the actual pilot run) pending — needs `OPENAI_API_KEY` + 6h. |
-| M82 | [`M82-hand-implement-m77.md`](M82-hand-implement-m77.md) | Hand-driven fallback for M77: implement the 10 M77 stories (`M77-stories.json`) in the working tree on `feature/m82-hand-implement-m77`, with `./scripts/ralph.sh M77 --agent stub` doing the test+commit+mark+progress.txt bookkeeping. M82 is the path when the M81 pilot is not run, fails, or only partially completes. |
-| M89 | [`M89-full-test-suite-hardening.md`](M89-full-test-suite-hardening.md) | Run full `mvn verify` suite after Modulith cycle fix. Fix remaining test failures, ensure all 872+ unit tests and 6+ integration tests pass consistently. |
+No active plans.
 
 ## Deferred
 
@@ -96,16 +92,19 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
 | M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
 | M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](archive/M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality: `MAJOR_SPECIALTIES` round-robin, `reconcileSpecialtyGraph()` (idempotent MERGE), admin endpoint `POST /api/v1/admin/synthetic-data/reconcile-specialties`, unconditional `INFO` LLM-usage log with `cache_hit=true\|false` |
-| M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, **UI path only** (`formatForChatDisplay`); data path (`toHumanReadable`) kept untouched so internal consumers still see the original JSON |
-| M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` for the case side (parallel to M73's doctor-side heal) + bidirectional substring match in `calculateSpecializationMatchScore` so "Cardiology" matches "Advanced Heart Failure and Transplant Cardiology" |
-| M76 | [`M76-update-data-sizes-and-add-very-large.md`](archive/M76-update-data-sizes-and-add-very-large.md) | Fix wildly wrong time estimates in `data-sizes.csv` (pre-M76 "1 day 14 hours" for `large` was actually ~95 s), normalize all sizes to 20 cases per doctor, add new `very_large` size (1,000 doctors / 20,000 cases) |
-| M77 | [`M77-runtime-measured-estimates.md`](archive/M77-runtime-measured-estimates.md) | Measure every actual synthetic-data run; persist in new `synthetic_data_generation_runs` table; surface "Last actual: X" in admin UI; nightly job auto-adjusts the static `estimated_time_minutes` in `data-sizes.csv` so the estimate never silently drifts from reality. **Pilot target for the Ralph loop** (see M79). |
-| M78 | [`M78-ralph-autonomous-loop.md`](archive/M78-ralph-autonomous-loop.md) | Ralph-style autonomous iteration loop: `scripts/ralph.sh` (bash) + `.agents/plans/progress.txt` (cross-iteration learnings) + `M{NN}-stories.json` (machine-parseable Phase list) + `.agents/templates/bootstrap-new-project.md` (sample MD for new repos); pilot on M77, then promote to `AGENTS.md` Commands |
-| M79 | [`M79-ralph-loop-pilot-m77.md`](archive/M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure: `scripts/ralph.sh` (the bash loop) + `M77-stories.json` (10 atomic stories) + `progress.txt` (cross-iteration learnings) + AGENTS.md Commands entry + architecture note append. TDD-first, smoke-test with `--max 1`. Actual full M77 pilot is a separate, time-boxed effort (M80). |
-| M80 | [`M80-wire-real-agent-invocation.md`](archive/M80-wire-real-agent-invocation.md) | Replace the M79 `invoke_agent()` stub in `scripts/ralph.sh` with a real OpenAI-compatible agent pipeline: `render_prompt.sh` → `call_openai.sh` → `extract_patch.sh` → `apply_patch.sh`. Adds `--agent stub\|openai\|<path>` flag, `OPENAI_*` env contract, `.agents/templates/M{NN}-prompt.md.template`. 14 hermetic tests. The unattended M77 pilot run is M81. |
-| M83 | [`M83-harness-section-2-2-depth.md`](archive/M83-harness-section-2-2-depth.md) | Add depth to `HARNESS_AND_AGENT_USAGE` §2.2: Mermaid flowchart + 10-layer narrative + LLM endpoints / skills / configuration tables. Remove the stale §2.1 ("Coding agents") which misleads about Ralph and `.agents/skills/`. Docs-only. |
-| M84 | [`M84-resolve-modulith-cycle.md`](archive/M84-resolve-modulith-cycle.md) | Resolve the pre-existing `ModulithVerificationIT` cycle by moving `MedicalCaseDescriptionServiceImpl` from `medicalcase` to `llm`. Interface stays in `medicalcase.service`. |
-| M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec: implement the service move, update 10+ import sites, adjust module deps, relocate IT test. `ModulithVerificationIT` green for the first time since M57. |
+| M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks embedded in narrative as human-readable prose, **UI path only** |
+| M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` + bidirectional substring match |
+| M76 | [`M76-update-data-sizes-and-add-very-large.md`](archive/M76-update-data-sizes-and-add-very-large.md) | Fix wrong time estimates in `data-sizes.csv`, add `very_large` size |
+| M77 | [`M77-runtime-measured-estimates.md`](archive/M77-runtime-measured-estimates.md) | Measure every actual run; persist in `synthetic_data_generation_runs` table; surface "Last actual" in admin UI; nightly job auto-adjusts estimates |
+| M78 | [`M78-ralph-autonomous-loop.md`](archive/M78-ralph-autonomous-loop.md) | Ralph-style autonomous iteration loop |
+| M79 | [`M79-ralph-loop-pilot-m77.md`](archive/M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure |
+| M80 | [`M80-wire-real-agent-invocation.md`](archive/M80-wire-real-agent-invocation.md) | Replace M79 `invoke_agent()` stub with real OpenAI-compatible pipeline |
+| M81 | [`M81-run-ralph-pilot-on-m77.md`](archive/M81-run-ralph-pilot-on-m77.md) | Run the Ralph loop unattended against M77 (superseded by M90) |
+| M83 | [`M83-harness-section-2-2-depth.md`](archive/M83-harness-section-2-2-depth.md) | Add depth to `HARNESS_AND_AGENT_USAGE` §2.2 |
+| M84 | [`M84-resolve-modulith-cycle.md`](archive/M84-resolve-modulith-cycle.md) | Resolve the pre-existing ModulithVerificationIT cycle |
+| M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec |
+| M82 | [`M82-hand-implement-m77.md`](archive/M82-hand-implement-m77.md) | Hand-driven M77 implementation (superseded by M90) |
+| M90 | [`M90-implement-m77-feature.md`](archive/M90-implement-m77-feature.md) | Implement M77 runtime-measured synthetic data estimates (consolidated M81+M82) |
 
 ## Creating a New Plan
 
