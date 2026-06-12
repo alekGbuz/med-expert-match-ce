@@ -51,6 +51,17 @@ public final class LlmResponseSanitizer {
             "(?i)\\d+\\.\\s*(Case Summary|Clinical Presentation|Matched Doctors|"
                     + "Matching Rationale(?: Explanation)?|Evidence Summary|Recommendations)\\b");
 
+    private static final Pattern MARKDOWN_HEADER_PATTERN = Pattern.compile(
+            "(?i)\\*{1,2}(Case Summary|Clinical Presentation|Matched Doctors|"
+                    + "Matching Rationale(?: Explanation)?|Evidence Summary|Recommendations|"
+                    + "Required Medical Specialty|Urgency Level|Clinical Findings|ICD-10 Codes|"
+                    + "Case Summary|Summary|Recommendations)\\s*:?\\*{0,2}\\s*\\n",
+            Pattern.MULTILINE);
+
+    private static final Pattern JSON_BLOCK_PATTERN = Pattern.compile(
+            "\\{[^}]*\"(requiredSpecialty|urgencyLevel|clinicalFindings|icd10Codes|caseSummary)\"[^}]*\\}",
+            Pattern.DOTALL);
+
     private static final int MIN_REASONING_CHARS = 40;
 
     private LlmResponseSanitizer() {
@@ -95,7 +106,52 @@ public final class LlmResponseSanitizer {
         }
         ReasoningSplit split = splitReasoningFromResponse(response);
         String content = split.content() != null && !split.content().isBlank() ? split.content() : response;
-        return stripCodeFences(stripLeadingReasoningHeaders(normalizeModelTokens(content)));
+        content = stripCodeFences(content);
+        content = stripToolResultsSection(content);
+        content = stripLeadingReasoningHeaders(normalizeModelTokens(content));
+        return content;
+    }
+
+    static String stripToolResultsSection(String response) {
+        if (response == null || response.isBlank()) {
+            return response;
+        }
+        int idx = response.toLowerCase().indexOf("**tool execution results:**");
+        if (idx < 0) {
+            idx = response.toLowerCase().indexOf("tool execution results:");
+        }
+        if (idx >= 0) {
+            int after = response.indexOf('\n', idx);
+            if (after < 0) after = idx;
+            int nextSection = response.indexOf("**", after + 1);
+            if (nextSection < 0) nextSection = response.indexOf("\n\n", after + 1);
+            if (nextSection > after) {
+                return response.substring(0, idx).trim() + "\n" + response.substring(nextSection).trim();
+            }
+            return response.substring(0, idx).trim();
+        }
+        return response;
+    }
+
+    static String stripLeadingJsonBlocks(String response) {
+        if (response == null || response.isBlank()) {
+            return response;
+        }
+        String result = response;
+        Matcher matcher = JSON_BLOCK_PATTERN.matcher(result);
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            String before = result.substring(0, start).trim();
+            String after = result.substring(end).trim();
+            if (before.isEmpty() || before.endsWith("```") || before.endsWith("```json")) {
+                result = after;
+                matcher = JSON_BLOCK_PATTERN.matcher(result);
+            } else {
+                break;
+            }
+        }
+        return result;
     }
 
     /**
@@ -215,12 +271,28 @@ public final class LlmResponseSanitizer {
             return numbered;
         }
 
+        int markdown = findFirstMarkdownHeaderStart(response);
+        if (markdown >= 0) {
+            return markdown;
+        }
+
         int fallback = findFallbackContentStart(response);
         if (fallback >= 0) {
             return fallback;
         }
 
         return findFirstValidSectionStart(response);
+    }
+
+    private static int findFirstMarkdownHeaderStart(String response) {
+        Matcher matcher = MARKDOWN_HEADER_PATTERN.matcher(response);
+        while (matcher.find()) {
+            int start = matcher.start();
+            if (start > MIN_REASONING_CHARS) {
+                return start;
+            }
+        }
+        return -1;
     }
 
     private static int findFallbackContentStart(String response) {
@@ -360,24 +432,8 @@ public final class LlmResponseSanitizer {
     }
 
     private static String stripCodeFences(String cleaned) {
-        if (cleaned.contains("```json")) {
-            int jsonStart = cleaned.indexOf("```json");
-            int jsonEnd = cleaned.lastIndexOf("```");
-            if (jsonStart >= 0 && jsonEnd > jsonStart + 7) {
-                return cleaned.substring(jsonStart + 7, jsonEnd).trim();
-            }
-        }
         if (cleaned.contains("```")) {
-            int codeStart = cleaned.indexOf("```");
-            int codeEnd = cleaned.lastIndexOf("```");
-            if (codeStart >= 0 && codeEnd > codeStart + 3) {
-                String content = cleaned.substring(codeStart + 3, codeEnd).trim();
-                int firstNewline = content.indexOf('\n');
-                if (firstNewline > 0 && firstNewline < 20) {
-                    content = content.substring(firstNewline + 1).trim();
-                }
-                return content;
-            }
+            cleaned = cleaned.replaceAll("```[a-zA-Z]*\\n?", "").replaceAll("```", "").trim();
         }
         return cleaned;
     }

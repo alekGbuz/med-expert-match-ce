@@ -29,14 +29,9 @@ Based on the original case analysis and the tool execution results (matched doct
 Provide a clear, well-structured response suitable for healthcare administrators or case coordinators. Use medical terminology appropriately but ensure the response is actionable.
 
 **CRITICAL INSTRUCTIONS:**
-- Provide ONLY ONE response (do NOT repeat the same content)
-- Do NOT include the prompt instructions in your response
-- Do NOT generate multiple identical JSON structures or repeated sections
-- Do NOT echo back the tool results verbatim - interpret and summarize them
-- Keep the response focused, concise, and actionable
-- Maximum response length: 1500 words (approximately 7500 characters)
-- CRITICAL: Generate EXACTLY ONE response and STOP immediately after completion
-- Do NOT generate loops or repeated content
-- Do NOT continue generating after the response is complete
-- If tool results are empty or minimal, provide a brief summary based on case analysis only
-- Stop after providing the response - do not continue generating
+- Output ONLY the final response. Do NOT include any reasoning, planning, or analysis.
+- Do NOT output JSON code blocks, case analysis JSON, or tool execution results.
+- Do NOT echo back the tool results verbatim - interpret and summarize them.
+- Do NOT include the prompt instructions in your response.
+- Provide ONLY ONE response. Stop immediately after completion.
+- Maximum response length: 1500 words.
