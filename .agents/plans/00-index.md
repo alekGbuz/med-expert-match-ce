@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
+| M95 | [`M95-llm-prompt-quality-and-response-reliability.md`](M95-llm-prompt-quality-and-response-reliability.md) | Improve LLM output quality: fix case analysis interpretation prompt, reduce hallucinated ICD-10 codes, improve medgemma1.5:4b response reliability |
 
 ## Deferred
 
@@ -104,6 +104,8 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M90 | [`M90-implement-m77-feature.md`](archive/M90-implement-m77-feature.md) | Implement M77 runtime-measured synthetic data estimates (consolidated M81+M82) |
 | M91 | [`M91-m77-fixes-and-session-compaction.md`](archive/M91-m77-fixes-and-session-compaction.md) | Fix clinicalExperienceMs tracking gap, remove duplicate @EnableScheduling |
 | M92 | [`M92-session-compaction-document-rag.md`](archive/M92-session-compaction-document-rag.md) | Wire DocumentSearch into evidence-retriever skill; add chunk NULL embedding backfill; add DocumentSearchServiceTest |
+| M93 | [`M93-production-readiness-and-doc-rag-closeout.md`](archive/M93-production-readiness-and-doc-rag-closeout.md) | Production-readiness close-out: document RAG embed scheduler, DocumentChunkRepositoryIT for findByEmbeddingIsNull, full-codebase security review, dependency-freshness pass, multi-module test-coverage infra closure |
+| M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](archive/M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
 
 ## Creating a New Plan
 

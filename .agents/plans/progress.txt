@@ -89,3 +89,9 @@ Read this file BEFORE starting any new milestone — it captures the
 - test_target 'mvn verify' green (rc=0, 549 IT, 0 failures, 0 errors, 1 skipped)
 - Discovered: ChunkRepositoryIT.setUp() does not purge embedding data after each test (DELETE FROM document_chunk is enough since insert doesn't set embedding); updateEmbedding needs 768-dim vector to match PG column schema.
 - Next: M94 security hardening and tool surface closeout
+
+## 2026-06-12 M94 (Session ID Fix and Tool Surface Closeout) [GREEN]
+- commit: 2e62a70
+- test_target 'mvn verify' green (rc=0)
+- Discovered: EvidenceAgentTools and ClinicalAdvisorAgentTools called medGemmaChatClient.prompt() without setting SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, causing "No session ID found in advisor context" errors. Fixed by adding .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId)) to all 4 prompt() calls across both files. SessionMemoryAdvisor lives in org.springframework.ai.session.advisor (not .chat.memory).
+- Next: M95 LLM prompt quality and response reliability
