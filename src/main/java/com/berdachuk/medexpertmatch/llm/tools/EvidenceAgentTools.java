@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.tools.support.AgentToolSessionSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,7 +55,7 @@ public class EvidenceAgentTools {
     ) {
         log.info("search_clinical_guidelines() tool called - condition: {}, specialty: {}, maxResults: {}",
                 condition, specialty, maxResults);
-        String sessionId = AgentToolSessionSupport.getSessionId();
+        String sessionId = resolveSessionId();
         logStreamService.logToolCall(sessionId, "search_clinical_guidelines",
                 String.format("condition: %s, specialty: %s, maxResults: %s", condition, specialty, maxResults));
 
@@ -80,6 +81,7 @@ public class EvidenceAgentTools {
             log.info("Calling LLM for clinical guidelines - condition: {}, specialty: {}", condition, specialty);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId))
                     .call()
                     .content();
 
@@ -143,7 +145,7 @@ public class EvidenceAgentTools {
             @ToolParam(description = "Maximum number of results (default: 10)") Integer maxResults
     ) {
         log.info("query_pubmed() tool called - query: {}, maxResults: {}", query, maxResults);
-        String sessionId = AgentToolSessionSupport.getSessionId();
+        String sessionId = resolveSessionId();
         logStreamService.logToolCall(sessionId, "query_pubmed",
                 String.format("query: %s, maxResults: %s", query, maxResults));
 
@@ -208,7 +210,7 @@ public class EvidenceAgentTools {
             @ToolParam(description = "Maximum number of results (default: 10)") Integer maxResults
     ) {
         log.info("search_local_documents() tool called - query: {}, maxResults: {}", query, maxResults);
-        String sessionId = AgentToolSessionSupport.getSessionId();
+        String sessionId = resolveSessionId();
         logStreamService.logToolCall(sessionId, "search_local_documents",
                 String.format("query: %s, maxResults: %s", query, maxResults));
 
@@ -246,5 +248,10 @@ public class EvidenceAgentTools {
             logStreamService.logError(sessionId, "search_local_documents failed", e.getMessage());
             return List.of("Error searching local documents: " + e.getMessage());
         }
+    }
+
+    private static String resolveSessionId() {
+        String sessionId = AgentToolSessionSupport.getSessionId();
+        return sessionId != null ? sessionId : "default";
     }
 }

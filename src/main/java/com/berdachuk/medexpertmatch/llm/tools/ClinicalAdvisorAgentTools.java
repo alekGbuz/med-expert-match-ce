@@ -10,6 +10,7 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -181,6 +182,7 @@ public class ClinicalAdvisorAgentTools {
             log.info("Calling LLM for recommendations - caseId: {}, type: {}", caseId, normalizedType);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId))
                     .call()
                     .content();
 
@@ -257,6 +259,7 @@ public class ClinicalAdvisorAgentTools {
             log.info("Calling LLM for differential diagnosis - caseId: {}", caseId);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId))
                     .call()
                     .content();
 
@@ -359,6 +362,7 @@ public class ClinicalAdvisorAgentTools {
             log.info("Calling LLM for risk assessment - caseId: {}, type: {}", caseId, normalizedRiskType);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId))
                     .call()
                     .content();
 
