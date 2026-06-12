@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M93 | [`M93-production-readiness-and-doc-rag-closeout.md`](M93-production-readiness-and-doc-rag-closeout.md) | Production-readiness close-out: document RAG embed scheduler, DocumentChunkRepositoryIT for findByEmbeddingIsNull, full-codebase security review, dependency-freshness pass, multi-module test-coverage infra closure |
+| M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
 
 ## Deferred
 

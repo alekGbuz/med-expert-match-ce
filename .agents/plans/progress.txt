@@ -84,11 +84,8 @@ Read this file BEFORE starting any new milestone — it captures the
 - Discovered: Automated tests prove the logic; 24h manual smoke deferred to post-merge
 - Next: none
 
-## 2026-06-10 M92 (Session Memory Compaction and Document RAG Pipeline) [GREEN]
-- commit: fc05d39
-- test_target 'mvn verify' green (rc=0, 888 unit + 546 IT, 0 failures)
-- Discovered: Session compaction wired in M91; SessionTurnSafetyIT already covers compaction;
-  DocumentSearchServiceImpl and DocumentEmbeddingPipeline existed but were not wired into
-  agent tools; NULL embedding backfill was missing from ChunkRepository.
-  documents module needed @NamedInterface("domain") and llm needed "documents :: domain" in package-info.
-- Next: M93 production-readiness and doc RAG closeout
+## 2026-06-12 M93 (Production-Readiness and Doc RAG Closeout) [GREEN]
+- commit: 25b85e8
+- test_target 'mvn verify' green (rc=0, 549 IT, 0 failures, 0 errors, 1 skipped)
+- Discovered: ChunkRepositoryIT.setUp() does not purge embedding data after each test (DELETE FROM document_chunk is enough since insert doesn't set embedding); updateEmbedding needs 768-dim vector to match PG column schema.
+- Next: M94 security hardening and tool surface closeout
