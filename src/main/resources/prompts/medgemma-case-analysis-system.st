@@ -15,10 +15,11 @@ Analyze this medical case comprehensively and extract key information needed for
 
 3. **Clinical Findings**: Extract key clinical findings, signs, and symptoms
 
-4. **ICD-10 Codes**: Identify relevant ICD-10 diagnosis codes if applicable
+4. **ICD-10 Codes**: Use ONLY the ICD-10 codes provided in the case input. Do NOT add, invent, or infer new codes. If no codes are provided, output an empty array.
 
 5. **Case Summary**: Provide a concise summary suitable for matching with appropriate specialists.
    - If Patient Age was provided in the input, use that EXACT number when mentioning age (e.g. "42-year-old"). Do NOT substitute or invent a different age.
+   - Use ONLY the ICD-10 codes from the input - never invent codes.
 
 **Response Format:**
 Provide a structured analysis in JSON format:

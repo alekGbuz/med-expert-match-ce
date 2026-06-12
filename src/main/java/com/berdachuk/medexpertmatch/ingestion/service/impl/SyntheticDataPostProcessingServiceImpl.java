@@ -2,6 +2,8 @@ package com.berdachuk.medexpertmatch.ingestion.service.impl;
 
 import com.berdachuk.medexpertmatch.clinicalexperience.repository.ClinicalExperienceRepository;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
+import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
+import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
 import com.berdachuk.medexpertmatch.facility.repository.FacilityRepository;
@@ -21,7 +23,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Handles description generation, embeddings, graph rebuild, and cleanup.
@@ -44,9 +52,13 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
     private final EmbeddingGeneratorService embeddingGeneratorService;
     private final SyntheticDataCatalogState catalogState;
     private final SyntheticDataGenerationRunRepository runRepository;
+    private final LlmCallLimiter llmCallLimiter;
 
-    @Value("${medexpertmatch.synthetic-data.description.batch-commit-size:10}")
+    @Value("${medexpertmatch.synthetic-data.description.batch-commit-size:100}")
     private int descriptionBatchCommitSize;
+
+    @Value("${medexpertmatch.synthetic-data.description.thread-pool-size:5}")
+    private int descriptionThreadPoolSize;
 
     private final ThreadLocal<String> currentRunId = new ThreadLocal<>();
     private final ThreadLocal<Long> descriptionMsHolder = new ThreadLocal<>();
@@ -70,7 +82,8 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
             MedicalCaseDescriptionService medicalCaseDescriptionService,
             EmbeddingGeneratorService embeddingGeneratorService,
             SyntheticDataCatalogState catalogState,
-            SyntheticDataGenerationRunRepository runRepository) {
+            SyntheticDataGenerationRunRepository runRepository,
+            LlmCallLimiter llmCallLimiter) {
         this.clinicalExperienceRepository = clinicalExperienceRepository;
         this.medicalCaseRepository = medicalCaseRepository;
         this.doctorRepository = doctorRepository;
@@ -83,6 +96,7 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
         this.embeddingGeneratorService = embeddingGeneratorService;
         this.catalogState = catalogState;
         this.runRepository = runRepository;
+        this.llmCallLimiter = llmCallLimiter;
     }
 
     @Override
@@ -182,78 +196,118 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
     public void generateMedicalCaseDescriptions(SyntheticDataGenerationProgress progress) {
         List<com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase> cases = medicalCaseRepository.findWithoutDescriptions();
         int totalRecords = cases.size();
-        log.info("Generating medical case descriptions: starting {} cases (batch commit size: {})",
-                totalRecords, descriptionBatchCommitSize);
+        log.info("Generating medical case descriptions: starting {} cases (batch commit size: {}, thread pool: {})",
+                totalRecords, descriptionBatchCommitSize, descriptionThreadPoolSize);
         if (totalRecords == 0) {
             log.info("Generating medical case descriptions: nothing to do (no cases without descriptions)");
             return;
         }
 
-        int processedCount = 0;
-        int successCount = 0;
-        int failedCount = 0;
+        AtomicInteger processedCount = new AtomicInteger(0);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(0);
         long startTime = System.currentTimeMillis();
-        List<CaseDescriptionUpdate> batch = new ArrayList<>();
+        List<CaseDescriptionUpdate> batch = Collections.synchronizedList(new ArrayList<>());
 
-        for (com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase medicalCase : cases) {
-            if (progress != null && progress.isCancelled()) {
-                log.info("Generating medical case descriptions: cancelled after {} of {} cases",
-                        processedCount, totalRecords);
-                break;
-            }
-            long caseStartMs = System.currentTimeMillis();
-            String outcomeSummary;
-            try {
-                String description = medicalCaseDescriptionService.generateDescription(medicalCase);
-                if (description != null && !description.isBlank()) {
-                    batch.add(new CaseDescriptionUpdate(medicalCase.id(), description));
-                    successCount++;
-                    outcomeSummary = "stored abstract, length=" + description.length();
-                } else {
-                    log.warn("Generating medical case descriptions: empty result for caseId={}", medicalCase.id());
-                    failedCount++;
-                    outcomeSummary = "empty description";
+        ExecutorService executor = Executors.newFixedThreadPool(descriptionThreadPoolSize);
+        try {
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+            for (com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase medicalCase : cases) {
+                if (progress != null && progress.isCancelled()) {
+                    log.info("Generating medical case descriptions: cancelled after {} of {} cases",
+                            processedCount.get(), totalRecords);
+                    break;
                 }
-            } catch (Exception e) {
-                log.error("Generating medical case descriptions: error for caseId={}", medicalCase.id(), e);
-                failedCount++;
-                outcomeSummary = "exception";
-            }
-            processedCount++;
-            long caseElapsedMs = System.currentTimeMillis() - caseStartMs;
-            log.info("Generating medical case descriptions: {}/{} finished (caseId={}, {} ms, {})",
-                    processedCount, totalRecords, medicalCase.id(), caseElapsedMs, outcomeSummary);
 
-            if (batch.size() >= descriptionBatchCommitSize) {
-                commitDescriptionBatch(batch);
-                batch.clear();
-                log.info("Generating medical case descriptions: committed DB batch of {} (checkpoint {}/{})",
-                        descriptionBatchCommitSize, processedCount, totalRecords);
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                    long caseStartMs = System.currentTimeMillis();
+                    try {
+                        llmCallLimiter.execute(LlmClientType.UTILITY, () -> {
+                            String description = medicalCaseDescriptionService.generateDescription(medicalCase);
+                            if (description != null && !description.isBlank()) {
+                                batch.add(new CaseDescriptionUpdate(medicalCase.id(), description));
+                                successCount.incrementAndGet();
+                            } else {
+                                log.warn("Generating medical case descriptions: empty result for caseId={}", medicalCase.id());
+                                failedCount.incrementAndGet();
+                            }
+                            return null;
+                        });
+                    } catch (Exception e) {
+                        log.error("Generating medical case descriptions: error for caseId={}", medicalCase.id(), e);
+                        failedCount.incrementAndGet();
+                    }
+                    int processed = processedCount.incrementAndGet();
+                    long caseElapsedMs = System.currentTimeMillis() - caseStartMs;
+                    log.info("Generating medical case descriptions: {}/{} finished (caseId={}, {} ms)",
+                            processed, totalRecords, medicalCase.id(), caseElapsedMs);
+                }, executor);
+
+                futures.add(future);
+
+                if (futures.size() >= descriptionThreadPoolSize * 2) {
+                    processDescriptionFutures(futures, batch, progress, totalRecords, processedCount);
+                }
             }
 
-            if (progress != null) {
-                int progressPercent = totalRecords > 0 ? (processedCount * 100 / totalRecords) : 0;
-                int descriptionProgress = 55 + (progressPercent * 10 / 100);
-                progress.updateProgress(descriptionProgress, DESCRIPTIONS_PROGRESS_LABEL,
-                        String.format("Generating medical case descriptions: %d/%d (%d%%)",
-                                processedCount, totalRecords, progressPercent));
-            }
-        }
+            processDescriptionFutures(futures, batch, progress, totalRecords, processedCount);
 
-        if (!batch.isEmpty()) {
-            commitDescriptionBatch(batch);
-            log.info("Generating medical case descriptions: committed final DB batch of {} rows",
-                    batch.size());
+            synchronized (batch) {
+                if (!batch.isEmpty()) {
+                    commitDescriptionBatch(new ArrayList<>(batch));
+                    batch.clear();
+                    log.info("Generating medical case descriptions: committed final DB batch of {} rows",
+                            batch.size());
+                }
+            }
+        } finally {
+            executor.shutdown();
+            try {
+                executor.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Description generation thread pool shutdown interrupted");
+            }
         }
 
         long totalElapsedTime = System.currentTimeMillis() - startTime;
-        double totalItemsPerSecond = totalElapsedTime > 0 ? (processedCount * 1000.0) / totalElapsedTime : 0;
+        double totalItemsPerSecond = totalElapsedTime > 0 ? (processedCount.get() * 1000.0) / totalElapsedTime : 0;
         log.info("Generating medical case descriptions: phase complete. processed={}, success={}, failed={}, duration={}s, rate={} cases/s",
-                processedCount, successCount, failedCount, totalElapsedTime / 1000.0,
+                processedCount.get(), successCount.get(), failedCount.get(), totalElapsedTime / 1000.0,
                 String.format("%.2f", totalItemsPerSecond));
 
         if (currentRunId.get() != null) {
             descriptionMsHolder.set(descriptionMsHolder.get() + totalElapsedTime);
+        }
+    }
+
+    private void processDescriptionFutures(
+            List<CompletableFuture<Void>> futures,
+            List<CaseDescriptionUpdate> batch,
+            SyntheticDataGenerationProgress progress,
+            int totalRecords,
+            AtomicInteger processedCount) {
+        if (futures.isEmpty()) return;
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        futures.clear();
+
+        synchronized (batch) {
+            if (batch.size() >= descriptionBatchCommitSize) {
+                List<CaseDescriptionUpdate> toCommit = new ArrayList<>(batch);
+                batch.clear();
+                commitDescriptionBatch(toCommit);
+                log.info("Generating medical case descriptions: committed DB batch of {} (checkpoint {}/{})",
+                        toCommit.size(), processedCount.get(), totalRecords);
+            }
+        }
+
+        if (progress != null) {
+            int processed = processedCount.get();
+            int progressPercent = totalRecords > 0 ? (processed * 100 / totalRecords) : 0;
+            int descriptionProgress = 55 + (progressPercent * 10 / 100);
+            progress.updateProgress(descriptionProgress, DESCRIPTIONS_PROGRESS_LABEL,
+                    String.format("Generating medical case descriptions: %d/%d (%d%%)",
+                            processed, totalRecords, progressPercent));
         }
     }
 

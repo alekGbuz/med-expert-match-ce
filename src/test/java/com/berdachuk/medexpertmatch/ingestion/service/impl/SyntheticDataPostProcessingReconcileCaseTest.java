@@ -62,7 +62,8 @@ class SyntheticDataPostProcessingReconcileCaseTest {
                 null,                       // MedicalCaseDescriptionService
                 null,                       // EmbeddingGeneratorService
                 catalogState,               // SyntheticDataCatalogState — M75 populates caseSpecialtyCoverage
-                null                        // SyntheticDataGenerationRunRepository — M77
+                null,                       // SyntheticDataGenerationRunRepository — M77
+                null                        // LlmCallLimiter
         );
     }
 

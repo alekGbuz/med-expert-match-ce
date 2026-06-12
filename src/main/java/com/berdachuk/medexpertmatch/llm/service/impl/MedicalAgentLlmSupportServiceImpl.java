@@ -103,6 +103,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             variables.put("patientAge", medicalCase.patientAge() != null ? medicalCase.patientAge().toString() : "Not provided");
             variables.put("chiefComplaint", medicalCase.chiefComplaint() != null ? medicalCase.chiefComplaint() : "");
             variables.put("symptoms", medicalCase.symptoms() != null ? medicalCase.symptoms() : "");
+            variables.put("icd10Codes", medicalCase.icd10Codes() != null && !medicalCase.icd10Codes().isEmpty()
+                    ? String.join(", ", medicalCase.icd10Codes()) : "None provided");
             variables.put("additionalNotes", medicalCase.additionalNotes() != null ? medicalCase.additionalNotes() : "");
 
             String systemPrompt = medgemmaCaseAnalysisSystemPromptTemplate.render(Collections.emptyMap());

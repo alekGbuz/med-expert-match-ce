@@ -31,7 +31,8 @@ class SyntheticDataPostProcessingServiceImplRunTrackingTest {
                 mock(com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService.class),
                 mock(com.berdachuk.medexpertmatch.ingestion.service.EmbeddingGeneratorService.class),
                 new SyntheticDataCatalogState(),
-                runRepository
+                runRepository,
+                mock(com.berdachuk.medexpertmatch.core.util.LlmCallLimiter.class)
         );
     }
 

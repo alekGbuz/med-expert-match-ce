@@ -60,7 +60,8 @@ class SyntheticDataPostProcessingReconcileTest {
                 null,                       // MedicalCaseDescriptionService
                 null,                       // EmbeddingGeneratorService
                 catalogState,               // SyntheticDataCatalogState — now required by reconcile
-                null                        // SyntheticDataGenerationRunRepository — M77
+                null,                       // SyntheticDataGenerationRunRepository — M77
+                null                        // LlmCallLimiter
         );
     }
 
