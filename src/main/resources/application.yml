@@ -104,7 +104,7 @@ spring:
         api-key: ${EMBEDDING_API_KEY:none}
         model: ${EMBEDDING_MODEL:nomic-embed-text:v1.5}
         dimensions: ${EMBEDDING_DIMENSIONS:768}
-      reranking: # Semantic reranking; same URL + utility model by default (M67)
+      reranking: # Semantic reranking; same URL + utility model by default
         provider: ${RERANKING_PROVIDER:${UTILITY_PROVIDER:${CHAT_PROVIDER:openai}}}
         base-url: ${RERANKING_BASE_URL:${UTILITY_BASE_URL:${CHAT_BASE_URL:http://localhost:11434/v1}}}
         api-key: ${RERANKING_API_KEY:${UTILITY_API_KEY:${CHAT_API_KEY:none}}}
