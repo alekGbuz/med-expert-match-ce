@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M109 | [`M109-next-priorities-triage-and-define.md`](M109-next-priorities-triage-and-define.md) | Triage remaining improvement areas, define next set of milestones |
+| M110 | [`M110-integration-test-infrastructure-and-ci-hardening.md`](M110-integration-test-infrastructure-and-ci-hardening.md) | Build test container in CI, add make test-image, document test setup in dev guide |
 
 ## Deferred
 
