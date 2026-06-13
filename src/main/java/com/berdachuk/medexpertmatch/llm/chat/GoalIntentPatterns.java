@@ -49,6 +49,13 @@ public final class GoalIntentPatterns {
                     + "where\\s+should\\s+(?:the\\s+)?patient\\s+go|treatment\\s+center)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    static final Pattern ROUTE_CASE_KEYWORDS_RU = Pattern.compile(
+            "(?:в\\s+какую\\s+клинику|куда\\s+(?:отправить|направить|обратиться)|"
+                    + "какую\\s+больницу|рекомендуй\\s+(?:клинику|больницу)|"
+                    + "подходящ(?:ая|ую|ий)\\s+(?:клиника|больницу|стационар)|"
+                    + "направить\\s+(?:в|к)|куда\\s+дальше)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
     static final Pattern TRIAGE_KEYWORDS = Pattern.compile(
             "\\b(?:urgency|triage|intake|red\\s+flag|priority\\s+level|how\\s+urgent|"
                     + "acuity\\s+assessment|emergency\\s+severity)\\b",
@@ -95,7 +102,8 @@ public final class GoalIntentPatterns {
     }
 
     public static boolean matchesRouteCaseKeywords(String message) {
-        return message != null && ROUTE_CASE_KEYWORDS.matcher(message).find();
+        return message != null && (ROUTE_CASE_KEYWORDS.matcher(message).find()
+                || ROUTE_CASE_KEYWORDS_RU.matcher(message).find());
     }
 
     public static boolean matchesTriageKeywords(String message) {
