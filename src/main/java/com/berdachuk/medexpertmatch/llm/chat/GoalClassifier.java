@@ -150,6 +150,11 @@ public class GoalClassifier {
                     "session: case detail with inherited case");
         }
 
+        if (GoalIntentPatterns.matchesRouteCaseKeywords(message)) {
+            return GoalClassification.routeCase(inheritedCaseId,
+                    "session: route case with inherited case");
+        }
+
         if (GoalIntentPatterns.looksLikeElaborationFollowUp(message)) {
             return GoalClassification.analyzeCase(inheritedCaseId,
                     "session: elaboration follow-up with inherited case");
