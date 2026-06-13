@@ -1,0 +1,65 @@
+# Progress
+
+Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
+
+## 2026-06-13: Memory Bank Alignment
+
+- Fixed factual errors in memory bank files against canonical docs
+- Added missing D-011, D-012, D-013 to decisions.md
+- Enriched systemPatterns.md with architecture patterns (array-based refs, ID normalization, agent skills, testing, harness)
+- Enriched productContext.md with 6 use cases, 7 agent skills, scoring weights
+- Updated techContext.md with correct versions (pgvector 0.1.6, AGE 1.6.0, Session 0.3.0, Testcontainers 2.0.5, etc.)
+
+## 2026-06-13: Memory Bank Bootstrap
+
+- Created `.agents/memory-bank/` with all 7 files
+- Updated `AGENTS.md` and `docs/ai-context-strategy.md` with memory bank layer
+- Added `bun.lock`/`package.json` to `.gitignore`
+
+## 2026-06-13: M96 Complete
+
+- Russian route-case keyword patterns, chat mode cleanup, LLM response sanitizer fixes
+
+## 2026-06-12: M95 Complete
+
+- Simplified case analysis prompt (31→16 lines), ICD-10 validation, parallel description generation with `LlmCallLimiter`
+
+## 2026-06-12: M94 Complete
+
+- Session ID fix in `EvidenceAgentTools`/`ClinicalAdvisorAgentTools`, data-sizes.csv update
+
+## 2026-06-12: M93 Complete
+
+- Production readiness closeout, embed scheduler, 549 ITs green
+
+## 2026-06-10: M89 Complete
+
+- Full test suite hardening: 544 tests, 0 failures
+
+## 2026-06-10: M77 Complete (10 stories)
+
+- Runtime-measured synthetic data estimates: `SyntheticDataGenerationRun` table, `EstimateAdjustmentService`, admin UI. 883 unit + 546 IT, 0 failures.
+
+## 2026-06-12: M92 Complete
+
+- Wire DocumentSearch into evidence-retriever skill; chunk NULL embedding backfill; `DocumentSearchServiceTest`
+
+## 2026-06: M91 Complete
+
+- Fix clinicalExperienceMs tracking gap, remove duplicate `@EnableScheduling`
+
+## 2026-06: M90 Complete
+
+- Implement M77 runtime-measured synthetic data estimates
+
+## 2026-06: M86 Complete
+
+- Execute M84 modulith cycle resolution spec
+
+## 2026-06: M84 Complete
+
+- Resolve pre-existing `ModulithVerificationIT` cycle
+
+## Historical (M01–M83)
+
+All milestones M01–M83 are complete and archived. See `.agents/plans/archive/` for full history (90+ plans) and `.agents/plans/progress.txt` for detailed per-story iteration log.
