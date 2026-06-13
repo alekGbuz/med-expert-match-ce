@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M100 | [`M100-hardening-roundout-and-next-priorities.md`](M100-hardening-roundout-and-next-priorities.md) | Finalize security hardening (DockerSecurityConfig), remaining code-quality fixes, sync main branch |
+| M101 | [`M101-document-rag-wiring-and-code-quality.md`](M101-document-rag-wiring-and-code-quality.md) | Wire document RAG into recommendation engine prompt, add startup backfill trigger, code quality pass |
 
 ## Deferred
 
