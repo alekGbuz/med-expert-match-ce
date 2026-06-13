@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M101 | [`M101-document-rag-wiring-and-code-quality.md`](M101-document-rag-wiring-and-code-quality.md) | Wire document RAG into recommendation engine prompt, add startup backfill trigger, code quality pass |
+| M102 | [`M102-find-specialist-explainability-and-chat-polish.md`](M102-find-specialist-explainability-and-chat-polish.md) | Find Specialist explainability panel improvements, chat context hardening, AskUserQuestionTool integration |
 
 ## Deferred
 
