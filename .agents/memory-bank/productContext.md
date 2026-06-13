@@ -16,17 +16,17 @@
 
 ## 9 Agent Skills
 
-| Skill                 | Purpose                                                                      |
-|-----------------------|------------------------------------------------------------------------------|
-| case-analyzer         | Extract entities, ICD-10/SNOMED codes, classify urgency and complexity       |
-| doctor-matcher        | Score and rank doctors using vector + graph + historical signals             |
-| evidence-retriever    | Search PubMed, clinical guidelines, GRADE evidence summaries                 |
-| recommendation-engine | Generate clinical recommendations, diagnostic workup, treatment options      |
-| clinical-advisor      | Differential diagnosis, risk assessment                                      |
-| network-analyzer      | Expertise network analytics, graph-based expert discovery, aggregate metrics |
-| routing-planner       | Facility routing optimization, multi-facility scoring, geographic routing    |
-| clinical-guideline    | Retrieve condition-specific clinical practice guidelines                     |
-| triage                | Assess urgency and acuity, recommend care level routing                      |
+| Skill | When | How |
+|-------|------|-----|
+| **case-analyzer** | Submit case (Find Specialist, Chat intake) | Calls clinical LLM → extracts entities, ICD-10/SNOMED codes, classifies urgency |
+| **doctor-matcher** | After case analysis complete | 3-signal pipeline: vector similarity (40%) + graph proximity (30%) + historical outcomes (30%) |
+| **evidence-retriever** | Case needs supporting evidence | PubMed E-utilities API + local document vector search |
+| **recommendation-engine** | Matches found, final synthesis needed | Clinical LLM → diagnostic workup, treatment plan, referral rationale |
+| **clinical-advisor** | Differential diagnosis requested | ClinicalExperience history + LLM → risk assessment, differentials |
+| **network-analyzer** | Expertise network analytics requested | Apache AGE graph queries on doctor-specialty-case relationships |
+| **routing-planner** | "Where should this patient go?" | Facility scoring: complexity match + outcomes + capacity + proximity |
+| **clinical-guideline** | Evidence needed for specific condition | Search published guidelines, grade strength of recommendation |
+| **triage** | New case enters system | Assess urgency → CRITICAL/HIGH/MEDIUM/LOW tier → route or hold |
 
 ## Constraints
 

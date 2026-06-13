@@ -64,14 +64,19 @@ TEXT[] arrays + GIN indexes used instead of foreign keys for reference data (ICD
 - Role-separated endpoints: `CLINICAL_HIGH`, `CLINICAL_LOW`, `UTILITY`, `TOOL_CALLING`, `EMBEDDING`, `RERANK`
 
 ### Agent Skills Architecture
-7 medical-specific skills loaded from `src/main/resources/skills/{skill-name}/SKILL.md`:
-1. **case-analyzer** — Extract entities, ICD-10 codes, classify urgency
-2. **doctor-matcher** — Score and rank doctors across multiple signals
-3. **evidence-retriever** — Search PubMed, guidelines, evidence summaries
-4. **recommendation-engine** — Generate clinical recommendations, treatment options
-5. **clinical-advisor** — Differential diagnosis, risk assessment
-6. **network-analyzer** — Expertise network analytics, graph-based discovery
-7. **routing-planner** — Facility routing optimization, geographic scoring
+9 medical-specific skills loaded from `src/main/resources/skills/{skill-name}/SKILL.md`:
+
+| Skill | When | How |
+|-------|------|-----|
+| **case-analyzer** | Submit case (Find Specialist, Chat intake) | Calls clinical LLM → extracts entities, ICD-10/SNOMED codes, classifies urgency |
+| **doctor-matcher** | After case analysis complete | 3-signal pipeline: vector similarity (40%) + graph proximity (30%) + historical outcomes (30%) |
+| **evidence-retriever** | Case needs supporting evidence | PubMed E-utilities API + local document vector search |
+| **recommendation-engine** | Matches found, final synthesis needed | Clinical LLM → diagnostic workup, treatment plan, referral rationale |
+| **clinical-advisor** | Differential diagnosis requested | ClinicalExperience history + LLM → risk assessment, differentials |
+| **network-analyzer** | Expertise network analytics requested | Apache AGE graph queries on doctor-specialty-case relationships |
+| **routing-planner** | "Where should this patient go?" | Facility scoring: complexity match + outcomes + capacity + proximity |
+| **clinical-guideline** | Evidence needed for specific condition | Search published guidelines, grade strength of recommendation |
+| **triage** | New case enters system | Assess urgency → CRITICAL/HIGH/MEDIUM/LOW tier → route or hold
 
 ### Agent Orchestration (Harness)
 ```
