@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M106 | [`M106-local-dev-experience-and-test-infrastructure.md`](M106-local-dev-experience-and-test-infrastructure.md) | Add Makefile for test image build, document test setup, ensure .gitignore consistency |
+| M107 | [`M107-code-quality-and-dependency-freshness.md`](M107-code-quality-and-dependency-freshness.md) | Dependency version check, remove remaining dead code, final doc sync |
 
 ## Deferred
 
