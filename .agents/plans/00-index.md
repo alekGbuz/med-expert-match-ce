@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M102 | [`M102-find-specialist-explainability-and-chat-polish.md`](M102-find-specialist-explainability-and-chat-polish.md) | Find Specialist explainability panel improvements, chat context hardening, AskUserQuestionTool integration |
+| M103 | [`M103-code-quality-and-dependency-freshness.md`](M103-code-quality-and-dependency-freshness.md) | Code quality pass: remove dead code, update stale docs, dependency freshness check |
 
 ## Deferred
 
