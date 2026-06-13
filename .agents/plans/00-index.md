@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M110 | [`M110-integration-test-infrastructure-and-ci-hardening.md`](M110-integration-test-infrastructure-and-ci-hardening.md) | Build test container in CI, add make test-image, document test setup in dev guide |
+None — all milestones through M110 are complete. See Archive below.
 
 ## Deferred
 
