@@ -309,7 +309,7 @@ medexpertmatch:
       chunk-size: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_SIZE:512}
       chunk-overlap: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_OVERLAP:64}
   auth:
-    enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:false}
+    enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:true}
     api-keys: ${MEDEXPERTMATCH_AUTH_API_KEYS:}
     session-tokens:
       enabled: ${MEDEXPERTMATCH_SESSION_TOKEN_AUTH:false}
