@@ -2,30 +2,39 @@
 
 ## Identity
 
-**MedExpertMatch** — AI-powered medical expert recommendation system for the MedGemma Impact Challenge.
+**MedExpertMatch** — AI-powered medical expert recommendation system built for the MedGemma Impact Challenge.
 
 ## Goal
 
-Match patient cases to the most suitable medical specialists using GraphRAG (vector embeddings + graph relationships + clinical history), powered by Spring AI and LLM agents. The system understands clinical context, retrieves relevant evidence, and outputs ranked, explainable specialist recommendations.
+Match patient cases to the most suitable medical specialists using a hybrid GraphRAG pipeline (vector similarity + graph relationships + clinical history), orchestrated by Spring AI agents with MedGemma LLMs.
 
 ## Stakeholders
 
-- **Clinicians** — receive explainable specialist matches with evidence links
-- **Patients** — benefit from faster, more accurate specialist referrals
-- **Developers/Evaluators** — the MedGemma Impact Challenge evaluation panel
+| Role | Need |
+|------|------|
+| Attending/referring physicians | Find the right specialist in minutes, not days |
+| Consultation coordinators | Prioritize queues by urgency, not FIFO |
+| CMO / analytics teams | Visibility into expertise network and outcomes |
+| Regional health authorities | Route patients to facilities matching case complexity |
+| MedGemma evaluators | Challenge entry with measurable impact metrics |
 
 ## Scope
 
-- Case intake with structured clinical data (symptoms, ICD-10, urgency)
-- Multi-dimensional specialist matching (vector similarity, graph proximity, historical outcomes)
-- LLM-powered agent harness for case analysis, evidence retrieval, and match explainability
-- Web UI (Thymeleaf SSR) for clinician interaction
-- Synthetic data generation for demo/eval scenarios
-- FHIR adapter layer for real-world EHR integration
+**In-scope:**
+- Medical case intake with ICD-10/SNOMED coding and urgency classification
+- Multi-dimensional specialist matching (vector, graph, historical)
+- 7 agent skills: case-analyzer, doctor-matcher, evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, routing-planner
+- Conversational AI chat (Expert match harness) with session memory and durable AutoMemory
+- PubMed clinical evidence retrieval + local document RAG
+- Synthetic data generation for demo/eval (5 sizes: tiny through huge)
+- FHIR R5 adapter layer
+- 4-metric LLM evaluation flywheel (7 eval families)
+- Web UI (Thymeleaf SSR, 9 pages)
+- Admin dashboard with health indicators and synthetic data management
 
-## Non-Goals
-
-- Real-time patient monitoring
-- HIPAA-compliant production deployment (MVP is demo/eval only)
+**Non-goals:**
+- Real patient data integration (synthetic-only for MVP)
+- Production deployment at scale
+- Multi-tenant architecture
+- HIPAA certification (design follows HIPAA principles but no formal certification)
 - Patient-facing mobile apps
-- Direct EHR integration (FHIR adapters exist but are not wired to live systems)
