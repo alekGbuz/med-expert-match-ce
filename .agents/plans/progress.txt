@@ -101,3 +101,9 @@ Read this file BEFORE starting any new milestone — it captures the
 - test_target 'mvn verify' green (rc=0, 549 IT, 0 failures, 0 errors, 1 skipped)
 - Discovered: Case analysis user prompt didn't include icd10Codes variable; LLM hallucinated codes because it had no ground truth. Added icd10Codes to user prompt and system prompt with explicit "use ONLY codes from input" instruction. Interpretation prompt was too verbose (31 lines → 16 lines). Description generation was purely sequential — now uses Executors.newFixedThreadPool(descriptionThreadPoolSize) with LlmCallLimiter gating each call. Need to rebuild test Docker image after container cleanup.
 - Next: none — all milestones through M95 are complete
+
+## 2026-06-13 M96 (Route-Case Keywords, Chat Mode Cleanup, Response Sanitizer) [GREEN]
+- commit: 76121d0
+- test_target 'mvn compile' green (rc=0)
+- Discovered: feature branch from main caused merge conflict in chat.html (develop already had prior M96 cleanup). Resolved by keeping the simpler hidden-input-only version. Added bun.lock and package.json to .gitignore.
+- Next: none — all milestones through M96 are complete

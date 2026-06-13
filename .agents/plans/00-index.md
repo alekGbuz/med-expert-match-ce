@@ -2,7 +2,9 @@
 
 ## Active
 
-None — all milestones through M95 are complete. See Archive below.
+| # | Plan | Description |
+|---|------|-------------|
+| M97 | [`M97-document-rag-embedding-backfill-and-deprecation-cleanup.md`](M97-document-rag-embedding-backfill-and-deprecation-cleanup.md) | Fix document RAG embedding backfill, remove deprecated primaryChatModel() and LlmClientType.CHAT, extract inline prompts to .st files
 
 ## Deferred
 
@@ -105,6 +107,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M93 | [`M93-production-readiness-and-doc-rag-closeout.md`](archive/M93-production-readiness-and-doc-rag-closeout.md) | Production-readiness close-out: document RAG embed scheduler, DocumentChunkRepositoryIT for findByEmbeddingIsNull, full-codebase security review, dependency-freshness pass, multi-module test-coverage infra closure |
 | M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](archive/M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
 | M95 | [`M95-llm-prompt-quality-and-response-reliability.md`](archive/M95-llm-prompt-quality-and-response-reliability.md) | Simplify case analysis prompt, add ICD-10 validation to prevent hallucination, parallelize synthetic data description generation (5-10x speedup), add LlmCallLimiter |
+| M96 | [`M96-route-case-keywords-and-chat-mode-cleanup.md`](archive/M96-route-case-keywords-and-chat-mode-cleanup.md) | Russian route-case keyword patterns, finalize chat mode cleanup, LLM response sanitizer fixes |
 
 ## Creating a New Plan
 
