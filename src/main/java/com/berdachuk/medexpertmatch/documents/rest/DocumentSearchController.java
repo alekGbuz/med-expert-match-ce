@@ -1,7 +1,9 @@
 package com.berdachuk.medexpertmatch.documents.rest;
 
+import com.berdachuk.medexpertmatch.core.security.AdminAccessGuard;
 import com.berdachuk.medexpertmatch.documents.DocumentSearchApi;
 import com.berdachuk.medexpertmatch.documents.domain.DocumentSearchResult;
+import com.berdachuk.medexpertmatch.documents.service.impl.DocumentEmbeddingPipeline;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
@@ -11,6 +13,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,9 +28,15 @@ import java.util.Map;
 public class DocumentSearchController {
 
     private final DocumentSearchApi documentSearchApi;
+    private final DocumentEmbeddingPipeline embeddingPipeline;
+    private final AdminAccessGuard adminAccessGuard;
 
-    public DocumentSearchController(DocumentSearchApi documentSearchApi) {
+    public DocumentSearchController(DocumentSearchApi documentSearchApi,
+                                    DocumentEmbeddingPipeline embeddingPipeline,
+                                    AdminAccessGuard adminAccessGuard) {
         this.documentSearchApi = documentSearchApi;
+        this.embeddingPipeline = embeddingPipeline;
+        this.adminAccessGuard = adminAccessGuard;
     }
 
     @Operation(summary = "Search document chunks by semantic similarity")
@@ -51,5 +60,13 @@ public class DocumentSearchController {
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("status", "DOWN", "error", e.getMessage()));
         }
+    }
+
+    @Operation(summary = "Trigger on-demand backfill of NULL embeddings for document chunks")
+    @PostMapping("/backfill-embeddings")
+    public ResponseEntity<Map<String, Object>> backfillEmbeddings() {
+        adminAccessGuard.requireAdmin();
+        embeddingPipeline.backfillNullEmbeddings();
+        return ResponseEntity.ok(Map.of("status", "accepted"));
     }
 }
