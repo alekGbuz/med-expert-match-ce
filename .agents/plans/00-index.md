@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M103 | [`M103-code-quality-and-dependency-freshness.md`](M103-code-quality-and-dependency-freshness.md) | Code quality pass: remove dead code, update stale docs, dependency freshness check |
+| M104 | [`M104-code-quality-and-dependency-freshness.md`](M104-code-quality-and-dependency-freshness.md) | Final documentation sync, remove dead code, dependency freshness check |
 
 ## Deferred
 
