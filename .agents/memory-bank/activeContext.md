@@ -2,38 +2,40 @@
 
 ## Current Focus
 
-All milestones M97–M105 are complete. The codebase is in a clean state with no stale branches, no stale API references (`LlmClientType.CHAT`, `primaryChatModel` removed), auth enabled by default, document RAG wired into the recommendation-engine skill, and startup backfill trigger added.
+All milestones M01–M111 are complete. The codebase has been upgraded to Spring Boot 4.1.0, Spring AI 2.0.0 GA, Spring Modulith 2.1.0, and spring-ai-agent-utils 0.9.0.
 
 ## Current Milestone
 
-**M106** — next phase (to be defined). All prior milestones through M105 are archived.
+**M112** — Post-upgrade stabilization: verify integration tests, check options mutability, review advisor ordering, update docs.
 
 **Deferred:** M60 (FunctionGemma fine-tune — needs GPU capacity, stakeholder sign-off)
 
 ## Completed Recently
 
+- **M111** — Core Framework Upgrades: Spring Boot 4.0.6 → 4.1.0, Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor → ToolCallingAdvisor rename, internalToolExecutionEnabled removal), Spring Modulith 2.0.7 → 2.1.0, spring-ai-agent-utils 0.8.0 → 0.9.0
+- **M110** — Integration test infrastructure and CI hardening: `make test-image` documented, `.gitignore` consistent, stale doc references fixed
+- **M109** — Next priorities triage: reviewed remaining improvement areas, defined M110 scope
+- **M108** — Code quality and dependency freshness (archived)
+- **M107** — Code quality and dependency freshness (archived)
+- **M106** — Local dev experience and test infrastructure (Makefile, memory bank update)
 - **M105** — Final stale API reference cleanup, dependency freshness check
 - **M104** — Remaining dead config file references fixed in docs
 - **M103** — `LlmClientType.CHAT` → `CLINICAL`, `primaryChatModel` → `clinicalChatModel` in all docs
-- **M102** — Find Specialist explainability panel, chat context hardening, AskUserQuestionTool (all already implemented)
+- **M102** — Find Specialist explainability panel, chat context hardening, AskUserQuestionTool
 - **M101** — Document RAG wired into recommendation-engine skill, startup backfill trigger
 - **M100** — Stale remote branches deleted, `main` synced with `develop`
-- **M99** — Case coordinates populated in synthetic data, graceful geo degradation
-- **M98** — Auth enabled by default, admin endpoints protected
-- **M97** — Document RAG backfill config + endpoint, deprecation cleanup
 
 ## Open Questions
 
 - When will GPU capacity become available for M60?
-- What should M106 focus on? (All prior milestones are complete)
 
 ## Active Risks
 
-- **Integration tests fail locally** — requires `./scripts/build-test-container.sh` first; not a code regression
-- **No active plan** — all milestones through M105 are complete; M106 needs definition
+- **Integration tests fail locally** — requires `make test-image` or `./scripts/build-test-container.sh` first; not a code regression
+- **Options mutability may need review** — Spring AI 2.0.0 GA uses `mutate()` instead of `copy()`/`fromOptions()`; verify no stale patterns remain
 
 ## Next Steps
 
-1. Define M106 scope
-2. Implement M106
-3. Run `mvn verify` to ensure green suite
+1. Implement M112: post-upgrade stabilization
+2. Run `mvn verify` to ensure green suite
+3. Run security review on upgraded dependencies
