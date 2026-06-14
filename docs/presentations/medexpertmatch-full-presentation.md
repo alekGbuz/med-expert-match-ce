@@ -79,7 +79,7 @@ Note: Not a toy benchmark. MedExpertMatch must be a credible applied scenario.
 
 ---
 
-## Agenda (about 45 minutes)
+## Agenda
 
 <div class="reveal-slide-row">
 
@@ -509,8 +509,11 @@ Note: Skills map to `skills/*/SKILL.md` and tool groups in the `llm` module.
 
 ## How Skills Work: Architecture and Execution Flow
 
-Spring AI describes the skill lifecycle in three stages: **discovery**, **activation**, and **execution**. The flow is:
-
+<span style="font-size:1.6rem;">
+Spring AI describes the skill lifecycle in three stages: discovery, activation, and execution. 
+The flow is:
+</span>
+<div style="max-width:1200px;max-height:700px;">
 <pre class="mermaid">
 sequenceDiagram
     actor User
@@ -530,12 +533,7 @@ sequenceDiagram
     Tool-->>Skill: Tool response in context
     Skill-->>User: Generated response with rationale
 </pre>
-
-1. **Discovery** — At startup, `SkillsTool` scans `src/main/resources/skills/` directories and extracts only `name` and `description` from each `SKILL.md` frontmatter. This lightweight registry is sent to the LLM.
-2. **Activation** — When a user message semantically matches a skill, the model invokes `Skill("skill-name")`. Only then is the full `SKILL.md` content loaded into the context window.
-3. **Execution** — Inside the skill's instructions, the model decides which `@Tool` methods to call. Tools execute in the local environment and return results into the skill's context.
-
-> **Important**: Scripts referenced by a skill execute directly in the local environment without sandboxing. This is fine for read-only operations but requires careful scoping for anything that modifies state.
+</div>
 
 ---
 
@@ -552,10 +550,8 @@ sequenceDiagram
 
 ```cypher
 MATCH (d:Doctor {id: $doctorId})
-      -[:TREATED]->
-      (c:MedicalCase)
-      -[:HAS_CONDITION]->
-      (i:ICD10Code {code: $icd10Code})
+      -[:TREATED]->(c:MedicalCase)
+      -[:HAS_CONDITION]->(i:ICD10Code {code: $icd10Code})
 RETURN count(*)
 ```
 
