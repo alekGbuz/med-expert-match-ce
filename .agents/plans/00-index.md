@@ -108,6 +108,13 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M96 | [`M96-route-case-keywords-and-chat-mode-cleanup.md`](archive/M96-route-case-keywords-and-chat-mode-cleanup.md) | Russian route-case keyword patterns, finalize chat mode cleanup, LLM response sanitizer fixes |
 | M111 | [`archive/M111-upgrade-spring-ai-to-2.0.0.md`](archive/M111-upgrade-spring-ai-to-2.0.0.md) | Upgrade Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor rename, internalToolExecutionEnabled removal, session BOM) |
 | M112 | [`archive/M112-post-upgrade-stabilization.md`](archive/M112-post-upgrade-stabilization.md) | Post-upgrade code quality, presentation slides, local dev auth fix |
+| M113 | [`archive/M113-presentation-slides-finalize.md`](archive/M113-presentation-slides-finalize.md) | Reorder slides, add System Overview/Three-Signal Scorer/How Skills Work slides, align speaker script and OPML mindmap |
+
+## Active
+
+| # | Plan | Description |
+|---|------|-------------|
+| M114 | [`M114-integration-test-hardening-and-ci.md`](M114-integration-test-hardening-and-ci.md) | Fix integration test infrastructure, harden CI pipeline, close stability gaps |
 
 ## Creating a New Plan
 
