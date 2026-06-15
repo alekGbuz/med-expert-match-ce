@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M115 | [`M115-dependency-freshness-and-ci-optimization.md`](M115-dependency-freshness-and-ci-optimization.md) | Update safe deps (jackson 2.22.0, spring-ai-agent-utils 0.10.0, wiremock 3.9.2→4.0), optimize CI build parallelism, document CI workflow |
+| M116 | [`M116-application-hardening-and-observability.md`](M116-application-hardening-and-observability.md) | Application hardening: health endpoint enhancements, startup readiness probe, graceful shutdown, structured logging, Prometheus metrics review |
 
 ## Deferred
 
@@ -112,12 +112,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M112 | [`archive/M112-post-upgrade-stabilization.md`](archive/M112-post-upgrade-stabilization.md) | Post-upgrade code quality, presentation slides, local dev auth fix |
 | M113 | [`archive/M113-presentation-slides-finalize.md`](archive/M113-presentation-slides-finalize.md) | Reorder slides, add System Overview/Three-Signal Scorer/How Skills Work slides, align speaker script and OPML mindmap |
 | M114 | [`archive/M114-integration-test-hardening-and-ci.md`](archive/M114-integration-test-hardening-and-ci.md) | Fix integration test failures, harden CI pipeline, close stability gaps |
-
-## Active
-
-| # | Plan | Description |
-|---|------|-------------|
-| M114 | [`M114-integration-test-hardening-and-ci.md`](M114-integration-test-hardening-and-ci.md) | Fix integration test infrastructure, harden CI pipeline, close stability gaps |
+| M115 | [`archive/M115-dependency-freshness-and-ci-optimization.md`](archive/M115-dependency-freshness-and-ci-optimization.md) | Update safe deps (jackson 2.22.0, spring-ai-agent-utils 0.10.0, wiremock held at 3.9.2), optimize CI build parallelism, document CI workflow |
 
 ## Creating a New Plan
 
