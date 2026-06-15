@@ -8,11 +8,13 @@ M115 (dependency freshness, CI optimization) and M116 (application hardening, ob
 
 **M117** (completed, 2026-06-15) introduced the semantic markup and traceability foundation: stable ID scheme (`REQ-###`, `SCN-###`, `TEST-###`, `DEC-###`, `RISK-###`), new `bdd-traceability` skill, and a seed traceability table in `productContext.md`. Documentation + skill scaffolding only; no production code change required.
 
-**M118** (active, 2026-06-15) closes the traceability coverage gaps identified in M117: dedicated tests for REQ-002/003/006, `DEC-014` decision on REQ-004 scope, and `SCN-###` annotations on the 9 agent-skill test classes.
+**M118** (completed, 2026-06-15) closed all 5 traceability gaps from M117. All 15 rows in `productContext.md` now **verified**.
+
+**M119** (active, 2026-06-15) adopts Cucumber JVM for BDD acceptance: 3 `.feature` files (case-analyzer, doctor-matcher, routing-planner), thin step definitions, CucumberIT runner. 6 Cucumber scenarios pass.
 
 ## Current Milestone
 
-**M118** — Traceability Coverage Closeout: all 5 M117 gaps closed. 3 new test annotations+1 new test method added to production test files; DEC-014 recorded; all 15 traceability rows in `productContext.md` now **verified**.
+**M119** — BDD Cucumber Adoption: Cucumber JVM deps added to pom.xml, 3 `.feature` files (6 scenarios), thin step definitions, CucumberIT runner. 6/6 Cucumber scenarios pass.
 
 **Deferred:** M60 (FunctionGemma fine-tune — needs GPU capacity, stakeholder sign-off)
 
@@ -47,6 +49,6 @@ All 5 gaps identified in M117 have been closed in M118:
 
 ## Next Steps
 
-1. **M116** — application hardening and observability (still active, in flight).
-2. After M116, consider adopting a full Gherkin/Cucumber JVM runtime (new M-plan) to drive further BDD traceability depth.
-3. Follow-up: enforce `SCN-###` annotations on all new test classes as part of code review (adopt the `bdd-traceability` skill as standard practice).
+1. **M120** — extend Cucumber coverage to remaining 6 agent skills (evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, clinical-guideline, triage).
+2. **M116** — application hardening and observability (still active, in flight).
+3. Follow-up: enforce `SCN-###` annotations on all new test classes as part of code review.

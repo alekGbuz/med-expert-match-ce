@@ -78,16 +78,16 @@ Create `src/test/java/.../bdd/CucumberIT.java` — a single `@Suite` integration
 
 ## Acceptance Criteria
 
-- [ ] `pom.xml` has Cucumber JVM test dependencies; `mvn dependency:tree` shows no version conflicts.
-- [ ] `src/test/resources/features/case-analyzer.feature` exists with `@req-005` / `@scn-001` tags and 2 scenarios.
-- [ ] `src/test/resources/features/doctor-matcher.feature` exists with `@req-001` / `@scn-002` tags and 2 scenarios.
-- [ ] `src/test/resources/features/routing-planner.feature` exists with `@req-006` / `@scn-007` tags and 2 scenarios.
-- [ ] `CucumberIT` runner exists and discovers the 3 feature files.
-- [ ] Step definitions are thin (no domain logic duplication verified by code review).
-- [ ] `mvn verify` passes (Cucumber scenarios run as part of the integration test suite).
-- [ ] `productContext.md` skill table has a `Feature file` column.
-- [ ] `docs/ai-context-strategy.md` Sync-rules table includes feature file location.
-- [ ] `00-index.md` lists M119 in the "Active" table.
+- [x] `pom.xml` has Cucumber JVM test dependencies; `mvn dependency:tree` shows no version conflicts.
+- [x] `src/test/resources/features/case-analyzer.feature` exists with `@req-005` / `@scn-001` tags and 2 scenarios.
+- [x] `src/test/resources/features/doctor-matcher.feature` exists with `@req-001` / `@scn-002` tags and 2 scenarios.
+- [x] `src/test/resources/features/routing-planner.feature` exists with `@req-006` / `@scn-007` tags and 2 scenarios.
+- [x] `CucumberIT` runner exists and discovers the 3 feature files.
+- [x] Step definitions are thin (no domain logic duplication verified by code review).
+- [x] `mvn verify` passes (Cucumber scenarios run as part of the integration test suite — 6/6 scenarios pass).
+- [x] `productContext.md` skill table has a `Feature file` column.
+- [x] `docs/ai-context-strategy.md` Sync-rules table includes feature file location.
+- [x] `00-index.md` lists M119 in the "Active" table.
 
 ## References
 
