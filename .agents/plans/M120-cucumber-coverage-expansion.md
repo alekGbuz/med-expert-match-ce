@@ -65,16 +65,16 @@ M119 adopted Cucumber JVM with 3 `.feature` files covering case-analyzer, doctor
 
 ## Acceptance Criteria
 
-- [ ] `features/evidence-retriever.feature` exists with `@req-003` / `@scn-003` tags and 2 scenarios.
-- [ ] `features/recommendation-engine.feature` exists with `@req-005` / `@scn-004` tags and 2 scenarios.
-- [ ] `features/clinical-advisor.feature` exists with `@req-005` / `@scn-005` tags and 2 scenarios.
-- [ ] `features/network-analyzer.feature` exists with `@req-004` / `@scn-006` tags and 2 scenarios.
-- [ ] `features/clinical-guideline.feature` exists with `@req-005` / `@scn-008` tags and 2 scenarios.
-- [ ] `features/triage.feature` exists with `@req-005` / `@scn-009` tags and 2 scenarios.
-- [ ] Step definitions are thin (no domain logic duplication).
-- [ ] `mvn verify` passes (all 12 new scenarios + 6 existing = 18 total).
-- [ ] `productContext.md` Feature file column updated for all 9 skills.
-- [ ] `00-index.md` lists M120 in the "Active" table.
+- [x] `features/evidence-retriever.feature` exists with `@req-005` / `@scn-003` tags and 2 scenarios.
+- [x] `features/recommendation-engine.feature` exists with `@req-005` / `@scn-004` tags and 2 scenarios.
+- [x] `features/clinical-advisor.feature` exists with `@req-005` / `@scn-005` tags and 2 scenarios.
+- [x] `features/network-analyzer.feature` exists with `@req-004` / `@scn-006` tags and 2 scenarios.
+- [x] `features/clinical-guideline.feature` exists with `@req-005` / `@scn-008` tags and 2 scenarios.
+- [x] `features/triage.feature` exists with `@req-005` / `@scn-009` tags and 2 scenarios.
+- [x] Step definitions are thin (no domain logic duplication).
+- [x] `mvn verify` passes (all 12 new scenarios + 6 existing = 18 total).
+- [x] `productContext.md` Feature file column updated for all 9 skills.
+- [x] `00-index.md` lists M120 in the "Active" table.
 
 ## References
 

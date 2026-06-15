@@ -87,10 +87,10 @@ Each skill gets a single seed `SCN-###` row. Status is **verified** if a test cl
 |---|---|---|---|---|---|---|
 | case-analyzer | SCN-001 | `caseanalysis`, `llm` | Given a medical case narrative, when analyzed, then entities/ICD-10/SNOMED and urgency tier are returned | verified (TEST-005) | `features/case-analyzer.feature` |
 | doctor-matcher | SCN-002 | `retrieval` | Given an analyzed case, when matched, then a ranked list of specialists with score breakdown is returned | verified (TEST-001) | `features/doctor-matcher.feature` |
-| evidence-retriever | SCN-003 | `evidence`, `documents` | Given a clinical question, when retrieved, then PubMed and local-document evidence is returned with citations | verified (TEST-007) | — |
-| recommendation-engine | SCN-004 | `llm` | Given matched specialists, when synthesized, then a diagnostic workup and referral rationale are produced | verified (TEST-008) | — |
-| clinical-advisor | SCN-005 | `llm`, `clinicalexperience` | Given a case, when advised, then a differential diagnosis with risk assessment is returned | verified (TEST-008) | — |
-| network-analyzer | SCN-006 | `graph`, `llm` | Given a query about the expertise network, when analyzed, then sub-specialist clusters and coverage gaps are returned | verified (TEST-004) — graph-ops-only per DEC-014 | — |
+| evidence-retriever | SCN-003 | `evidence`, `documents` | Given a clinical question, when retrieved, then PubMed and local-document evidence is returned with citations | verified (TEST-007) | `features/evidence-retriever.feature` |
+| recommendation-engine | SCN-004 | `llm` | Given matched specialists, when synthesized, then a diagnostic workup and referral rationale are produced | verified (TEST-008) | `features/recommendation-engine.feature` |
+| clinical-advisor | SCN-005 | `llm`, `clinicalexperience` | Given a case, when advised, then a differential diagnosis with risk assessment is returned | verified (TEST-008) | `features/clinical-advisor.feature` |
+| network-analyzer | SCN-006 | `graph`, `llm` | Given a query about the expertise network, when analyzed, then sub-specialist clusters and coverage gaps are returned | verified (TEST-004) — graph-ops-only per DEC-014 | `features/network-analyzer.feature` |
 | routing-planner | SCN-007 | `retrieval` | Given a case and a set of facilities, when routed, then a facility is recommended with score breakdown | verified (TEST-008) | `features/routing-planner.feature` |
-| clinical-guideline | SCN-008 | `evidence`, `documents` | Given a condition, when queried, then published guidelines with strength of recommendation are returned | verified (TEST-007) | — |
-| triage | SCN-009 | `caseanalysis`, `llm` | Given a new case, when triaged, then an urgency tier (CRITICAL/HIGH/MEDIUM/LOW) is assigned | verified (TEST-005) | `features/case-analyzer.feature` |
+| clinical-guideline | SCN-008 | `evidence`, `documents` | Given a condition, when queried, then published guidelines with strength of recommendation are returned | verified (TEST-007) | `features/clinical-guideline.feature` |
+| triage | SCN-009 | `caseanalysis`, `llm` | Given a new case, when triaged, then an urgency tier (CRITICAL/HIGH/MEDIUM/LOW) is assigned | verified (TEST-005) | `features/triage.feature` |
