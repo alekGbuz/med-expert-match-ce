@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.retrieval.service.MatchOutcomeCalibrationSer
 import com.berdachuk.medexpertmatch.retrieval.service.MatchOutcomeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +38,7 @@ public class MatchOutcomeRestController {
 
     @Operation(summary = "Record a match outcome label for a case-doctor pair")
     @PostMapping("/match-outcomes")
-    public ResponseEntity<Map<String, Object>> recordOutcome(@RequestBody MatchOutcomeRecordRequest request) {
+    public ResponseEntity<Map<String, Object>> recordOutcome(@RequestBody @Valid MatchOutcomeRecordRequest request) {
         log.info("POST /api/v1/match-outcomes label={}", request.label());
         MatchOutcome outcome = matchOutcomeService.recordOutcome(
                 request.caseId(), request.doctorId(), request.label());

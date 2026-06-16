@@ -7,8 +7,10 @@ import com.berdachuk.medexpertmatch.core.service.ChatExportAuditQueryService;
 import com.berdachuk.medexpertmatch.core.service.ChatRetentionQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @Tag(name = "Admin", description = "Simulated admin APIs (requires X-User-Id: admin)")
+@Validated
 @RestController
 @RequestMapping("/api/v1/admin")
 public class AdminController {
@@ -46,7 +49,7 @@ public class AdminController {
 
     @Operation(summary = "Create API session token (full key returned once)")
     @PostMapping("/session-tokens")
-    public ApiSessionTokenCreated createSessionToken(@RequestBody Map<String, String> body) {
+    public ApiSessionTokenCreated createSessionToken(@RequestBody @NotEmpty Map<String, String> body) {
         adminAccessGuard.requireAdmin();
         RateLimitTier tier = RateLimitTier.fromDatabaseValue(body.get("rateLimitTier"));
         Instant expiresAt = body.containsKey("expiresAt") && body.get("expiresAt") != null
