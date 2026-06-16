@@ -73,7 +73,7 @@ Test that configuration properties are correctly bound and validated:
 
 ## D4: Documentation-Sensitive Path Tests
 
-Test behavior that depends on profile configuration (referenced in docs/ARCHITECTURE.md and DEV_GUIDE):
+Test behavior that depends on profile configuration (referenced in docs/02-architecture.md and DEV_GUIDE):
 
 - `local` profile: browser auto-launch behavior
 - `local` profile: synthetic data generation gate
@@ -166,5 +166,5 @@ Create a concise document listing required external services:
 
 - [FIX_PLAN.md](../docs/FIX_PLAN.md) — source of remaining items
 - [M44 plan](M44-core-infrastructure-test-coverage.md) — sibling infrastructure test coverage milestone
-- [ARCHITECTURE.md](../docs/ARCHITECTURE.md) — system architecture reference
+- [02-architecture.md](../docs/02-architecture.md) — system architecture reference
 - [AGENTS.md](../AGENTS.md) — project rules and conventions

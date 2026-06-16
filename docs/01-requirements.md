@@ -1427,8 +1427,8 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 ### 13.2 Related Documents
 
 - [Vision](VISION.md) - Project vision and long-term goals
-- [Use Cases](USE_CASES.md) - Detailed use case workflows with sequence diagrams
-- [Architecture](ARCHITECTURE.md) - System architecture and design
+- [Use Cases](use-cases.md) - Detailed use case workflows with sequence diagrams
+- [Architecture](02-architecture.md) - System architecture and design
 - [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface flows, wireframe mockups, and UI/UX guidelines
 
 ---

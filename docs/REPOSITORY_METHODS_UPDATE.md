@@ -151,4 +151,4 @@ Both methods are tested through:
 ## Related Documentation
 
 - [Synthetic Data Generator](./SYNTHETIC_DATA_GENERATOR.md)
-- [Architecture](./ARCHITECTURE.md)
+- [Architecture](./02-architecture.md)

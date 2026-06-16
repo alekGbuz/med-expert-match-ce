@@ -76,7 +76,7 @@ ADR-style decision log. Each entry: status, date, title, rationale, affected mod
 - **Status:** Accepted
 - **Rationale:** Read-heavy workload optimization: GIN indexes for fast containment queries (`@>`), no JOIN overhead, simple application code. Trade-off: no DB-enforced referential integrity. Graph layer handles semantic relationships; ingestion validates reference data.
 - **Affects:** All domain modules (doctor, medicalcase, medicalcoding, facility)
-- **Reference:** `docs/ARCHITECTURE.md` (Array-Based References Pattern)
+- **Reference:** `docs/02-architecture.md` (Array-Based References Pattern)
 
 ### DEC-014: Network Analytics Scope (M118)
 - **Status:** Accepted (2026-06-15)

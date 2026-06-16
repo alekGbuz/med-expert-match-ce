@@ -132,12 +132,12 @@ MedExpertMatch supports six core use cases:
 5. **Human-in-the-Loop Decision Support** - AI copilot with expert matching for specialists
 6. **Cross-Organization / Regional Routing** - Optimal facility routing for regional operators
 
-See [Use Cases](USE_CASES.md) for detailed workflows and technical implementation.
+See [Use Cases](use-cases.md) for detailed workflows and technical implementation.
 
 ## Related Documentation
 
-- [Use Cases](USE_CASES.md) - Detailed use case workflows
-- [Architecture](ARCHITECTURE.md) - System architecture and design
+- [Use Cases](use-cases.md) - Detailed use case workflows
+- [Architecture](02-architecture.md) - System architecture and design
 
 ---
 

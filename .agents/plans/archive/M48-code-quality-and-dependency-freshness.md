@@ -51,7 +51,7 @@ Run full `mvn verify` to confirm all 210+ test files pass after all changes.
 
 ### 5. Update docs/version references
 
-Update any stale Spring AI version references in docs (PRD.md, IMPLEMENTATION_PLAN.md, etc.) to reflect M8.
+Update any stale Spring AI version references in docs (01-requirements.md, IMPLEMENTATION_PLAN.md, etc.) to reflect M8.
 
 ## Success Criteria
 

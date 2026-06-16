@@ -1,7 +1,7 @@
 MedExpertMatch is an AI-powered medical expert recommendation proof-of-concept using MedGemma and GraphRAG, emphasizing human-centered, locally deployable health-AI and designed as decision support using research-grade models.
 
 > **Note**: This page is a condensed summary suitable for external sharing. For complete specifications, see the
-> [Product Requirements Document](PRD.md). For the full list of problems addressed, see
+> [Product Requirements Document](01-requirements.md). For the full list of problems addressed, see
 > [Problems Solved](PROBLEMS_SOLVED.md).
 
 **Last Updated:** 2026-06-03
@@ -52,7 +52,7 @@ For the complete list, see [Problems Solved](PROBLEMS_SOLVED.md).
 - **Human-in-the-loop decision support:** Specialist uses an AI copilot for case summary, differential diagnosis, evidence retrieval, recommendations, and colleague suggestions.
 - **Cross-organization / regional routing:** Regional operator or multi-hospital network routes complex cases to the right facility.
 
-For detailed workflows, see [Use Cases](USE_CASES.md).
+For detailed workflows, see [Use Cases](use-cases.md).
 
 ## How It Works
 

@@ -24,13 +24,13 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 | **Вопросы и ответы** | **14 минут** | Структурированная дискуссия |
 | **Итого** | **~59 минут** | Плюс перерыв по договорённости с модератором |
 
-**Источники в репозитории:** [VISION.md](VISION.md), [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [USE_CASES.md](USE_CASES.md), [DEMO_GUIDE.md](DEMO_GUIDE.md).
+**Источники в репозитории:** [VISION.md](VISION.md), [01-requirements.md](01-requirements.md), [02-architecture.md](02-architecture.md), [use-cases.md](use-cases.md), [DEMO_GUIDE.md](DEMO_GUIDE.md).
 
 **Сценарий по слайдам колоды (RU):** [medexpertmatch-full-presentation-speaker-ru.md](presentations/medexpertmatch-full-presentation-speaker-ru.md) — что говорить на каждом слайде [полной английской презентации](presentations/medexpertmatch-full-presentation.md) в порядке выступления.
 
 **Короткий формат:** если нужно уложиться в 25–30 минут, вычеркните помеченные «★ deepen» подразделы и сократите демо до сценариев A и D.
 
-**Сокращение SGR:** **SGR** = **Semantic Graph Retrieval** (семантический графовый ретривер). В проекте это слой скоринга, который сочетает **векторное сходство** (PgVector), **связи в графе** (Apache AGE, Cypher) и **исторические показатели** (исходы, рейтинги) при подборе врачей, маршрутов и смежных сценариях; в коде — `SemanticGraphRetrievalService`. Подробнее: [ARCHITECTURE.md](ARCHITECTURE.md).
+**Сокращение SGR:** **SGR** = **Semantic Graph Retrieval** (семантический графовый ретривер). В проекте это слой скоринга, который сочетает **векторное сходство** (PgVector), **связи в графе** (Apache AGE, Cypher) и **исторические показатели** (исходы, рейтинги) при подборе врачей, маршрутов и смежных сценариях; в коде — `SemanticGraphRetrievalService`. Подробнее: [02-architecture.md](02-architecture.md).
 
 ---
 
@@ -144,7 +144,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 - Последствия: риск, LOS, нагрузка на отделение
 - Продукт: матчинг и приоритизация очереди на этапе **подбора** за минуты
 
-**Заметки:** [USE_CASES.md](USE_CASES.md) §1, §3; мини-история: «кейс поступил ночью — до утра нужен список кандидатов с обоснованием».
+**Заметки:** [use-cases.md](use-cases.md) §1, §3; мини-история: «кейс поступил ночью — до утра нужен список кандидатов с обоснованием».
 
 ### 2.2 «Невидимая» экспертиза (**≈2 мин**)
 
@@ -153,7 +153,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 - Знание «кто сильнее в X» в головах, не в системе
 - Продукт: граф врач–случай–контекст, **network analytics**
 
-**Заметки:** [USE_CASES.md](USE_CASES.md) §4; фраза: «оргструктура специальностей не равна карте реальных компетенций».
+**Заметки:** [use-cases.md](use-cases.md) §4; фраза: «оргструктура специальностей не равна карте реальных компетенций».
 
 ### 2.3 Недостаток структурированной поддержки (**≈2 мин**)
 
@@ -192,7 +192,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 
 **На экране:**
 
-- Из [PRD.md](PRD.md): сокращение задержек на этапе подбора; целевая доступность критичных операций (формулировки уточнить под фактический релиз)
+- Из [01-requirements.md](01-requirements.md): сокращение задержек на этапе подбора; целевая доступность критичных операций (формулировки уточнить под фактический релиз)
 - Уточнение: MVP vs полный PRD — **честно обозначить зрелость**
 
 ---
@@ -231,7 +231,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 
 ### 3.3 Spring Modulith
 
-**Заметки (≈3 мин):** список модулей из [ARCHITECTURE.md](ARCHITECTURE.md); при росте фич **изменения не расползаются** по монолиту хаотично; `web` как композиция UI.
+**Заметки (≈3 мин):** список модулей из [02-architecture.md](02-architecture.md); при росте фич **изменения не расползаются** по монолиту хаотично; `web` как композиция UI.
 
 ### 3.4 Оркестрация LLM
 
@@ -255,7 +255,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 
 ### Слайд 3.8 — Поток Find Specialist (пошагово, **опционально +2 мин** из резерва)
 
-Шаги из [USE_CASES.md](USE_CASES.md) §1: создание кейса, эмбеддинг, агент, цикл `score(case, doctor)`.
+Шаги из [use-cases.md](use-cases.md) §1: создание кейса, эмбеддинг, агент, цикл `score(case, doctor)`.
 
 ---
 
@@ -278,7 +278,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 | 5:45–6:45 | **E** (если успевает) | `/routing` | Факторы учреждений |
 | 6:45–7:00 | Фраза | — | Один стек: API + UI; при желании показать **один** вызов `POST .../agent/match/...` в документации |
 
-**Если live ломается:** запасной видеозапись или скриншоты + открытый `USE_CASES.md`.
+**Если live ломается:** запасной видеозапись или скриншоты + открытый `use-cases.md`.
 
 ---
 
@@ -291,7 +291,7 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 3. Четыре опоры решения: **GraphRAG+SGR**, **Modulith**, **агент+tools**, **политика данных и графа**.
 4. **14 минут** на вопросы; приглашение писать коротко; сложные кейсы — «встреча после» или email.
 
-**Заметки:** честно назвать границы MVP ([PRD.md](PRD.md), [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)); одна фраза: проверка стека **завершена** в смысле сквозного прототипа, а не «все возможные нагрузочные тесты в проде» — если это так для вашей команды.
+**Заметки:** честно назвать границы MVP ([01-requirements.md](01-requirements.md), [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)); одна фраза: проверка стека **завершена** в смысле сквозного прототипа, а не «все возможные нагрузочные тесты в проде» — если это так для вашей команды.
 
 ---
 
@@ -352,7 +352,7 @@ JUnit, контейнеры, разделение unit/integration; Modulith bou
 
 ## Приложение
 
-- Диаграмма [ARCHITECTURE.md](ARCHITECTURE.md).
+- Диаграмма [02-architecture.md](02-architecture.md).
 - **SGR** = Semantic Graph Retrieval; веса скоринга в SGR: 40 / 30 / 30 (вектор / граф / история).
 - UI: `/`, `/match`, `/queue`, `/analytics`, `/analyze/{id}`, `/routing`, админ-страницы ([DEMO_GUIDE.md](DEMO_GUIDE.md)).
 

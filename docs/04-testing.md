@@ -170,7 +170,7 @@ All tests follow TDD principles and use Testcontainers with PostgreSQL.
 ## Related Documentation
 
 - [Development Guide](DEVELOPMENT_GUIDE.md)
-- [Architecture](ARCHITECTURE.md)
+- [Architecture](02-architecture.md)
 - [Synthetic Data Generator](SYNTHETIC_DATA_GENERATOR.md) - Comprehensive feature description including vector
   embeddings
 - [Find Specialist Flow](FIND_SPECIALIST_FLOW.md) - Text input endpoint and case search documentation

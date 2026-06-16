@@ -12,9 +12,9 @@ uses patterns established in this repository. This document is written in Englis
 
 **Related Documentation**:
 
-- [Product Requirements Document](PRD.md) - Complete product requirements and specifications
-- [Architecture](ARCHITECTURE.md) - System architecture and design
-- [Use Cases](USE_CASES.md) - Detailed use case workflows with sequence diagrams
+- [Product Requirements Document](01-requirements.md) - Complete product requirements and specifications
+- [Architecture](02-architecture.md) - System architecture and design
+- [Use Cases](use-cases.md) - Detailed use case workflows with sequence diagrams
 - [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface wireframes, flows, and UI/UX guidelines
 - [Vision](VISION.md) - Project vision and long-term goals
 
@@ -614,12 +614,12 @@ public abstract class BaseIntegrationTest {
 ### 3.1 Agent Skills Setup
 
 **Reference**: See `src/main/resources/skills/` directory structure
-and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
+and [Architecture - Agent Skills](02-architecture.md#agent-skills)
 
 **Tasks**:
 
 1. Create `src/main/resources/skills/` directory structure
-2. Create 7 skill directories (see [Architecture](ARCHITECTURE.md#agent-skills) for skill descriptions):
+2. Create 7 skill directories (see [Architecture](02-architecture.md#agent-skills) for skill descriptions):
     - `case-analyzer/` - Analyze cases, extract entities, ICD-10 codes, classify urgency and complexity
     - `doctor-matcher/` - Match doctors to cases, scoring and ranking using multiple signals
     - `evidence-retriever/` - Search guidelines, PubMed, GRADE evidence summaries
@@ -629,7 +629,7 @@ and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
     - `routing-planner/` - Facility routing optimization, multi-facility scoring, geographic routing
 3. Create `SKILL.md` file in each directory with domain knowledge and tool invocation guidance
 4. Configure Spring AI Agent Skills in `application.yml`
-5. Map skills to use cases (see [Architecture - API Layer](ARCHITECTURE.md#api-layer) for endpoint-to-skill mapping)
+5. Map skills to use cases (see [Architecture - API Layer](02-architecture.md#api-layer) for endpoint-to-skill mapping)
 
 ### 3.2 Java Tool Methods
 
@@ -669,13 +669,13 @@ and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
 
 **Location**: `src/main/java/com/berdachuk/medexpertmatch/llm/rest/MedicalAgentController.java`
 
-**Reference**: See [Architecture - API Layer](ARCHITECTURE.md#api-layer) and [Use Cases](USE_CASES.md) for endpoint
+**Reference**: See [Architecture - API Layer](02-architecture.md#api-layer) and [Use Cases](use-cases.md) for endpoint
 details
 
 **Tasks**:
 
 1. Create REST controller for agent endpoints
-2. Implement endpoints (see [Use Cases](USE_CASES.md) for sequence diagrams):
+2. Implement endpoints (see [Use Cases](use-cases.md) for sequence diagrams):
     - `POST /api/v1/agent/match/{caseId}` - Specialist matching (Use Cases 1 & 2)
         - Skills: case-analyzer, doctor-matcher
         - UI Page: `/match`
@@ -933,29 +933,29 @@ for wireframe mockups
     - `TestDataController` - Test Data Generator (`/admin/test-data`) - Admin UI
 3. Return template names and use `Model` to pass data
 4. Implement user flows as documented in [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md)
-5. Follow form field requirements from [PRD Section 7.2](PRD.md#72-ui-pages-and-forms)
+5. Follow form field requirements from [PRD Section 7.2](01-requirements.md#72-ui-pages-and-forms)
 6. Write integration tests: `*ControllerIT`
 
 ## Phase 6: Integration & Testing (Week 5-6)
 
 ### 6.1 Integration Testing
 
-**Reference**: See [Use Cases](USE_CASES.md) for detailed sequence diagrams and workflows
+**Reference**: See [Use Cases](use-cases.md) for detailed sequence diagrams and workflows
 
 **Tasks**:
 
 1. Write integration tests for all use cases
-2. Test complete workflows (see [Use Cases](USE_CASES.md) for sequence diagrams):
-    - **Use Case 1**: Specialist Matching - `POST /api/v1/agent/match/{caseId}` (see [Use Case 1](USE_CASES.md))
+2. Test complete workflows (see [Use Cases](use-cases.md) for sequence diagrams):
+    - **Use Case 1**: Specialist Matching - `POST /api/v1/agent/match/{caseId}` (see [Use Case 1](use-cases.md))
     - **Use Case 2**: Second Opinion - `POST /api/v1/agent/match/{caseId}` (
-      see [Use Case 2](USE_CASES.md))
-    - **Use Case 3**: Queue Prioritization - `POST /api/v1/agent/prioritize-consults` (see [Use Case 3](USE_CASES.md))
-    - **Use Case 4**: Network Analytics - `POST /api/v1/agent/network-analytics` (see [Use Case 4](USE_CASES.md))
+      see [Use Case 2](use-cases.md))
+    - **Use Case 3**: Queue Prioritization - `POST /api/v1/agent/prioritize-consults` (see [Use Case 3](use-cases.md))
+    - **Use Case 4**: Network Analytics - `POST /api/v1/agent/network-analytics` (see [Use Case 4](use-cases.md))
     - **Use Case 5**: Decision Support - `POST /api/v1/agent/analyze-case/{caseId}` and
       `POST /api/v1/agent/recommendations/{matchId}` (
-      see [Use Case 5](USE_CASES.md))
+      see [Use Case 5](use-cases.md))
     - **Use Case 6**: Regional Routing - `POST /api/v1/agent/route-case/{caseId}` (
-      see [Use Case 6](USE_CASES.md))
+      see [Use Case 6](use-cases.md))
 3. Test agent skills integration (7 skills: case-analyzer, doctor-matcher, evidence-retriever, recommendation-engine,
    clinical-advisor, network-analyzer, routing-planner)
 4. Test FHIR adapter integration
@@ -974,14 +974,14 @@ for wireframe mockups
 
 ### 6.3 Demo Preparation
 
-**Reference**: See [PRD Section 4.2.3](PRD.md#423-test-data-generation) for test data generator requirements
+**Reference**: See [PRD Section 4.2.3](01-requirements.md#423-test-data-generation) for test data generator requirements
 
 **Tasks**:
 
 1. Generate demo dataset (medium size: 500 doctors, 1000 cases) using test data generator
 2. Pre-populate embeddings for all entities
 3. Build graph relationships in Apache AGE
-4. Create demo scenarios for each use case (see [Use Cases](USE_CASES.md)):
+4. Create demo scenarios for each use case (see [Use Cases](use-cases.md)):
     - Use Case 1: Specialist Matching - Demo with complex inpatient case
     - Use Case 2: Second Opinion - Demo with telehealth-enabled doctors
     - Use Case 3: Queue Prioritization - Demo with multiple urgency levels
@@ -1237,11 +1237,11 @@ See the codebase and test coverage for detailed metrics and implementation patte
 For detailed information on specific aspects of the implementation:
 
 - **Implementation status** - Current implementation status, metrics, patterns, and known limitations (see codebase)
-- **[Product Requirements Document](PRD.md)** - Complete product requirements, functional requirements, UI pages, and
+- **[Product Requirements Document](01-requirements.md)** - Complete product requirements, functional requirements, UI pages, and
   API specifications
-- **[Architecture](ARCHITECTURE.md)** - System architecture, module structure, service layer, API layer, and agent
+- **[Architecture](02-architecture.md)** - System architecture, module structure, service layer, API layer, and agent
   skills
-- **[Use Cases](USE_CASES.md)** - Detailed use case workflows with sequence diagrams showing API, agent, skill, and
+- **[Use Cases](use-cases.md)** - Detailed use case workflows with sequence diagrams showing API, agent, skill, and
   service interactions
 - **[UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md)** - User interface wireframes (PlantUML Salt), user flows, form
   mockups, and UI/UX guidelines
