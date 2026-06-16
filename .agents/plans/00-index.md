@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M121 | [`M121-application-hardening-and-observability.md`](M121-application-hardening-and-observability.md) | Application hardening: health endpoint enhancements, startup readiness probe, graceful shutdown, structured logging, Prometheus metrics review |
+| M122 | [`M122-security-hardening-and-test-coverage.md`](M122-security-hardening-and-test-coverage.md) | Security hardening: @Valid on 8 controllers, unit tests for zero-coverage modules, BDD step definitions for 3 feature files, CORS/CSRF audit |
 
 ## Deferred
 
