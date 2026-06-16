@@ -4,6 +4,9 @@ import com.berdachuk.medexpertmatch.core.security.CheckpointAccessGuard;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowCheckpointService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -27,7 +30,7 @@ public class WorkflowCheckpointController {
     @PostMapping("/{runId}/checkpoint")
     public Map<String, Object> checkpoint(
             @PathVariable String runId,
-            @RequestBody CheckpointRequestBody body) {
+            @RequestBody @Valid CheckpointRequestBody body) {
         return checkpointService.checkpoint(
                 runId,
                 new HarnessWorkflowCheckpointService.CheckpointDecision(
@@ -36,8 +39,8 @@ public class WorkflowCheckpointController {
     }
 
     public record CheckpointRequestBody(
-            HarnessWorkflowCheckpointService.CheckpointAction decision,
-            String resumeToken,
+            @NotNull HarnessWorkflowCheckpointService.CheckpointAction decision,
+            @NotBlank String resumeToken,
             String comment) {
     }
 }

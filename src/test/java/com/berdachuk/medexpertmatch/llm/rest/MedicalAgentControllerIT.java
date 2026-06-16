@@ -10,6 +10,7 @@ import com.berdachuk.medexpertmatch.medicalcase.domain.CaseType;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,10 +150,9 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
 
     @Test
     void testMatchFromText_Validation_MissingCaseText() {
-        // Test validation - missing caseText
         Map<String, Object> request = Map.of();
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(ConstraintViolationException.class, () -> {
             medicalAgentController.matchFromTextSync(request);
         });
     }

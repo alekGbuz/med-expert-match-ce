@@ -9,9 +9,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -22,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
  * Provides agent-based endpoints for medical case analysis, doctor matching, and routing.
  */
 @Slf4j
+@Validated
 @RestController
 @RequestMapping("/api/v1/agent")
 public class MedicalAgentController {
@@ -125,10 +128,9 @@ public class MedicalAgentController {
                             "patientAge (Integer), caseType (String), symptoms (String), additionalNotes (String)",
                     required = true
             )
-            @RequestBody Map<String, Object> request
+            @RequestBody @NotEmpty Map<String, Object> request
     ) {
         log.info("POST /api/v1/agent/match-from-text (async)");
-
         Object caseTextObj = request.get("caseText");
         if (caseTextObj == null) {
             throw new IllegalArgumentException("caseText is required");
@@ -156,7 +158,7 @@ public class MedicalAgentController {
      */
     @PostMapping("/match-from-text-sync")
     public ResponseEntity<MedicalAgentService.AgentResponse> matchFromTextSync(
-            @RequestBody Map<String, Object> request
+            @RequestBody @NotEmpty Map<String, Object> request
     ) {
         log.info("POST /api/v1/agent/match-from-text-sync");
         Object caseTextObj = request.get("caseText");

@@ -3,12 +3,15 @@ package com.berdachuk.medexpertmatch.llm.rest;
 import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @Tag(name = "Agent Questions", description = "Interactive intake clarification (AskUserQuestion)")
+@Validated
 @RestController
 @RequestMapping("/api/v1/agent/questions")
 public class AgentQuestionController {
@@ -38,7 +41,7 @@ public class AgentQuestionController {
     @PostMapping("/answer")
     public ResponseEntity<Map<String, String>> answer(
             @RequestParam String sessionId,
-            @RequestBody Map<String, String> answers) {
+            @RequestBody @NotEmpty Map<String, String> answers) {
         agentQuestionService.submitAnswers(sessionId, answers);
         return ResponseEntity.ok(Map.of("status", "accepted"));
     }
