@@ -470,10 +470,10 @@
 
     function finalizeAssistantBubble() {
         if (currentAssistantBubble) {
-            updateAssistantBubble();
             if (currentAssistantBubble.closest('.chat-streaming')) {
                 currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
             }
+            updateAssistantBubble();
         }
         currentAssistantBubble = null;
         currentMarkdownBuffer = '';
@@ -528,9 +528,12 @@
         if (!rawData) return;
         try {
             var parsed = JSON.parse(rawData);
-            if (parsed && typeof parsed.content === 'string') {
+            if (parsed && typeof parsed.renderedHtml === 'string') {
+                if (currentAssistantBubble) {
+                    currentAssistantBubble.innerHTML = sanitizeAssistantHtml(parsed.renderedHtml);
+                }
+            } else if (parsed && typeof parsed.content === 'string') {
                 currentMarkdownBuffer = parsed.content;
-                updateAssistantBubble();
             }
             if (currentAssistantBubble) {
                 renderExplainabilityPanel(currentAssistantBubble, parsed);
