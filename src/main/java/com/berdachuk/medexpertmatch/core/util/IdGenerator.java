@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.SecureRandom;
 import java.util.Enumeration;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Utility for generating MongoDB-compatible 24-character hexadecimal IDs and external system IDs.
@@ -18,6 +19,7 @@ import java.util.Enumeration;
  * Format: 24-character hexadecimal string (0-9, a-f)
  * Pattern: ^[0-9a-fA-F]{24}$
  */
+@Slf4j
 public class IdGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -89,7 +91,7 @@ public class IdGenerator {
                 }
             }
         } catch (Exception e) {
-            // Fall through to random generation
+            log.warn("Failed to get MAC address, falling back to random machine ID", e);
         }
 
         // Fallback: generate random 3 bytes
@@ -114,7 +116,7 @@ public class IdGenerator {
                 return processId;
             }
         } catch (Exception e) {
-            // Fall through to random generation
+            log.warn("Failed to get process ID, falling back to random process ID", e);
         }
 
         // Fallback: generate random 2 bytes

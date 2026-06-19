@@ -529,7 +529,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         }
         StringBuilder sb = new StringBuilder("Previous conversation:\n");
         for (var msg : history) {
-            if (currentContent != null && msg.content().equals(currentContent)) {
+            if (currentContent != null && currentContent.equals(msg.content())) {
                 continue;
             }
             String snippet = msg.content();
