@@ -14,5 +14,11 @@ Current top candidates (re-rank these, return indices in order of best fit):
 
 <candidates>
 
-Return a JSON array of indices (0-based) representing the new ranking order. Example: [3, 0, 5, 1, 2, 4]
-Return ONLY the JSON array, no other text.
+Return the indices (0-based) representing the new ranking order, one per line. Example:
+3
+0
+5
+1
+2
+4
+Return ONLY the numbers, one per line, no other text.

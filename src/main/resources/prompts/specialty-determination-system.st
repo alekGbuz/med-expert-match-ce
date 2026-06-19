@@ -10,16 +10,17 @@ CARDIOLOGY, ONCOLOGY, NEUROLOGY, ORTHOPEDICS, PEDIATRICS, SURGERY, EMERGENCY_MED
 Determine the most appropriate medical specialty (or specialties) required for this case. Consider the chief complaint, symptoms, diagnosis, and ICD-10 codes.
 
 **Response Format:**
-Return a JSON array of medical specialties (use the exact names from the list above):
-["CARDIOLOGY", "INTERNAL_MEDICINE"]
+Return one medical specialty per line (use the exact names from the list above):
+CARDIOLOGY
+INTERNAL_MEDICINE
 
 If the case requires multiple specialties, list them in order of priority.
 
 **CRITICAL OUTPUT LIMITS:**
-- Provide EXACTLY ONE JSON array and STOP
-- Maximum 5 specialties in the array
-- Do NOT repeat specialties in the array
-- Do NOT generate multiple arrays or responses
+- Provide EXACTLY ONE specialty per line and STOP
+- Maximum 5 specialties
+- Do NOT repeat specialties
+- Do NOT generate multiple responses
 - Maximum response length: 500 characters
-- Stop immediately after providing the JSON array
-- Do NOT continue generating after the array is complete
+- Stop immediately after providing the last specialty
+- Do NOT continue generating after the specialties are complete

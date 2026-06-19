@@ -98,4 +98,47 @@ class CaseAnalysisServiceImplTest {
         var service = createService();
         assertThrows(IllegalArgumentException.class, () -> service.determineRequiredSpecialty(null));
     }
+
+    @Test
+    @DisplayName("parseJsonArray handles line-based format for ICD-10 codes")
+    void parseJsonArrayLineBasedIcd10() throws Exception {
+        String lineBased = "I21.9\nE11.9\n";
+        var field = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseJsonArray", String.class);
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<String> result = (List<String>) field.invoke(createService(), lineBased);
+        assertEquals(List.of("I21.9", "E11.9"), result);
+    }
+
+    @Test
+    @DisplayName("parseJsonArray handles line-based format for specialties")
+    void parseJsonArrayLineBasedSpecialties() throws Exception {
+        String lineBased = "CARDIOLOGY\nINTERNAL_MEDICINE\n";
+        var field = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseJsonArray", String.class);
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<String> result = (List<String>) field.invoke(createService(), lineBased);
+        assertEquals(List.of("CARDIOLOGY", "INTERNAL_MEDICINE"), result);
+    }
+
+    @Test
+    @DisplayName("parseJsonArray handles legacy JSON array format")
+    void parseJsonArrayLegacyJson() throws Exception {
+        String jsonArray = "[\"I21.9\", \"E11.9\"]";
+        var field = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseJsonArray", String.class);
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<String> result = (List<String>) field.invoke(createService(), jsonArray);
+        assertEquals(List.of("I21.9", "E11.9"), result);
+    }
+
+    @Test
+    @DisplayName("parseJsonArray handles empty line-based format")
+    void parseJsonArrayEmptyLineBased() throws Exception {
+        var field = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseJsonArray", String.class);
+        field.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<String> result = (List<String>) field.invoke(createService(), "");
+        assertEquals(List.of(), result);
+    }
 }

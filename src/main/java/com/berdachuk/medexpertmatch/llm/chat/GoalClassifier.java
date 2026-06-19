@@ -434,9 +434,9 @@ public class GoalClassifier {
             String json = LlmResponseSanitizer.extractJson(response);
             @SuppressWarnings("unchecked")
             Map<String, Object> parsed = objectMapper.readValue(json, Map.class);
-            String goalType = (String) parsed.get("goalType");
-            String summary = (String) parsed.getOrDefault("summary", "");
-            boolean useSessionCase = Boolean.TRUE.equals(parsed.get("useSessionCase"));
+            String goalType = (String) parsed.getOrDefault("g", parsed.get("goalType"));
+            String summary = (String) parsed.getOrDefault("s", parsed.getOrDefault("summary", ""));
+            boolean useSessionCase = Boolean.TRUE.equals(parsed.getOrDefault("u", parsed.get("useSessionCase")));
 
             if (goalType == null) {
                 return GoalClassification.general();

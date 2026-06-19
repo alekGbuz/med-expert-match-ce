@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M127 | [`M127-token-efficient-format-implementation.md`](M127-token-efficient-format-implementation.md) | Token-efficient format implementation — ultra-compact JSON + line-based prompts |
+| — | — | No active plans |
 
 ## Deferred
 
@@ -123,6 +123,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M124 | [`archive/M124-performance-optimization-and-monitoring-enhancement.md`](archive/M124-performance-optimization-and-monitoring-enhancement.md) | Performance optimization and monitoring enhancement |
 | M125 | [`archive/M125-main-menu-restructure.md`](archive/M125-main-menu-restructure.md) | Main menu restructure — AI Chat as primary entry point |
 | M126 | [`archive/M126-next-implementation-phase.md`](archive/M126-next-implementation-phase.md) | Next implementation phase — GraphRAG profiling, monitoring, ops docs |
+| M127 | [`archive/M127-token-efficient-format-implementation.md`](archive/M127-token-efficient-format-implementation.md) | Token-efficient format implementation — ultra-compact JSON + line-based prompts |
 
 ## Creating a New Plan
 
