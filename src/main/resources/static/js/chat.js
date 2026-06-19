@@ -473,7 +473,9 @@
             if (currentAssistantBubble.closest('.chat-streaming')) {
                 currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
             }
-            updateAssistantBubble();
+            if (!currentAssistantBubble._doneRendered) {
+                updateAssistantBubble();
+            }
         }
         currentAssistantBubble = null;
         currentMarkdownBuffer = '';
@@ -531,6 +533,7 @@
             if (parsed && typeof parsed.renderedHtml === 'string') {
                 if (currentAssistantBubble) {
                     currentAssistantBubble.innerHTML = sanitizeAssistantHtml(parsed.renderedHtml);
+                    currentAssistantBubble._doneRendered = true;
                 }
             } else if (parsed && typeof parsed.content === 'string') {
                 currentMarkdownBuffer = parsed.content;
