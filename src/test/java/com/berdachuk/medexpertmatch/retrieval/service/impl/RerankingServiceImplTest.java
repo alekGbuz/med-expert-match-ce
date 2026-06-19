@@ -1,9 +1,10 @@
 package com.berdachuk.medexpertmatch.retrieval.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,45 +12,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RerankingServiceImplTest {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-    @DisplayName("parseLineBasedIndices parses valid line-based indices")
-    void parseLineBasedIndicesValid() throws Exception {
-        String input = "3\n0\n5\n1\n2\n4\n";
-        Method method = RerankingServiceImpl.class.getDeclaredMethod("parseLineBasedIndices", String.class);
-        method.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<Integer> result = (List<Integer>) method.invoke(null, input);
+    @DisplayName("parseJsonArray parses valid JSON array of indices")
+    void parseJsonArrayValid() throws Exception {
+        String json = "[3, 0, 5, 1, 2, 4]";
+        List<Integer> result = objectMapper.readValue(json, new TypeReference<List<Integer>>() {});
         assertEquals(List.of(3, 0, 5, 1, 2, 4), result);
     }
 
     @Test
-    @DisplayName("parseLineBasedIndices handles blank lines")
-    void parseLineBasedIndicesWithBlankLines() throws Exception {
-        String input = "3\n\n0\n\n5\n";
-        Method method = RerankingServiceImpl.class.getDeclaredMethod("parseLineBasedIndices", String.class);
-        method.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<Integer> result = (List<Integer>) method.invoke(null, input);
-        assertEquals(List.of(3, 0, 5), result);
-    }
-
-    @Test
-    @DisplayName("parseLineBasedIndices returns empty for null input")
-    void parseLineBasedIndicesNull() throws Exception {
-        Method method = RerankingServiceImpl.class.getDeclaredMethod("parseLineBasedIndices", String.class);
-        method.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<Integer> result = (List<Integer>) method.invoke(null, (Object) null);
+    @DisplayName("parseJsonArray handles empty array")
+    void parseJsonArrayEmpty() throws Exception {
+        List<Integer> result = objectMapper.readValue("[]", new TypeReference<List<Integer>>() {});
         assertTrue(result.isEmpty());
     }
 
     @Test
-    @DisplayName("parseLineBasedIndices returns empty for blank input")
-    void parseLineBasedIndicesBlank() throws Exception {
-        Method method = RerankingServiceImpl.class.getDeclaredMethod("parseLineBasedIndices", String.class);
-        method.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<Integer> result = (List<Integer>) method.invoke(null, "   ");
-        assertTrue(result.isEmpty());
+    @DisplayName("parseJsonArray handles single element")
+    void parseJsonArraySingle() throws Exception {
+        List<Integer> result = objectMapper.readValue("[0]", new TypeReference<List<Integer>>() {});
+        assertEquals(List.of(0), result);
     }
 }
