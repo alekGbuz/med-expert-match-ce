@@ -2,14 +2,15 @@
 
 ## Current Focus
 
-All milestones M01–M125 are complete. All planned tasks implemented. Ready for next phase planning.
+All milestones M01–M127 are complete. All planned tasks implemented. Ready for next phase planning.
 
 ## Current Milestone
 
-**M126** — Next implementation phase (TBD).
+None — all plans archived.
 
 ## Completed Recently
 
+- **M127** — Token-efficient format implementation (REQ-127). Converted 4 prompt templates to compact formats: `goal-classification.st` → ultra-compact JSON with short keys (`g`/`s`/`u`), `reranking-doctors.st` → line-based indices, `icd10-extraction-system.st` → line-based codes, `specialty-determination-system.st` → line-based specialties. Updated `GoalClassifier.parseClassification()` to support short keys with legacy fallback. Replaced Jackson JSON array parsing in `RerankingServiceImpl` with line-based `parseLineBasedIndices()`. Added auto-detection in `CaseAnalysisServiceImpl.parseJsonArray()` (JSON vs line-based). 9 new tests across 3 test classes. 948 unit tests pass, 0 failures.
 - **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/` (REQ-125). Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow now gates on `currentPage != 'chat'`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`. Fixed pre-existing `@MockBean` compilation error in `SessionTokenApiKeyAuthFilterIT` (replaced with `@TestConfiguration` + `mock()`). 938 unit + 567 IT tests pass.
 - **M124** — Performance optimization and monitoring enhancement plan (scope deferred to M126).
 - **M123** — Code quality and dependency freshness: fixed flaky `SessionTokenApiKeyAuthFilterIT` (mocked `PubMedService`), dependency freshness pass (all deps current), documentation alignment (6 docs updated with correct Spring Boot 4.1.0 / Spring AI 2.0.0 GA versions), code quality scan (no violations found)
@@ -38,4 +39,4 @@ None active.
 
 ## Next Steps
 
-1. **M126** — Next implementation phase (TBD).
+1. **Next implementation phase** — TBD.

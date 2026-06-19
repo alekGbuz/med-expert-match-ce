@@ -2,6 +2,21 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-19: M127 Complete — Token-Efficient Format Implementation
+
+- **M127** — Token-efficient format implementation (REQ-127):
+  - `goal-classification.st` → ultra-compact JSON with short keys (`g`/`s`/`u`)
+  - `reranking-doctors.st` → line-based indices (one per line)
+  - `icd10-extraction-system.st` → line-based codes (one per line)
+  - `specialty-determination-system.st` → line-based specialties (one per line)
+  - `GoalClassifier.parseClassification()`: supports short keys with legacy long-key fallback
+  - `RerankingServiceImpl`: replaced Jackson JSON array parsing with `parseLineBasedIndices()`
+  - `CaseAnalysisServiceImpl.parseJsonArray()`: auto-detects JSON vs line-based format
+  - 9 new tests: GoalClassifierTest (short keys + legacy), RerankingServiceImplTest (4 line-based tests), CaseAnalysisServiceImplTest (4 line-based tests)
+  - 948 unit tests pass, 0 failures, 2 skipped
+- Merged via `feat/m127-token-efficient-format-implementation` → develop → branch deleted
+- Archived M127 plan to `.agents/plans/archive/`
+
 ## 2026-06-19: M124+M125 Complete — Main Menu Restructure + Pre-existing Fix
 
 - **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/`. Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow gates on `currentPage != 'chat'`. i18n: `nav.home=AI Chat`, removed `nav.chat`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`.

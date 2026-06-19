@@ -43,11 +43,22 @@ public class ChatMarkdownRendererImpl implements ChatMarkdownRenderer {
     }
 
     private String renderPreparedAssistant(String prepared) {
+        int detailsStart = prepared.indexOf("<details");
         int detailsEnd = prepared.indexOf(DETAILS_CLOSE);
-        if (detailsEnd > 0) {
-            String detailsHtml = prepared.substring(0, detailsEnd + DETAILS_CLOSE.length());
-            String answerMarkdown = unwrapAnswerMarkdown(prepared.substring(detailsEnd + DETAILS_CLOSE.length()));
-            return sanitizeHtml(detailsHtml + "<div class=\"llm-answer\">" + convertMarkdown(answerMarkdown) + "</div>");
+        if (detailsStart >= 0 && detailsEnd > detailsStart) {
+            String beforeDetails = prepared.substring(0, detailsStart).trim();
+            String detailsHtml = prepared.substring(detailsStart, detailsEnd + DETAILS_CLOSE.length());
+            String afterDetails = unwrapAnswerMarkdown(prepared.substring(detailsEnd + DETAILS_CLOSE.length()));
+            StringBuilder sb = new StringBuilder();
+            if (!beforeDetails.isEmpty()) {
+                sb.append("<div class=\"llm-answer\">").append(convertMarkdown(beforeDetails)).append("</div>");
+            }
+            sb.append(detailsHtml);
+            if (!afterDetails.isEmpty()) {
+                sb.append("<div class=\"llm-answer-label\">Response</div><div class=\"llm-answer\">")
+                        .append(convertMarkdown(afterDetails)).append("</div>");
+            }
+            return sanitizeHtml(sb.toString());
         }
         return sanitizeHtml(convertMarkdown(LlmResponseSanitizer.stripLlmReasoning(prepared)));
     }
@@ -57,13 +68,30 @@ public class ChatMarkdownRendererImpl implements ChatMarkdownRenderer {
     }
 
     private String convertMarkdown(String text) {
-        String escaped = escapeHtml(text);
-        escaped = replaceAll(FENCED_CODE, escaped, m -> "<pre><code>" + m.group(1) + "</code></pre>");
-        escaped = applyInlineFormatting(escaped);
+        String processed = replaceAll(FENCED_CODE, text, m -> {
+            String code = escapeHtml(m.group(1));
+            return "\u0000FENCED\u0000" + code + "\u0000ENDFENCED\u0000";
+        });
+        processed = applyInlineFormatting(processed);
+        processed = processed
+                .replace("<strong>", "\u0000B\u0000").replace("</strong>", "\u0000/B\u0000")
+                .replace("<em>", "\u0000I\u0000").replace("</em>", "\u0000/I\u0000")
+                .replace("<code>", "\u0000C\u0000").replace("</code>", "\u0000/C\u0000")
+                .replace("<a ", "\u0000A ").replace("</a>", "\u0000/A\u0000")
+                .replace("\">", "\u0000Q\u0000");
+        processed = escapeHtml(processed);
+        processed = processed
+                .replace("\u0000B\u0000", "<strong>").replace("\u0000/B\u0000", "</strong>")
+                .replace("\u0000I\u0000", "<em>").replace("\u0000/I\u0000", "</em>")
+                .replace("\u0000C\u0000", "<code>").replace("\u0000/C\u0000", "</code>")
+                .replace("\u0000A ", "<a ").replace("\u0000/A\u0000", "</a>")
+                .replace("\u0000Q\u0000", "\">");
+        processed = processed.replace("\u0000FENCED\u0000", "<pre><code>")
+                .replace("\u0000ENDFENCED\u0000", "</code></pre>");
 
         StringBuilder html = new StringBuilder();
         boolean inList = false;
-        for (String line : escaped.split("\\R")) {
+        for (String line : processed.split("\\R")) {
             String trimmed = line.trim();
             if (trimmed.startsWith("- ")) {
                 if (!inList) {

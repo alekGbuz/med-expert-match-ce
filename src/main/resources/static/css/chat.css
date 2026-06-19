@@ -9,12 +9,13 @@
 .chat-message-row--user {
     margin-left: auto;
     align-items: flex-end;
+    max-width: 90%;
 }
 
 .chat-message-row--assistant {
     margin-right: auto;
     align-items: flex-start;
-    max-width: min(48rem, 92%);
+    max-width: 90%;
 }
 
 .chat-message-label {
