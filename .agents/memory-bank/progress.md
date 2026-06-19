@@ -2,6 +2,14 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-19: M123 Complete — Code Quality and Dependency Freshness
+
+- **Fixed flaky test** — `SessionTokenApiKeyAuthFilterIT.allowsValidKey`: mocked `PubMedService` to prevent real HTTP calls causing 500 errors; enabled auth in test properties
+- **Dependency freshness pass** — All deps current (Spring Boot 4.1.0, Spring AI 2.0.0 GA, Spring Modulith 2.1.0, Testcontainers 2.0.5, Jackson 2.22.0, WireMock 3.9.2)
+- **Documentation alignment** — Updated 6 docs (PRD.md, MedExpertMatch.md, IMPLEMENTATION_PLAN.md, ARCHITECTURE.md, README.md) with correct version numbers
+- **Code quality scan** — No violations: 0 hardcoded prompts, 0 @Deprecated usage, 0 TODO/FIXME/HACK, 5 System.out/err (all in CLI main classes)
+- Merged via `feat/m123-code-quality-and-dependency-freshness` → develop → archived
+
 ## 2026-06-16: M121 Complete — Application Hardening and Observability
 
 - **M121 plan created** — `.agents/plans/M121-application-hardening-and-observability.md` (active)

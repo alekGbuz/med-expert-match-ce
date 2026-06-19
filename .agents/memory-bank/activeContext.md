@@ -2,14 +2,16 @@
 
 ## Current Focus
 
-All milestones M01–M120 are complete. M121 (Application Hardening and Observability) is now active.
+All milestones M01–M123 are complete. M124 (Next Implementation Phase) is now active.
 
 ## Current Milestone
 
-**M121** — Application Hardening and Observability: Kubernetes probes enabled (`management.endpoint.health.probes.enabled=true`), `ReadinessStateHealthIndicator` created, dev Docker health check added to app service. 885 unit + 568 integration tests pass.
+**M124** — Next implementation phase (TBD).
 
 ## Completed Recently
 
+- **M123** — Code quality and dependency freshness: fixed flaky `SessionTokenApiKeyAuthFilterIT` (mocked `PubMedService`), dependency freshness pass (all deps current), documentation alignment (6 docs updated with correct Spring Boot 4.1.0 / Spring AI 2.0.0 GA versions), code quality scan (no violations found)
+- **M122** — Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests (938 unit + 568 IT, 0 failures)
 - **M121** — Application hardening closeout: probes, readiness indicator, dev Docker health check
 - **M120** — Cucumber coverage expansion to 6 agent skills (18 scenarios)
 - **M119** — BDD Cucumber adoption (3 feature files, 6 scenarios)
@@ -34,4 +36,4 @@ None active.
 
 ## Next Steps
 
-1. **M122** — Next implementation phase (TBD).
+1. **M124** — Next implementation phase (TBD).
