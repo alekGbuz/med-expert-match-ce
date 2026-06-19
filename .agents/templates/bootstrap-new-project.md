@@ -248,6 +248,7 @@ Propose an initial set of 4–7 skills that make sense for this project, based o
 - `write-less-code` — minimal-diff thinking, simplification, reuse-first implementation, and context hygiene.
 - `bdd-traceability` — links functional requirements to Gherkin scenarios, step definitions, tests, and implementation artifacts.
 - `requirements-modeling` — normalizes requirement statements, stable IDs, domain vocabulary, and ownership.
+- `token-efficient-format` — chooses the cheapest format that still supports safe parsing per LLM call (JSON, TOON, ultra-compact JSON, CSV/TSV, line-based, or unstructured text) based on structure needs, volume, and downstream parsers. TOON (Token-Oriented Object Notation) uses indentation for hierarchy and tabular blocks for uniform arrays, achieving ~60% token reduction vs JSON.
 
 For each proposed skill, define:
 
