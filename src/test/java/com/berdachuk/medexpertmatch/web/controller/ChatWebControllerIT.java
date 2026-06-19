@@ -20,6 +20,16 @@ class ChatWebControllerIT extends BaseIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
+    void shouldLoadRootPage() throws Exception {
+        mockMvc.perform(get("/")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, "root-page-user"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("chat"))
+                .andExpect(model().attributeExists("currentPage", "chats", "currentChat", "messages"))
+                .andExpect(model().attribute("currentPage", "chat"));
+    }
+
+    @Test
     void shouldLoadChatPage() throws Exception {
         mockMvc.perform(get("/chat")
                         .header(HeaderBasedUserContext.USER_ID_HEADER, "test-user-chat"))
