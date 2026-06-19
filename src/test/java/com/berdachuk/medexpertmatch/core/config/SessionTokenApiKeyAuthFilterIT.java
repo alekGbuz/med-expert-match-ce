@@ -11,8 +11,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +24,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,13 +46,22 @@ class SessionTokenApiKeyAuthFilterIT extends BaseIntegrationTest {
     @Autowired
     private NamedParameterJdbcTemplate namedJdbcTemplate;
 
-    @MockBean
-    private PubMedService pubmedService;
+    private static PubMedService pubmedService;
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        PubMedService pubmedService() {
+            pubmedService = mock(PubMedService.class);
+            when(pubmedService.search(anyString(), anyInt())).thenReturn(List.of());
+            return pubmedService;
+        }
+    }
 
     @BeforeEach
     void setUp() {
         namedJdbcTemplate.getJdbcTemplate().execute("DELETE FROM api_session_token");
-        when(pubmedService.search(anyString(), anyInt())).thenReturn(List.of());
     }
 
     @Test

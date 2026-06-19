@@ -4,11 +4,8 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-<<<<<<< HEAD
-| M123 | [`M123-code-quality-and-dependency-freshness.md`](M123-code-quality-and-dependency-freshness.md) | Code quality pass, dependency freshness, flaky test fixes, documentation alignment |
-=======
-| M124 | [`M124-next-implementation-phase.md`](M124-next-implementation-phase.md) | Next implementation phase (TBD) |
->>>>>>> feat/m123-code-quality-and-dependency-freshness
+| M124 | [`M124-performance-optimization-and-monitoring-enhancement.md`](M124-performance-optimization-and-monitoring-enhancement.md) | Performance optimization and monitoring enhancement |
+| M125 | [`M125-main-menu-restructure.md`](M125-main-menu-restructure.md) | Main menu restructure — AI Chat as primary entry point |
 
 ## Deferred
 
