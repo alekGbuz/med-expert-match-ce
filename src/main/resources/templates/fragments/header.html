@@ -27,12 +27,17 @@
     <nav class="navbar navbar-expand-lg navbar-dark py-2 px-4" style="background-color: #1a5490;" role="navigation" aria-label="Main navigation">
         <div class="container-fluid">
             <div class="d-flex align-items-center gap-4">
+                <button class="btn btn-outline-light btn-sm chat-sidebar-mobile" id="chatSidebarToggleBtn"
+                        th:if="${currentPage == 'chat'}" type="button"
+                        aria-label="Toggle chat list">
+                    <span aria-hidden="true">&#9776;</span>
+                </button>
                 <a class="text-white text-decoration-none" style="color: #FFFFFF !important;"
-                   th:href="@{/}" th:if="${currentPage != 'index' and !isAdmin}" aria-label="Back to home">
+                   th:href="@{/}" th:if="${currentPage != 'chat' and !isAdmin}" aria-label="Back to home">
                     <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 </a>
                 <a class="text-white text-decoration-none" style="color: #FFFFFF !important;"
-                   th:href="@{/(user=admin)}" th:if="${currentPage != 'index' and isAdmin}" aria-label="Back to admin home">
+                   th:href="@{/(user=admin)}" th:if="${currentPage != 'chat' and isAdmin}" aria-label="Back to admin home">
                     <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 </a>
                 <div class="d-flex align-items-center">
@@ -49,41 +54,26 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarMainCollapse">
                 <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 py-3 py-lg-0 ms-lg-auto">
-                    <a class="text-white text-decoration-none" th:classappend="${currentPage == 'index'} ? 'fw-bold'"
-                       th:href="@{/}" th:if="${!isAdmin}" th:text="#{nav.home}">Home</a>
-                    <a class="text-white text-decoration-none" th:classappend="${currentPage == 'index'} ? 'fw-bold'"
-                       th:href="@{/(user=admin)}" th:if="${isAdmin}" th:text="#{nav.home}">Home</a>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.find_specialist}" th:href="@{/match}" th:if="${currentPage == 'index'}" th:text="#{nav.find_specialist}">Find Specialist</a>
+                    <a class="text-white text-decoration-none" th:classappend="${currentPage == 'chat'} ? 'fw-bold'"
+                       th:href="@{/}" th:if="${!isAdmin}" th:text="#{nav.home}">AI Chat</a>
+                    <a class="text-white text-decoration-none" th:classappend="${currentPage == 'chat'} ? 'fw-bold'"
+                       th:href="@{/(user=admin)}" th:if="${isAdmin}" th:text="#{nav.home}">AI Chat</a>
+                    <a class="text-white text-decoration-none" th:aria-label="#{nav.find_specialist}" th:href="@{/match}" th:if="${currentPage != 'match'}" th:text="#{nav.find_specialist}">Find Specialist</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${currentPage == 'match'}" th:text="#{nav.find_specialist}">Find Specialist</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'match'}" th:text="#{nav.find_specialist}">Find Specialist</span>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.case_analysis}" th:href="@{/analyze}" th:if="${currentPage == 'index'}" th:text="#{nav.case_analysis}">Case Analysis</a>
+                    <a class="text-white text-decoration-none" th:aria-label="#{nav.case_analysis}" th:href="@{/analyze}" th:if="${currentPage != 'analyze'}" th:text="#{nav.case_analysis}">Case Analysis</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${currentPage == 'analyze'}" th:text="#{nav.case_analysis}">Case Analysis</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'analyze'}" th:text="#{nav.case_analysis}">Case Analysis</span>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.queue}" th:href="@{/queue}" th:if="${currentPage == 'index'}" th:text="#{nav.queue}">Queue</a>
+                    <a class="text-white text-decoration-none" th:aria-label="#{nav.queue}" th:href="@{/queue}" th:if="${currentPage != 'queue'}" th:text="#{nav.queue}">Queue</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${currentPage == 'queue'}" th:text="#{nav.queue}">Queue</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'queue'}" th:text="#{nav.queue}">Queue</span>
                     <a class="text-white text-decoration-none" th:aria-label="#{nav.analytics}" th:href="@{/analytics}"
-                       th:if="${currentPage == 'index'}" th:text="#{nav.analytics}">Analytics</a>
+                       th:if="${currentPage != 'analytics'}" th:text="#{nav.analytics}">Analytics</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${currentPage == 'analytics'}" th:text="#{nav.analytics}">Analytics</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'analytics'}" th:text="#{nav.analytics}">Analytics</span>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.routing}" th:href="@{/routing}" th:if="${currentPage == 'index'}" th:text="#{nav.routing}">Routing</a>
+                    <a class="text-white text-decoration-none" th:aria-label="#{nav.routing}" th:href="@{/routing}" th:if="${currentPage != 'routing'}" th:text="#{nav.routing}">Routing</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${currentPage == 'routing'}" th:text="#{nav.routing}">Routing</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'routing'}" th:text="#{nav.routing}">Routing</span>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.chat}" th:href="@{/chat}" th:if="${currentPage == 'index'}" th:text="#{nav.chat}">AI Chat</a>
-                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
-                          th:if="${currentPage == 'chat'}" th:text="#{nav.chat}">AI Chat</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'chat'}" th:text="#{nav.chat}">AI Chat</span>
                     <a class="text-white text-decoration-none" th:aria-label="#{nav.synthetic_data}" th:href="@{/admin/synthetic-data(user=admin)}"
                        th:if="${isAdmin and currentPage != 'synthetic-data'}" th:text="#{nav.synthetic_data}">Synthetic Data</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"

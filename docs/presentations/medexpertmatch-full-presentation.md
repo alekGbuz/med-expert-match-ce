@@ -821,8 +821,8 @@ Note: Use the Q&A bank in PRESENTATION_PLAN_RU (speaker script) for framing answ
 
 This section is normal MkDocs content (printable, searchable).
 
-- [Architecture overview](../ARCHITECTURE.md)
-- [Use cases](../USE_CASES.md)
+- [Architecture overview](../02-architecture.md)
+- [Use cases](../use-cases.md)
 - [Demo guide](../DEMO_GUIDE.md)
 - [Harness and agent usage](../HARNESS_AND_AGENT_USAGE.md)
 - [Harness architecture](../HARNESS.md)

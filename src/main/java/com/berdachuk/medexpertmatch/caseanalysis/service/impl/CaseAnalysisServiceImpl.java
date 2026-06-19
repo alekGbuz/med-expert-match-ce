@@ -296,12 +296,24 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
     private List<String> parseJsonArray(String responseText) {
         try {
             String jsonText = extractJsonFromResponse(responseText);
-            return objectMapper.readValue(jsonText, new TypeReference<List<String>>() {
-            });
+            if (jsonText != null && !jsonText.isBlank() && jsonText.startsWith("[")) {
+                return objectMapper.readValue(jsonText, new TypeReference<List<String>>() {});
+            }
+            return parseLineBasedList(responseText);
         } catch (Exception e) {
             log.error("Failed to parse JSON array: {}", responseText, e);
             return List.of();
         }
+    }
+
+    private List<String> parseLineBasedList(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+        return text.lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .toList();
     }
 
     /**

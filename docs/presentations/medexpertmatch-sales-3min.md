@@ -243,5 +243,5 @@ Note: ~15 s. CTA: docs, longer demo, thank you.
 Full **speaker script**, image/video prompts, timing tables, and demo preparation: [Sales presentation (3 min)](../PRESENTATION_SALES_3MIN.md).
 
 - [Demo Guide](../DEMO_GUIDE.md)
-- [Use Cases](../USE_CASES.md)
+- [Use Cases](../use-cases.md)
 - [Full 45-minute deck](medexpertmatch-full-presentation.md)

@@ -15,7 +15,7 @@ This is a typical "planception" risk: the codebase now has 80 plans in `archive/
 ## Goal
 
 1. **Implement the M78 infrastructure** (the bash loop, the stories JSON for M77, the progress.txt format, the AGENTS.md command entry) — TDD-first, mirroring the M73-M76 cadence that worked.
-2. **Run a single end-to-end smoke test** of the loop on M77 with `--max 1` (one iteration) to prove the bash script works end-to-end without erroring out, picks the right story from `M77-stories.json`, invokes the agent in a fresh subprocess, and on green test runs `git commit` and marks `passes: true` on the chosen story.
+2. **Run a single end-to-end smoke test** of the loop on M77 with `--max 1` (one iteration) to prove the bash script works end-to-end without erroring out, picks the right story, invokes the agent in a fresh subprocess, and on green test runs `git commit` and marks `passes: true` on the chosen story.
 3. **Document the smoke result** in `progress.txt` (one block, no agent involvement) so the next operator can see the loop works.
 4. **Update `AGENTS.md` Commands table** with the `ralph.sh` entry and a one-paragraph "Ralph workflow" section.
 5. **Append "Ralph-style autonomous loop" section to `docs/ai-context-strategy.md`** that explains how skills + plans + tests integrate with the loop.
@@ -38,13 +38,7 @@ This is a typical "planception" risk: the codebase now has 80 plans in `archive/
 |------|------|--------|
 | Bash loop | `scripts/ralph.sh` (new, `chmod +x`) | 80-line bash script. Usage: `./scripts/ralph.sh M77 [--max N]`. Reads `.agents/plans/M{NN}-stories.json`, picks the highest-priority unpassed story (lowest `priority` int where `passes == false`), invokes the agent in a fresh subprocess with the story's `prompt_template` + skill list, runs the story's `test_target` via `mvn test -Dtest='<X>'` or `mvn verify -Dit.test='<X>'`, on green `git commit -m "M{NN}-{storyId}: {title}"` (no `Co-authored-by:` trailer) + flip `passes: true` + write `commit_sha` + append to `.agents/plans/progress.txt` + push. On red: log to `progress.txt`, continue. `set -euo pipefail`. |
 
-### Part 2 — `M77-stories.json` (machine-parseable story list)
-
-| Area | File | Change |
-|------|------|--------|
-| Stories file | `.agents/plans/M77-stories.json` (new) | 10 stories, one per Phase in `M77-runtime-measured-estimates.md:64-75`. Each story: `id` (M77-01 through M77-10), `title`, `phase_ref` (line number in the plan), `test_target` (Java class), `files_touched[]`, `skills_to_load[]`, `accept[]` (3-5 acceptance bullets), `priority` (1-10, lower = first), `passes: false`, `commit_sha: null`, `started_at: null`, `finished_at: null`, `duration_min: null`, `notes: ""`. |
-
-### Part 3 — `progress.txt` format (cross-iteration learnings)
+### Part 2 — `progress.txt` format (cross-iteration learnings)
 
 | Area | File | Change |
 |------|------|--------|
@@ -62,7 +56,7 @@ This is a typical "planception" risk: the codebase now has 80 plans in `archive/
 | Area | File | Change |
 |------|------|--------|
 | Bash unit test | `scripts/ralph/test_ralph.sh` (new) | A few `bash -e` sanity checks: `ralph.sh` exits non-zero on missing args, on missing stories.json, on `--max 0`. Run manually before pushing. |
-| Smoke test | Manual: run `./scripts/ralph.sh M77 --max 1` against the current codebase | Verify it picks the first unpassed story from M77-stories.json (M77-01, the entity creation), prints the prompt, and exits cleanly even if the agent is a no-op stub. No automated test for the actual LLM-driven iteration (it requires an API key). |
+| Smoke test | Manual: run `./scripts/ralph.sh M77 --max 1` against the current codebase | Verify it picks the first unpassed story, prints the prompt, and exits cleanly even if the agent is a no-op stub. No automated test for the actual LLM-driven iteration (it requires an API key). |
 
 ## Phases
 
@@ -74,7 +68,7 @@ This is a typical "planception" risk: the codebase now has 80 plans in `archive/
 | 4 | Add `git commit` + `passes: true` + `commit_sha` + `progress.txt` append | Pending |
 | 5 | Add `--max N` for-loop guard | Pending |
 | 6 | Create `.agents/plans/progress.txt` (empty + header) | Pending |
-| 7 | Create `.agents/plans/M77-stories.json` with 10 stories (TDD: write the JSON by hand, validate with `jq` it parses, validate each story has all required fields) | Pending |
+| 7 | _(removed — M77-stories.json deleted)_ | — |
 | 8 | Update root `AGENTS.md`: add `ralph.sh` to Commands table + "Ralph workflow" section | Pending |
 | 9 | Append "Ralph-style autonomous loop" section to `docs/ai-context-strategy.md` | Pending |
 | 10 | Smoke test: `./scripts/ralph.sh M77 --max 1` runs end-to-end without erroring, picks M77-01, prints the chosen story, exits cleanly | Pending |
@@ -83,9 +77,7 @@ This is a typical "planception" risk: the codebase now has 80 plans in `archive/
 
 - [ ] `scripts/ralph.sh` exists, is `chmod +x`, has a usage line printed on `--help` and on bad args
 - [ ] `scripts/ralph/test_ralph.sh` runs and exits 0 (all 3 negative tests pass)
-- [ ] `ralph.sh M77 --max 1` runs end-to-end without erroring and picks `M77-01` (lowest priority int with `passes: false`)
-- [ ] `M77-stories.json` has exactly 10 stories, all initially `passes: false`
-- [ ] Each story has all required fields: `id`, `title`, `test_target`, `files_touched[]`, `skills_to_load[]`, `accept[]`, `priority`, `passes`
+- [ ] `ralph.sh M77 --max 1` runs end-to-end without erroring and picks the first unpassed story
 - [ ] `progress.txt` exists with a header explaining the format
 - [ ] Root `AGENTS.md` Commands table has `ralph.sh` row
 - [ ] Root `AGENTS.md` has a "Ralph workflow" section

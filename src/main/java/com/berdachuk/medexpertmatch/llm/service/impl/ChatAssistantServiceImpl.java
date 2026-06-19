@@ -22,6 +22,7 @@ import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
+import com.berdachuk.medexpertmatch.web.service.ChatMarkdownRenderer;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -65,6 +66,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final LlmRoutingMetrics llmRoutingMetrics;
     private final LlmTierProperties llmTierProperties;
     private final LlmUsageTelemetryService llmUsageTelemetryService;
+    private final ChatMarkdownRenderer chatMarkdownRenderer;
 
     public ChatAssistantServiceImpl(
             ChatService chatService,
@@ -88,7 +90,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             PipelineProgressCollector pipelineProgressCollector,
             LlmRoutingMetrics llmRoutingMetrics,
             LlmTierProperties llmTierProperties,
-            LlmUsageTelemetryService llmUsageTelemetryService) {
+            LlmUsageTelemetryService llmUsageTelemetryService,
+            ChatMarkdownRenderer chatMarkdownRenderer) {
         this.chatService = chatService;
         this.chatClient = chatClient;
         this.promptSupportService = promptSupportService;
@@ -111,6 +114,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.llmRoutingMetrics = llmRoutingMetrics;
         this.llmTierProperties = llmTierProperties;
         this.llmUsageTelemetryService = llmUsageTelemetryService;
+        this.chatMarkdownRenderer = chatMarkdownRenderer;
     }
 
     @Override
@@ -234,7 +238,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                 llmUsageTelemetryService.clearSessionRollup(ctx.sessionId());
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                                         "id", assistant.id(),
-                                        "content", reply)));
+                                        "content", reply,
+                                        "renderedHtml", chatMarkdownRenderer.renderSafe(reply))));
                                 chatTurnMetrics.recordTurnSuccess(turnSample, metricsTier);
                                 emitter.complete();
                             } catch (IOException e) {
@@ -326,6 +331,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                 Map<String, Object> donePayload = new HashMap<>();
                 donePayload.put("id", assistant.id());
                 donePayload.put("content", reply);
+                donePayload.put("renderedHtml", chatMarkdownRenderer.renderSafe(reply));
                 donePayload.putAll(buildPackagingPayload(chatMode, goal, result.engineMetadata()));
                 emitter.send(SseEmitter.event().name("done").data(donePayload));
                 chatTurnMetrics.recordTurnSuccess(turnSample, metricsTier);
@@ -529,7 +535,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         }
         StringBuilder sb = new StringBuilder("Previous conversation:\n");
         for (var msg : history) {
-            if (currentContent != null && msg.content().equals(currentContent)) {
+            if (currentContent != null && currentContent.equals(msg.content())) {
                 continue;
             }
             String snippet = msg.content();
@@ -786,7 +792,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                 sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", "case-analysis-harness"));
                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                         "id", assistant.id(),
-                        "content", reply)));
+                        "content", reply,
+                        "renderedHtml", chatMarkdownRenderer.renderSafe(reply))));
                 chatTurnMetrics.recordTurnSuccess(turnSample, metricsTier);
                 emitter.complete();
             } catch (Exception e) {

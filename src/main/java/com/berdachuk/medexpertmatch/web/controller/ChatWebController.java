@@ -9,13 +9,11 @@ import com.berdachuk.medexpertmatch.web.service.ChatMarkdownRenderer;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
 @Controller
-@RequestMapping("/chat")
 public class ChatWebController {
 
     private final ChatService chatService;
@@ -29,7 +27,7 @@ public class ChatWebController {
         this.chatMarkdownRenderer = chatMarkdownRenderer;
     }
 
-    @GetMapping
+    @GetMapping({"/", "/chat"})
     public String chatPage(@RequestParam(required = false) String chatId, Model model) {
         String userId = userContext.currentUserId();
         chatService.getOrCreateDefaultChat(userId);

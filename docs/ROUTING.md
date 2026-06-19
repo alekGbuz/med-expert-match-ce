@@ -92,9 +92,9 @@ The `sessionId` in the request body is used to stream execution logs to the clie
 
 ## Related
 
-- [Use Cases](USE_CASES.md) – Use Case 6: Cross-Organization / Regional Routing
+- [Use Cases](use-cases.md) – Use Case 6: Cross-Organization / Regional Routing
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) – case-analyzer and routing-planner tools
-- [Architecture](ARCHITECTURE.md) – API and pages
+- [Architecture](02-architecture.md) – API and pages
 
 ## Geographic Position (How It Works)
 

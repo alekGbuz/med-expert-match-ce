@@ -1,13 +1,10 @@
 package com.berdachuk.medexpertmatch.retrieval.service.impl;
 
 import com.berdachuk.medexpertmatch.doctor.domain.Doctor;
-import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.berdachuk.medexpertmatch.retrieval.service.RerankingService;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -25,22 +22,16 @@ public class RerankingServiceImpl implements RerankingService {
     private final ChatClient rerankingChatClient;
     private final PromptTemplate rerankingDoctorsPromptTemplate;
     private final MedicalCaseRepository medicalCaseRepository;
-    private final DoctorRepository doctorRepository;
-    private final ObjectMapper objectMapper;
     private final boolean enabled;
 
     public RerankingServiceImpl(
             @Nullable @Qualifier("rerankingChatClient") ChatClient rerankingChatClient,
             @Qualifier("rerankingDoctorsPromptTemplate") PromptTemplate rerankingDoctorsPromptTemplate,
             MedicalCaseRepository medicalCaseRepository,
-            DoctorRepository doctorRepository,
-            ObjectMapper objectMapper,
             @Value("${medexpertmatch.retrieval.reranking.enabled:false}") boolean enabled) {
         this.rerankingChatClient = rerankingChatClient;
         this.rerankingDoctorsPromptTemplate = rerankingDoctorsPromptTemplate;
         this.medicalCaseRepository = medicalCaseRepository;
-        this.doctorRepository = doctorRepository;
-        this.objectMapper = objectMapper;
         this.enabled = enabled;
     }
 
@@ -91,16 +82,7 @@ public class RerankingServiceImpl implements RerankingService {
                 return candidates;
             }
 
-            String jsonText = response.trim();
-            if (jsonText.contains("```")) {
-                int start = jsonText.indexOf("[");
-                int end = jsonText.lastIndexOf("]");
-                if (start >= 0 && end > start) {
-                    jsonText = jsonText.substring(start, end + 1);
-                }
-            }
-
-            List<Integer> ranking = objectMapper.readValue(jsonText, new TypeReference<List<Integer>>() {});
+            List<Integer> ranking = parseLineBasedIndices(response);
             if (ranking == null || ranking.isEmpty()) {
                 return candidates;
             }
@@ -124,6 +106,17 @@ public class RerankingServiceImpl implements RerankingService {
             log.warn("Re-ranking failed for case {}: {}", caseId, e.getMessage());
             return candidates;
         }
+    }
+
+    private static List<Integer> parseLineBasedIndices(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+        return text.lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .map(Integer::parseInt)
+                .toList();
     }
 
     private static String nullToEmpty(String s) {

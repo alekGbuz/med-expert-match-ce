@@ -7,16 +7,17 @@ This AI system is for research and educational purposes only. It is NOT certifie
 Extract relevant ICD-10 codes from the medical case information. Return only valid ICD-10 codes in standard format (e.g., "I21.9", "E11.9").
 
 **Response Format:**
-Return a JSON array of ICD-10 codes:
-["I21.9", "E11.9"]
+Return one ICD-10 code per line:
+I21.9
+E11.9
 
-If no ICD-10 codes can be determined, return an empty array: []
+If no ICD-10 codes can be determined, return nothing (empty response).
 
 **CRITICAL OUTPUT LIMITS:**
-- Provide EXACTLY ONE JSON array and STOP
-- Maximum 20 ICD-10 codes in the array
-- Do NOT repeat codes in the array
-- Do NOT generate multiple arrays or responses
+- Provide EXACTLY ONE code per line and STOP
+- Maximum 20 ICD-10 codes
+- Do NOT repeat codes
+- Do NOT generate multiple responses
 - Maximum response length: 500 characters
-- Stop immediately after providing the JSON array
-- Do NOT continue generating after the array is complete
+- Stop immediately after providing the last code
+- Do NOT continue generating after the codes are complete

@@ -13,7 +13,7 @@ worsen outcomes.
 - Replaces ad-hoc "who do I know?" with a consistent, data-driven matching process.
 - Reduces time-to-consultation and can shorten hospital length of stay.
 
-**Use case:** [Specialist Matching for Complex Inpatient Cases](USE_CASES.md)
+**Use case:** [Specialist Matching for Complex Inpatient Cases](use-cases.md)
 
 ---
 
@@ -28,7 +28,7 @@ instead of the right sub-specialist.
 - Matches by diagnosis, ICD-10/SNOMED codes, and complexity so the case goes to the right sub-specialist.
 - Can prioritize telehealth-enabled doctors for remote second opinions.
 
-**Use case:** [Online Second Opinion / Telehealth](USE_CASES.md)
+**Use case:** [Online Second Opinion / Telehealth](use-cases.md)
 
 ---
 
@@ -43,7 +43,7 @@ patients face unnecessary delays.
 - Uses case analysis (symptoms, urgency, risk) and priority scoring so the sickest patients are seen first.
 - Gives coordinators a sorted queue and optional suggested specialists.
 
-**Use case:** [Prioritizing the Consultation Queue](USE_CASES.md)
+**Use case:** [Prioritizing the Consultation Queue](use-cases.md)
 
 ---
 
@@ -58,7 +58,7 @@ planning are suboptimal.
 - Shows who actually handles complex cases in specific domains (e.g. by ICD-10 code).
 - Supports data-driven routing, capability planning, and mentorship/learning programs.
 
-**Use case:** [Network Analytics](USE_CASES.md)
+**Use case:** [Network Analytics](use-cases.md)
 
 ---
 
@@ -74,7 +74,7 @@ access to colleagues for complex cases.
 - Generates recommendations: diagnostic workup, treatment options, monitoring, follow-up.
 - Suggests colleagues and multidisciplinary experts via Semantic Graph Retrieval.
 
-**Use case:** [Human-in-the-Loop Decision Support](USE_CASES.md)
+**Use case:** [Human-in-the-Loop Decision Support](use-cases.md)
 
 ---
 
@@ -90,7 +90,7 @@ capacity. Mismatches and inefficiencies are common in hierarchical systems.
 - Returns ranked facilities with suggested lead specialists and explanations.
 - Makes referrals and transfers more transparent, consistent, and measurable.
 
-**Use case:** [Cross-Organization / Regional Routing](USE_CASES.md)
+**Use case:** [Cross-Organization / Regional Routing](use-cases.md)
 
 ---
 

@@ -9,7 +9,9 @@ import com.berdachuk.medexpertmatch.llm.service.A2AMessageService;
 import com.berdachuk.medexpertmatch.llm.service.A2aSkillRegistryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.http.MediaType;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @Tag(name = "A2A Bridge", description = "JSON-RPC 2.0 A2A message endpoint")
+@Validated
 @RestController
 @RequestMapping("/a2a/v1")
 public class A2aJsonRpcController {
@@ -44,14 +47,14 @@ public class A2aJsonRpcController {
 
     @Operation(summary = "JSON-RPC 2.0 sendMessage (PHI-safe, routes to domain skills)")
     @PostMapping("/jsonrpc")
-    public Map<String, Object> jsonRpc(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> jsonRpc(@RequestBody @NotEmpty Map<String, Object> body) {
         enforceRateLimit();
         return a2aMessageService.handleJsonRpc(body);
     }
 
     @Operation(summary = "Stream skill result with chat-compatible SSE token envelope")
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter stream(@RequestBody Map<String, Object> body) {
+    public SseEmitter stream(@RequestBody @NotEmpty Map<String, Object> body) {
         enforceRateLimit();
         return a2aMessageService.streamMessage(body);
     }

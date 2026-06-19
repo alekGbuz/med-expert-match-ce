@@ -2,9 +2,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M122 | [`M122-security-hardening-and-test-coverage.md`](M122-security-hardening-and-test-coverage.md) | Security hardening: @Valid on 8 controllers, unit tests for zero-coverage modules, BDD step definitions for 3 feature files, CORS/CSRF audit |
+None — all plans archived.
 
 ## Deferred
 
@@ -118,6 +116,14 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M119 | [`archive/M119-bdd-cucumber-adoption.md`](archive/M119-bdd-cucumber-adoption.md) | Adopt Cucumber JVM + Gherkin: 3 .feature files (case-analyzer, doctor-matcher, routing-planner), thin step definitions, CucumberIT runner, 6 scenarios pass |
 | M120 | [`archive/M120-cucumber-coverage-expansion.md`](archive/M120-cucumber-coverage-expansion.md) | Extend Cucumber BDD coverage to remaining 6 agent skills (evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, clinical-guideline, triage); 18 total scenarios |
 | M121 | [`archive/M121-application-hardening-and-observability.md`](archive/M121-application-hardening-and-observability.md) | Application hardening: Kubernetes probes, ReadinessStateHealthIndicator, dev Docker health check |
+| M122 | [`archive/M122-security-hardening-and-test-coverage.md`](archive/M122-security-hardening-and-test-coverage.md) | Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests |
+| M123 | [`archive/M123-code-quality-and-dependency-freshness.md`](archive/M123-code-quality-and-dependency-freshness.md) | Code quality pass, dependency freshness, flaky test fixes, documentation alignment |
+| M124 | [`archive/M124-performance-optimization-and-monitoring-enhancement.md`](archive/M124-performance-optimization-and-monitoring-enhancement.md) | Performance optimization and monitoring enhancement |
+| M125 | [`archive/M125-main-menu-restructure.md`](archive/M125-main-menu-restructure.md) | Main menu restructure — AI Chat as primary entry point |
+| M126 | [`archive/M126-next-implementation-phase.md`](archive/M126-next-implementation-phase.md) | Next implementation phase — GraphRAG profiling, monitoring, ops docs |
+| M127 | [`archive/M127-token-efficient-format-implementation.md`](archive/M127-token-efficient-format-implementation.md) | Token-efficient format implementation — ultra-compact JSON + line-based prompts |
+| M128 | [`archive/M128-markdown-rendering-fix.md`](archive/M128-markdown-rendering-fix.md) | Fix markdown rendering in chat — bold/italic/lists, content before reasoning block |
+| M129 | [`archive/M129-responsive-chat-sidebar.md`](archive/M129-responsive-chat-sidebar.md) | Responsive chat sidebar — hide on small/medium, hamburger menu toggle |
 
 ## Creating a New Plan
 

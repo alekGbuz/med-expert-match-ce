@@ -1,13 +1,12 @@
 package com.berdachuk.medexpertmatch.retrieval.domain.dto;
 
 import com.berdachuk.medexpertmatch.retrieval.domain.MatchOutcomeLabel;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-/**
- * Request body for recording a match outcome (synthetic/anonymized IDs in tests only).
- */
 public record MatchOutcomeRecordRequest(
-        String caseId,
-        String doctorId,
-        MatchOutcomeLabel label
+        @NotBlank String caseId,
+        @NotBlank String doctorId,
+        @NotNull MatchOutcomeLabel label
 ) {
 }

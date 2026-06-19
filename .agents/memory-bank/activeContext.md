@@ -2,14 +2,19 @@
 
 ## Current Focus
 
-All milestones M01–M120 are complete. M121 (Application Hardening and Observability) is now active.
+All milestones M01–M127 are complete. All planned tasks implemented. Ready for next phase planning.
 
 ## Current Milestone
 
-**M121** — Application Hardening and Observability: Kubernetes probes enabled (`management.endpoint.health.probes.enabled=true`), `ReadinessStateHealthIndicator` created, dev Docker health check added to app service. 885 unit + 568 integration tests pass.
+None — all plans archived.
 
 ## Completed Recently
 
+- **M129** — Responsive chat sidebar (REQ-129). Sidebar hidden on screens <992px (`d-none d-lg-block`). Hamburger button (☰) appears in top-left of chat area on small screens. Bootstrap offcanvas wraps sidebar for slide-in overlay. JS wires hamburger click to toggle, auto-closes on chat selection. CSS for hamburger positioning, offcanvas body padding, chat list max-height. 948 unit tests pass (1 pre-existing failure: `ChatMarkdownRendererTest.allowsHttpsLinks`).
+- **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/` (REQ-125). Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow now gates on `currentPage != 'chat'`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`. Fixed pre-existing `@MockBean` compilation error in `SessionTokenApiKeyAuthFilterIT` (replaced with `@TestConfiguration` + `mock()`). 938 unit + 567 IT tests pass.
+- **M124** — Performance optimization and monitoring enhancement plan (scope deferred to M126).
+- **M123** — Code quality and dependency freshness: fixed flaky `SessionTokenApiKeyAuthFilterIT` (mocked `PubMedService`), dependency freshness pass (all deps current), documentation alignment (6 docs updated with correct Spring Boot 4.1.0 / Spring AI 2.0.0 GA versions), code quality scan (no violations found)
+- **M122** — Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests (938 unit + 568 IT, 0 failures)
 - **M121** — Application hardening closeout: probes, readiness indicator, dev Docker health check
 - **M120** — Cucumber coverage expansion to 6 agent skills (18 scenarios)
 - **M119** — BDD Cucumber adoption (3 feature files, 6 scenarios)
@@ -34,4 +39,4 @@ None active.
 
 ## Next Steps
 
-1. **M122** — Next implementation phase (TBD).
+1. **Next implementation phase** — TBD.

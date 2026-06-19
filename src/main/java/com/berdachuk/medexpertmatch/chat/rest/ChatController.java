@@ -7,8 +7,10 @@ import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Tag(name = "AI Chat", description = "Per-user chat sessions and message history")
+@Validated
 @RestController
 @RequestMapping("/api/v1/chats")
 public class ChatController {
@@ -79,7 +82,7 @@ public class ChatController {
     @PostMapping("/{chatId}/messages")
     public Map<String, Object> postMessage(
             @PathVariable String chatId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody @NotEmpty Map<String, String> body) {
         String content = body.get("content");
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("content is required");
@@ -111,7 +114,7 @@ public class ChatController {
     @PostMapping(value = "/{chatId}/messages/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamMessage(
             @PathVariable String chatId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody @NotEmpty Map<String, String> body) {
         String userId = userContext.currentUserId();
         if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier(), RateLimitScope.CHAT_SSE)) {
             throw new RateLimitExceededException(

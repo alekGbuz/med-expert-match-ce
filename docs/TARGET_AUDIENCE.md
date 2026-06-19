@@ -17,7 +17,7 @@ This document describes the primary users and audiences of MedExpertMatch.
 **Main use:** Specialist matching for complex inpatient cases (Find Specialist). May use EMR integration or direct text
 input.
 
-**Use case:** [Specialist Matching for Complex Inpatient Cases](USE_CASES.md)
+**Use case:** [Specialist Matching for Complex Inpatient Cases](use-cases.md)
 
 ---
 
@@ -34,7 +34,7 @@ input.
 **Main use:** Online second opinion flow. Upload medical records (FHIR Bundle); system matches to the right
 sub-specialist by diagnosis and complexity.
 
-**Use case:** [Online Second Opinion / Telehealth](USE_CASES.md)
+**Use case:** [Online Second Opinion / Telehealth](use-cases.md)
 
 ---
 
@@ -51,7 +51,7 @@ sub-specialist by diagnosis and complexity.
 **Main use:** Consultation queue prioritization. Opens the consult queue; system returns consults sorted by priority (
 CRITICAL / HIGH / MEDIUM / LOW) with optional suggested doctors.
 
-**Use case:** [Prioritizing the Consultation Queue](USE_CASES.md)
+**Use case:** [Prioritizing the Consultation Queue](use-cases.md)
 
 ---
 
@@ -68,7 +68,7 @@ CRITICAL / HIGH / MEDIUM / LOW) with optional suggested doctors.
 **Main use:** Network analytics. Queries such as "top experts for ICD-10 I21.9 in the past 2 years"; gets ranked doctors
 and facilities with volume, complexity, outcomes.
 
-**Use case:** [Network Analytics](USE_CASES.md)
+**Use case:** [Network Analytics](use-cases.md)
 
 ---
 
@@ -86,7 +86,7 @@ with.
 **Main use:** AI analysis and expert suggestions (analyze case, recommendations, evidence retrieval, colleague
 matching).
 
-**Use case:** [Human-in-the-Loop Decision Support](USE_CASES.md)
+**Use case:** [Human-in-the-Loop Decision Support](use-cases.md)
 
 ---
 
@@ -103,7 +103,7 @@ matching).
 **Main use:** Cross-organization / regional routing. Submits case; system returns ranked facilities with suggested lead
 specialists and explanations (case complexity, outcomes, capacity, geography).
 
-**Use case:** [Cross-Organization / Regional Routing](USE_CASES.md)
+**Use case:** [Cross-Organization / Regional Routing](use-cases.md)
 
 ---
 

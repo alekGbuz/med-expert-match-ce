@@ -1,11 +1,11 @@
 # MedExpertMatch
 
-AI-Powered Medical Expert Recommendation System for MedGemma Impact Challenge
+GraphRAG-Powered Medical Expert Recommendation System for MedGemma Impact Challenge
 
 ## Overview
 
-**MedExpertMatch** is an AI-powered medical expert recommendation system that matches medical cases with appropriate
-doctors based on case analysis, doctor expertise, clinical guidelines, and similar case outcomes.
+**MedExpertMatch** is a GraphRAG-powered medical expert recommendation system that matches medical cases with appropriate
+doctors using hybrid vector + graph retrieval, LLM-based case analysis, and historical scoring.
 
 ## Quick Start
 
@@ -136,7 +136,7 @@ Key REST endpoints:
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md)
+- [Architecture](docs/02-architecture.md)
 - [Unique Selling Propositions](docs/UNIQUE_SELLING_PROPOSITIONS.md)
 - [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
 - [Development Guide](docs/DEVELOPMENT_GUIDE.md)

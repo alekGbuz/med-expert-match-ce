@@ -470,9 +470,11 @@
 
     function finalizeAssistantBubble() {
         if (currentAssistantBubble) {
-            updateAssistantBubble();
             if (currentAssistantBubble.closest('.chat-streaming')) {
                 currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
+            }
+            if (!currentAssistantBubble._doneRendered) {
+                updateAssistantBubble();
             }
         }
         currentAssistantBubble = null;
@@ -528,7 +530,12 @@
         if (!rawData) return;
         try {
             var parsed = JSON.parse(rawData);
-            if (parsed && typeof parsed.content === 'string') {
+            if (parsed && typeof parsed.renderedHtml === 'string') {
+                if (currentAssistantBubble) {
+                    currentAssistantBubble.innerHTML = sanitizeAssistantHtml(parsed.renderedHtml);
+                    currentAssistantBubble._doneRendered = true;
+                }
+            } else if (parsed && typeof parsed.content === 'string') {
                 currentMarkdownBuffer = parsed.content;
             }
             if (currentAssistantBubble) {
@@ -766,4 +773,20 @@
     initHistoricalMarkdown();
     pollAgenticState();
     setInterval(pollAgenticState, 5000);
+
+    // Responsive sidebar: hamburger toggle in header
+    var offcanvasEl = document.getElementById('chatSidebarOffcanvas');
+    if (offcanvasEl && typeof bootstrap !== 'undefined') {
+        var offcanvas = new bootstrap.Offcanvas(offcanvasEl, { backdrop: true, scroll: true });
+        document.getElementById('chatSidebarToggleBtn')?.addEventListener('click', function () {
+            offcanvas.toggle();
+        });
+        // Auto-close on chat selection
+        offcanvasEl.addEventListener('click', function (e) {
+            var chatItem = e.target.closest('.chat-item');
+            if (chatItem) {
+                offcanvas.hide();
+            }
+        });
+    }
 })();

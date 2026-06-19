@@ -18,6 +18,7 @@ import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
+import com.berdachuk.medexpertmatch.web.service.ChatMarkdownRenderer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,6 +64,7 @@ class ChatAssistantServiceImplTest {
     private final LlmRoutingMetrics llmRoutingMetrics = new LlmRoutingMetrics(meterRegistry);
     private final LlmTierProperties llmTierProperties = new LlmTierProperties(null, null, null);
     private final LlmUsageTelemetryService llmUsageTelemetryService = mock(LlmUsageTelemetryService.class);
+    private final ChatMarkdownRenderer chatMarkdownRenderer = mock(ChatMarkdownRenderer.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
@@ -70,7 +72,8 @@ class ChatAssistantServiceImplTest {
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
             medicalAgentPolicyGateService, HarnessProperties.defaults(),
             "functiongemma", goalClassifier, chatLanguageService, medicalAgentService, sessionService,
-            pipelineProgressCollector, llmRoutingMetrics, llmTierProperties, llmUsageTelemetryService);
+            pipelineProgressCollector, llmRoutingMetrics, llmTierProperties, llmUsageTelemetryService,
+            chatMarkdownRenderer);
 
     @BeforeEach
     void stubLanguageAndClassification() {

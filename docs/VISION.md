@@ -70,9 +70,9 @@ data, evidence, and AI-powered intelligence — reducing delays, improving accur
 
 *For detailed use cases, technical architecture, and specifications, see:*
 
-- [Use Cases](USE_CASES.md)
-- [Architecture](ARCHITECTURE.md)
-- [Product Requirements Document](PRD.md)
+- [Use Cases](use-cases.md)
+- [Architecture](02-architecture.md)
+- [Product Requirements Document](01-requirements.md)
 
 *MedGemma Impact
 Challenge: [Kaggle Competition](https://www.kaggle.com/competitions/med-gemma-impact-challenge/overview)*
