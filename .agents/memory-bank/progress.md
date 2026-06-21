@@ -486,6 +486,12 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: M13 Phase A: AI Chat Tab Foundation — ✅ Archived
 
+### M134
+
+- [full record](records/progress/M134.md)
+
+- Summary: - **Milestone:** M134
+
 ### M133
 
 - [full record](records/progress/M133.md)

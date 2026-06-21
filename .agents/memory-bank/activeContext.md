@@ -4,29 +4,28 @@
 
 ## Current Focus
 
-### M134
+### M135
 
-# M134 — Memory-Bank Migration Completion & CI Integration
+# M135 — Memory-Bank Enrichment & Traceability Backfill
 
-- **Milestone:** M134
+- **Milestone:** M135
 - **DEC:** DEC-015
 - **Status:** Active
 - **Date:** 2026-06-21
 
 ## Current Focus
 
-Completing the migration to the partitioned memory-bank structure (M133 seeded only recent milestones) and wiring the `sync-memory-index.sh --check` gate into CI.
+Enrich the auto-generated milestone stubs (M01–M128) with richer summaries and backfill traceability links (REQ-###, TEST-###) for milestones that currently lack them.
 
 ## Tasks
 
-1. [x] Add `sync-memory-index.sh --check` step to `.github/workflows/ci.yml`.
-2. [x] Migrate archive plans M01-M128 to `records/progress/` stubs (125 records total).
-3. [x] Seed `registry/nfr.jsonl` from docs NFRs (22 NFRs mapped from legacy NFR-X.Y to NFR-###).
-4. [x] Seed `registry/task.jsonl` from M133/M134 tasks.
-5. [x] Update `docs/ai-context-strategy.md` with partitioned layer model.
-6. [ ] Run `sync-memory-index.sh`, verify `--check` passes.
-7. [ ] Security review.
-8. [ ] Commit + merge to develop.
+1. [ ] Enrich M01–M110 stubs with structured metadata (affected modules, tests, REQ/DEC refs).
+2. [ ] Mine `src/test/java/**/*IT.java` and `*Test.java` for significant test artifacts; append to `test.jsonl`.
+3. [ ] Cross-check `docs/01-requirements.md` FR IDs against `registry/req.jsonl`; append missing.
+4. [ ] Acquire and release a module lock in a real task to validate the flow.
+5. [ ] Run `sync-memory-index.sh`, verify `--check` passes.
+6. [ ] Security review.
+7. [ ] Commit + merge to develop.
 
 ## Open Questions
 
@@ -34,7 +33,7 @@ Completing the migration to the partitioned memory-bank structure (M133 seeded o
 
 ## Risks
 
-- RISK-134: CI gate fails if jq not installed. Mitigated by `Install jq` step in ci.yml.
+- RISK-135: Enrichment script may extract wrong module assignments. Mitigation: manual spot-check 10%.
 ## Open Questions
 
 _Captured per-milestone in `records/active/M{NN}.md`._
@@ -44,6 +43,7 @@ _Captured per-milestone in `records/active/M{NN}.md`._
 - **RISK-132** — Short-key/long-key drift in LlmResponseSanitizer (mitigated, module: core) — mitigation: dual-key fallback + parity tests
 - **RISK-133** — Agents ignore do-not-hand-edit rule on generated files (mitigated, module: .agents) — mitigation: sync-memory-index.sh --check CI gate + code-style/security-check skill enforcement
 - **RISK-134** — CI gate fails if jq not installed on runner (mitigated, module: .github) — mitigation: Install jq step added to ci.yml before sync check
+- **RISK-135** — Enrichment script may extract wrong module assignments from archived plans (open, module: core) — mitigation: manual spot-check 10% of enriched records
 
 ## Traceability Gaps
 

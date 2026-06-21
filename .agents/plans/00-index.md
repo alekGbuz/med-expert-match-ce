@@ -6,7 +6,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M134 | [`M134.md`](../memory-bank/records/active/M134.md) | - **Milestone:** M134 |
+| M135 | [`M135.md`](../memory-bank/records/active/M135.md) | - **Milestone:** M135 |
 
 ## Deferred
 
@@ -96,6 +96,7 @@ None.
 | M15 | [`M15.md`](../memory-bank/records/progress/M15.md) | A2A Interop, Chat Streaming & Production Hardening — ✅ Archived |
 | M14 | [`M14.md`](../memory-bank/records/progress/M14.md) | AI Chat Agent Routing — ✅ Archived |
 | M13 | [`M13.md`](../memory-bank/records/progress/M13.md) | M13 Phase A: AI Chat Tab Foundation — ✅ Archived |
+| M134 | [`M134.md`](../memory-bank/records/progress/M134.md) | - **Milestone:** M134 |
 | M133 | [`M133.md`](../memory-bank/records/progress/M133.md) | - **Milestone:** M133 |
 | M132 | [`M132.md`](../memory-bank/records/progress/M132.md) | - **Milestone:** M132 |
 | M131 | [`M131.md`](../memory-bank/records/progress/M131.md) | - **Milestone:** M131 |

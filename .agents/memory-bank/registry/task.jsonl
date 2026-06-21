@@ -13,4 +13,10 @@
 {"id":"TASK-013","milestone":"M134","title":"Migrate archive plans M01-M128 to records/progress/ stubs","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
 {"id":"TASK-014","milestone":"M134","title":"Seed registry/nfr.jsonl from docs NFRs","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
 {"id":"TASK-015","milestone":"M134","title":"Seed registry/task.jsonl from M133 completed tasks","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
-{"id":"TASK-016","milestone":"M134","title":"Update docs/ai-context-strategy.md with partitioned layer model","module":"core","status":"in_progress","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-016","milestone":"M134","title":"Update docs/ai-context-strategy.md with partitioned layer model","module":"core","status":"in_progress","plan":"records/active/M134.md","assignedTo":null}{"id":"TASK-017","milestone":"M134","title":"Run sync-memory-index.sh, verify --check passes","module":"core","status":"done","plan":"records/progress/M134.md","assignedTo":null}
+{"id":"TASK-018","milestone":"M134","title":"Security review","module":"core","status":"done","plan":"records/progress/M134.md","assignedTo":null}
+{"id":"TASK-019","milestone":"M134","title":"Commit + merge to develop","module":"core","status":"done","plan":"records/progress/M134.md","assignedTo":null}
+{"id":"TASK-020","milestone":"M135","title":"Enrich M01-M110 stubs with structured metadata","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-021","milestone":"M135","title":"Mine test classes and append to test.jsonl","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-022","milestone":"M135","title":"Cross-check req.jsonl against docs FRs","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-023","milestone":"M135","title":"Validate module lock flow end-to-end","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
