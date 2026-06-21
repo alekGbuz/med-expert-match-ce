@@ -123,3 +123,11 @@ ADR-style decision log. Each entry: status, date, title, rationale, affected mod
 - **Rationale:** Network analytics use case covered by existing graph operations; no dedicated scoring path until roadmap requires
 - **Reference:** records/decisions/DEC-014.md
 
+### DEC-015: Multi-Agent Memory-Bank Partitioning
+- **Status:** Accepted
+- **Date:** 2026-06-21
+- **Module:** core
+- **Affects:** .agents/memory-bank, scripts/
+- **Rationale:** Prevent merge conflicts when multiple AI agents work in parallel worktrees by partitioning memory-bank into append-only JSONL registries + per-record files + generated index files + module locks, instead of single-writer monolithic Markdown files
+- **Reference:** records/decisions/DEC-015.md
+

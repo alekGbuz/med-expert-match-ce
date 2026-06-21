@@ -130,9 +130,11 @@ gen_active_context() {
     echo "## Risks"
     echo
     if [[ -f "$REG/risk.jsonl" ]] && [[ -s "$REG/risk.jsonl" ]]; then
-      jq -r 'select(.status != "closed") | "- **\(.id)** — \(.title) (\(.status), module: \(.module)) — mitigation: \(.mitigation // "none")"' "$REG/risk.jsonl" 2>/dev/null
-      # If jq produced no output (all closed), show none
-      if ! jq -e 'any(.status != "closed")' "$REG/risk.jsonl" >/dev/null 2>&1; then
+      local risks
+      risks="$(jq -r 'select(.status != "closed") | "- **\(.id)** — \(.title) (\(.status), module: \(.module)) — mitigation: \(.mitigation // "none")"' "$REG/risk.jsonl" 2>/dev/null || true)"
+      if [[ -n "$risks" ]]; then
+        echo "$risks"
+      else
         echo "_None active._"
       fi
     else

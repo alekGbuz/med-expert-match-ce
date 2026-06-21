@@ -13,7 +13,7 @@ _Captured per-milestone in `records/active/M{NN}.md`._
 ## Risks
 
 - **RISK-132** — Short-key/long-key drift in LlmResponseSanitizer (mitigated, module: core) — mitigation: dual-key fallback + parity tests
-_None active._
+- **RISK-133** — Agents ignore do-not-hand-edit rule on generated files (mitigated, module: .agents) — mitigation: sync-memory-index.sh --check CI gate + code-style/security-check skill enforcement
 
 ## Traceability Gaps
 
