@@ -21,7 +21,7 @@ Enrich the auto-generated milestone stubs (M01–M128) with richer summaries and
 
 1. [ ] Enrich M01–M110 stubs with structured metadata (affected modules, tests, REQ/DEC refs).
 2. [ ] Mine `src/test/java/**/*IT.java` and `*Test.java` for significant test artifacts; append to `test.jsonl`.
-3. [ ] Cross-check `docs/01-requirements.md` FR IDs against `registry/req.jsonl`; append missing.
+3. [ ] Cross-check `docs/pipeline/01-requirements.md` FR IDs against `registry/req.jsonl`; append missing.
 4. [ ] Acquire and release a module lock in a real task to validate the flow.
 5. [ ] Run `sync-memory-index.sh`, verify `--check` passes.
 6. [ ] Security review.
