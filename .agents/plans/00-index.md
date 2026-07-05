@@ -6,7 +6,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M135 | [`M135.md`](../memory-bank/records/active/M135.md) | - **Milestone:** M135 |
+| M139 | [`M139.md`](../memory-bank/records/active/M139.md) | - **Milestone:** M139 |
 
 ## Deferred
 
@@ -96,6 +96,7 @@ None.
 | M15 | [`M15.md`](../memory-bank/records/progress/M15.md) | - **Milestone:** M15 |
 | M14 | [`M14.md`](../memory-bank/records/progress/M14.md) | - **Milestone:** M14 |
 | M13 | [`M13.md`](../memory-bank/records/progress/M13.md) | - **Milestone:** M13 |
+| M138 | [`M138.md`](../memory-bank/records/progress/M138.md) | - **Milestone:** M138 |
 | M137 | [`M137.md`](../memory-bank/records/progress/M137.md) | - **Milestone:** M137 |
 | M136 | [`M136.md`](../memory-bank/records/progress/M136.md) | - **Milestone:** M136 |
 | M135 | [`M135.md`](../memory-bank/records/progress/M135.md) | - **Milestone:** M135 |

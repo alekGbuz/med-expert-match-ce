@@ -1,7 +1,7 @@
 # M138 — Traceability Coverage Expansion & Test Registration
 
 - **Milestone:** M138
-- **Status:** Active
+- **Status:** Completed
 - **Date:** 2026-06-24
 - **Follows:** M135 (memory-bank enrichment & traceability backfill)
 
@@ -27,12 +27,12 @@ M135 expanded `test.jsonl` from 8 to 106 entries and `req.jsonl` from 14 to 26 e
 
 ## Tasks
 
-1. [ ] Script: for each IT class in `test.jsonl`, scan source for `REQ-###` / `SCN-###` references in javadoc, `@DisplayName`, or `@Tag`; update `test.jsonl` entries.
-2. [ ] Verify all 9 `.feature` files have `SCN-###` entries in `scn.jsonl`.
-3. [ ] Add `@DisplayName` annotations to IT test methods that lack REQ/SCN references.
-4. [ ] Run `sync-memory-index.sh --check`, verify passes.
-5. [ ] Security review.
-6. [ ] Commit + merge to develop.
+1. [x] Script: for each IT class in `test.jsonl`, scan source for `REQ-###` / `SCN-###` references in javadoc, `@DisplayName`, or `@Tag`; update `test.jsonl` entries.
+2. [x] Verify all 9 `.feature` files have `SCN-###` entries in `scn.jsonl`.
+3. [x] Add `@DisplayName` annotations to IT test methods that lack REQ/SCN references.
+4. [x] Run `sync-memory-index.sh --check`, verify passes.
+5. [x] Security review.
+6. [x] Commit + merge to develop.
 
 ## Verification
 

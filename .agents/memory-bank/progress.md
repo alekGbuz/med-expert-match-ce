@@ -486,6 +486,12 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: - **Milestone:** M13
 
+### M138
+
+- [full record](records/progress/M138.md)
+
+- Summary: - **Milestone:** M138
+
 ### M137
 
 - [full record](records/progress/M137.md)

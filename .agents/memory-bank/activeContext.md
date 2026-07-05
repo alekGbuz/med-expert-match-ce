@@ -4,28 +4,28 @@
 
 ## Current Focus
 
-### M135
+### M139
 
-# M135 — Memory-Bank Enrichment & Traceability Backfill
+# M139 — Traceability CI Gate & Composable Tool Calling Monitoring
 
-- **Milestone:** M135
-- **DEC:** DEC-015
+- **Milestone:** M139
 - **Status:** Active
-- **Date:** 2026-06-21
+- **Date:** 2026-07-05
 
 ## Current Focus
 
-Enrich the auto-generated milestone stubs (M01–M128) with richer summaries and backfill traceability links (REQ-###, TEST-###) for milestones that currently lack them.
+Harden traceability as a CI gate and add monitoring for composable tool calling risks (RISK-137..140).
 
 ## Tasks
 
-1. [ ] Enrich M01–M110 stubs with structured metadata (affected modules, tests, REQ/DEC refs).
-2. [ ] Mine `src/test/java/**/*IT.java` and `*Test.java` for significant test artifacts; append to `test.jsonl`.
-3. [ ] Cross-check `docs/pipeline/01-requirements.md` FR IDs against `registry/req.jsonl`; append missing.
-4. [ ] Acquire and release a module lock in a real task to validate the flow.
-5. [ ] Run `sync-memory-index.sh`, verify `--check` passes.
-6. [ ] Security review.
-7. [ ] Commit + merge to develop.
+1. [ ] Add `--check` mode to `backfill-test-traceability.py`.
+2. [ ] Wire traceability check into CI.
+3. [ ] Update `scn.jsonl` `testRefs` from enriched `test.jsonl`.
+4. [ ] Add Micrometer metrics for schema retry and tool-search fallback.
+5. [ ] Document monitoring for RISK-137..140.
+6. [ ] Run `sync-memory-index.sh --check`.
+7. [ ] Security review.
+8. [ ] Commit + merge to develop.
 
 ## Open Questions
 
@@ -33,7 +33,8 @@ Enrich the auto-generated milestone stubs (M01–M128) with richer summaries and
 
 ## Risks
 
-- RISK-135: Enrichment script may extract wrong module assignments. Mitigation: manual spot-check 10%.
+- RISK-142: CI traceability check false-positives on provisional entries.
+
 ## Open Questions
 
 _Captured per-milestone in `records/active/M{NN}.md`._
@@ -49,6 +50,7 @@ _Captured per-milestone in `records/active/M{NN}.md`._
 - **RISK-138** — ToolSearchToolCallingAdvisor with vector index requires VectorStore bean (open, module: llm) — mitigation: Fall back to regex index if vector store is unavailable
 - **RISK-139** — AugmentedToolCallbackProvider adds tokens per tool call (inner thinking) (open, module: llm) — mitigation: Monitor via LlmUsageTelemetryService; thinking field is a small record
 - **RISK-140** — Moving SessionMemoryAdvisor inside tool loop may increase session storage (open, module: llm) — mitigation: Compaction trigger/strategy already configured; monitor session sizes
+- **RISK-141** — Module-inferred traceability refs may mis-link IT classes to requirements (mitigated, module: .agents) — mitigation: Class-level javadoc added to 96 IT classes; backfill script re-scans source on each run
 
 ## Traceability Gaps
 
